@@ -1,44 +1,38 @@
-﻿export const dashboards = [
+export const dashboards = [
   {
     id: 1,
     name: 'Ryan Barbearia',
     description: 'CRM e Dashboard completo para gestão da barbearia',
-    url: 'https://ryan-barbearia.vercel.app',
+    longDescription: 'Sistema completo de CRM para barbearia com gestão de clientes, agendamentos, controle financeiro e relatórios de performance em tempo real.',
+    url: 'https://ryan-barbearia-dashboard.vercel.app/',
     category: 'CRM',
     status: 'Em desenvolvimento',
     icon: 'Scissors',
-    color: 'blue'
+    stack: ['React', 'Supabase', 'Tailwind'],
+    updatedAt: '2026-03-13',
   },
   {
     id: 2,
-    name: 'Elisa - Tráfego Pago',
+    name: 'Elisa — Tráfego Pago',
     description: 'Métricas e análises de campanhas de tráfego pago',
-    url: 'https://elisa-paid-traffic.vercel.app',
+    longDescription: 'Dashboard de análise de tráfego pago com métricas de campanhas, ROI, conversões e comparativo entre períodos para tomada de decisão rápida.',
+    url: 'https://trafic-eli.vercel.app/',
     category: 'Marketing',
     status: 'Planejamento',
     icon: 'TrendingUp',
-    color: 'purple'
+    stack: ['React', 'Recharts'],
+    updatedAt: '2026-03-13',
   },
   {
     id: 3,
     name: 'Sombrear',
-    description: 'Automações e workflows',
-    url: 'https://sombrear.vercel.app',
+    description: 'Automações e workflows integrados',
+    longDescription: 'Central de automações e workflows com monitoramento de execuções, gestão de integrações e visibilidade de todos os processos automatizados.',
+    url: 'https://dash-sombrear.vercel.app/',
     category: 'Automação',
     status: 'Planejamento',
     icon: 'Workflow',
-    color: 'green'
+    stack: ['React', 'N8N'],
+    updatedAt: '2026-03-13',
   },
-  {
-    id: 4,
-    name: 'Axiom Guessless',
-    description: 'Relatório de marca e arquétipos',
-    url: 'https://axiom-guessless.vercel.app',
-    category: 'Branding',
-    status: 'Ativo',
-    icon: 'Target',
-    color: 'indigo'
-  }
-];
-
-export const categories = ['Todos', 'CRM', 'Marketing', 'Automação', 'Branding'];
+]
