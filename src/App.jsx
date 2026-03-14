@@ -27,6 +27,22 @@ function formatDate(str) {
   })
 }
 
+// Destaca o trecho buscado no texto
+function Highlight({ text, query }) {
+  if (!query.trim()) return <>{text}</>
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'))
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} className="search-mark">{part}</mark>
+          : part
+      )}
+    </>
+  )
+}
+
 // ── Theme ─────────────────────────────────────────────────────
 function useTheme() {
   const [theme, setTheme] = useState(
@@ -40,7 +56,7 @@ function useTheme() {
   return { theme, toggle }
 }
 
-// ── Card Preview (visual abstrato) ────────────────────────────
+// ── Card Preview ──────────────────────────────────────────────
 function CardPreview({ Icon }) {
   return (
     <div className="card-preview">
@@ -62,6 +78,7 @@ function DetailPanel({ dashboard, onClose }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
   const [opening, setOpening] = useState(false)
+  const touchStartX = useRef(null)
 
   const handleOpen = () => {
     setOpening(true)
@@ -71,16 +88,36 @@ function DetailPanel({ dashboard, onClose }) {
     }, 500)
   }
 
+  // Fechar com Escape
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
+  // Swipe para fechar (mobile)
+  const handleTouchStart = e => {
+    touchStartX.current = e.touches[0].clientX
+  }
+  const handleTouchMove = e => {
+    if (touchStartX.current === null) return
+    const diff = e.touches[0].clientX - touchStartX.current
+    if (diff > 72) {
+      onClose()
+      touchStartX.current = null
+    }
+  }
+  const handleTouchEnd = () => { touchStartX.current = null }
+
   return (
     <>
       <div className="panel-overlay" onClick={onClose} />
-      <aside className="detail-panel">
+      <aside
+        className="detail-panel"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <button className="panel-close" onClick={onClose} aria-label="Fechar">
           <X size={15} />
         </button>
@@ -91,7 +128,10 @@ function DetailPanel({ dashboard, onClose }) {
 
         <div className="panel-content">
           <div className="panel-meta">
-            <span className={`status-badge ${status.cls}`}>{status.label}</span>
+            <span className={`status-badge ${status.cls}`}>
+              {status.cls === 'status-active' && <span className="pulse-dot" />}
+              {status.label}
+            </span>
             <span className="panel-cat"><Tag size={10} />{dashboard.category}</span>
           </div>
 
@@ -114,11 +154,7 @@ function DetailPanel({ dashboard, onClose }) {
             </div>
           )}
 
-          <button
-            className="panel-open-btn"
-            onClick={handleOpen}
-            disabled={opening}
-          >
+          <button className="panel-open-btn" onClick={handleOpen} disabled={opening}>
             {opening
               ? <span className="btn-spinner" />
               : <><ExternalLink size={14} />Abrir projeto</>
@@ -131,7 +167,7 @@ function DetailPanel({ dashboard, onClose }) {
 }
 
 // ── Dashboard Card ────────────────────────────────────────────
-function DashboardCard({ dashboard, index, onClick }) {
+function DashboardCard({ dashboard, index, onClick, query }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
 
@@ -148,17 +184,18 @@ function DashboardCard({ dashboard, index, onClick }) {
 
       <div className="card-body">
         <div className="card-body-head">
-          <h3>{dashboard.name}</h3>
-          <span className={`status-badge ${status.cls}`}>{status.label}</span>
+          <h3><Highlight text={dashboard.name} query={query} /></h3>
+          <span className={`status-badge ${status.cls}`}>
+            {status.cls === 'status-active' && <span className="pulse-dot" />}
+            {status.label}
+          </span>
         </div>
-        <p>{dashboard.description}</p>
+        <p><Highlight text={dashboard.description} query={query} /></p>
       </div>
 
       <div className="card-footer">
         <span className="category-tag">{dashboard.category}</span>
-        <span className="card-hint">
-          Ver detalhes <ArrowRight size={11} />
-        </span>
+        <span className="card-hint">Ver detalhes <ArrowRight size={11} /></span>
       </div>
     </div>
   )
@@ -203,6 +240,8 @@ function App() {
     d.category.toLowerCase().includes(search.toLowerCase())
   )
 
+  const isFiltering = search.trim().length > 0
+
   return (
     <div className="hub">
       <header className="hub-header">
@@ -210,12 +249,7 @@ function App() {
           <span className="brand-dot" />
           <span className="brand-name">LUCCA CORE</span>
         </div>
-        <button
-          className="theme-btn"
-          onClick={toggle}
-          aria-label="Alternar tema"
-          title="Atalho: T"
-        >
+        <button className="theme-btn" onClick={toggle} aria-label="Alternar tema" title="Atalho: T">
           {theme === 'dark'
             ? <Sun size={15} strokeWidth={1.75} />
             : <Moon size={15} strokeWidth={1.75} />
@@ -225,7 +259,13 @@ function App() {
 
       <div className="hub-intro">
         <h1>Seus projetos</h1>
-        <p>Acesse e gerencie todos os seus dashboards</p>
+        <p className="hub-subtitle">Acesse e gerencie todos os seus dashboards</p>
+        <p className="hub-count">
+          {isFiltering
+            ? <><strong>{filtered.length}</strong> de {dashboards.length} projetos</>
+            : <><strong>{dashboards.length}</strong> projetos</>
+          }
+        </p>
       </div>
 
       <div className="hub-search">
@@ -253,6 +293,7 @@ function App() {
               dashboard={d}
               index={i}
               onClick={setSelected}
+              query={search}
             />
           ))
           : <EmptyState query={search} />

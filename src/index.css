@@ -66,3 +66,13 @@ body {
 }
 
 p { margin: 0; }
+
+/* ── Scrollbar global ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+* { scrollbar-width: thin; scrollbar-color: #1e1e1e transparent; }
+
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #d0d0d0; }
+[data-theme="light"] * { scrollbar-color: #d0d0d0 transparent; }

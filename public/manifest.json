@@ -1,0 +1,17 @@
+{
+  "name": "LUCCA CORE",
+  "short_name": "LUCCA CORE",
+  "description": "Central de dashboards e projetos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#c41930",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
