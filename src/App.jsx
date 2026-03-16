@@ -5,6 +5,7 @@ import {
   Sun, Moon, Search, X, ExternalLink, Clock, Tag, ArrowRight,
   Github, Database, Layers, LayoutGrid, FileText,
   List, LayoutList, Link2, Calendar, Plus, Trash2, ChevronDown, ArrowUpDown,
+  Download, Upload,
 } from 'lucide-react'
 import { dashboards as staticDashboards } from './data/dashboards'
 import { links } from './data/links'
@@ -73,6 +74,13 @@ function relativeTime(ts) {
   if (hours < 24) return `há ${hours}h`
   const days = Math.floor(hours / 24)
   return days === 1 ? 'há 1 dia' : `há ${days} dias`
+}
+
+function categoryColor(name) {
+  if (!name) return null
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
+  return `hsl(${Math.abs(h) % 360}, 60%, 65%)`
 }
 
 function getFavicon(url) {
@@ -167,6 +175,9 @@ function useCustomDashboards() {
     try { return JSON.parse(localStorage.getItem('lucc-custom-dashboards') || '[]') }
     catch { return [] }
   })
+  const [pendingDeleteId, setPendingDeleteId] = useState(null)
+  const undoTimerRef = useRef(null)
+
   const add = useCallback((data) => {
     setCustom(prev => {
       const next = [...prev, { ...data, id: `c-${Date.now()}`, isCustom: true }]
@@ -181,7 +192,19 @@ function useCustomDashboards() {
       return next
     })
   }, [])
-  return { custom, add, remove }
+  const removeWithUndo = useCallback((id) => {
+    setPendingDeleteId(id)
+    undoTimerRef.current = setTimeout(() => {
+      remove(id)
+      setPendingDeleteId(null)
+    }, 5000)
+  }, [remove])
+  const undoRemove = useCallback(() => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    setPendingDeleteId(null)
+  }, [])
+  const visibleCustom = useMemo(() => custom.filter(d => d.id !== pendingDeleteId), [custom, pendingDeleteId])
+  return { custom: visibleCustom, add, remove, removeWithUndo, undoRemove, pendingDeleteId }
 }
 
 function useTagSystem() {
@@ -277,6 +300,27 @@ function usePendingTasks(tab) {
   const [pending, setPending] = useState(read)
   useEffect(() => { setPending(read()) }, [tab])
   return pending
+}
+
+// ── Progress Ring ──────────────────────────────────────────────
+function ProgressRing({ value = 0, size = 32, stroke = 2.5 }) {
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const dash = (value / 100) * circ
+  return (
+    <svg width={size} height={size} className="progress-ring">
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+      <circle
+        cx={size/2} cy={size/2} r={r}
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth={stroke}
+        strokeDasharray={`${dash} ${circ - dash}`}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size/2} ${size/2})`}
+      />
+    </svg>
+  )
 }
 
 // ── Progress Bar ───────────────────────────────────────────────
@@ -732,16 +776,25 @@ function DashboardCard({ dashboard, index, onClick, query, lastVisit, isFavorite
           </span>
         </div>
         <p><Highlight text={dashboard.description} query={query} /></p>
-        {dashboard.progress !== undefined && (
-          <ProgressBar value={dashboard.progress} className="card-progress-bar" />
-        )}
       </div>
       <div className="card-footer">
-        <span className="category-tag">{dashboard.category}</span>
-        {last
-          ? <span className="card-hint last-visit-hint"><Clock size={10} />{relativeTime(last)}</span>
-          : <span className="card-hint">Ver detalhes <ArrowRight size={11} /></span>
-        }
+        {(() => { const c = categoryColor(dashboard.category); return (
+          <span className="category-tag" style={c ? { color: c, borderColor: c + '40' } : undefined}>
+            {dashboard.category}
+          </span>
+        )})()}
+        <div className="card-footer-right">
+          {dashboard.progress !== undefined && (
+            <div className="card-ring-foot">
+              <ProgressRing value={dashboard.progress} size={26} stroke={2.5} />
+              <span className="ring-pct">{dashboard.progress}%</span>
+            </div>
+          )}
+          {last
+            ? <span className="card-hint last-visit-hint"><Clock size={10} />{relativeTime(last)}</span>
+            : <span className="card-hint">Ver detalhes <ArrowRight size={11} /></span>
+          }
+        </div>
       </div>
     </div>
   )
@@ -815,7 +868,7 @@ function App() {
   const { theme, toggle } = useTheme()
   const { track, lastVisit } = useActivity()
   const { getNote, setNote } = useNotes()
-  const { custom, add: addCustom, remove: removeCustom } = useCustomDashboards()
+  const { custom, add: addCustom, remove: removeCustom, removeWithUndo, undoRemove, pendingDeleteId } = useCustomDashboards()
   const { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds, addAndAssignTag } = useTagSystem()
   const { favorites, toggleFavorite } = useFavorites()
   const [tab, setTab] = useState(() => localStorage.getItem('lucc-tab') || 'hub')
@@ -829,10 +882,60 @@ function App() {
   const [activeTags, setActiveTags] = useState(new Set())
   const [showTagInput, setShowTagInput] = useState(false)
   const [tagInput, setTagInput] = useState('')
+  const [activeStatus, setActiveStatus] = useState(null)
+  const [searchHistory, setSearchHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lucc-search-history') || '[]') }
+    catch { return [] }
+  })
+  const [showHistory, setShowHistory] = useState(false)
   const searchRef = useRef(null)
+  const fileInputRef = useRef(null)
   const pendingTasks = usePendingTasks(tab)
 
   useEffect(() => { localStorage.setItem('lucc-tab', tab) }, [tab])
+
+  const saveToHistory = useCallback((q) => {
+    if (!q.trim()) return
+    setSearchHistory(prev => {
+      const next = [q.trim(), ...prev.filter(s => s !== q.trim())].slice(0, 5)
+      localStorage.setItem('lucc-search-history', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const handleExport = useCallback(() => {
+    const data = {
+      customDashboards: JSON.parse(localStorage.getItem('lucc-custom-dashboards') || '[]'),
+      tags:     JSON.parse(localStorage.getItem('lucc-tags')       || '[]'),
+      dashTags: JSON.parse(localStorage.getItem('lucc-dash-tags')  || '{}'),
+      notes:    JSON.parse(localStorage.getItem('lucc-notes')      || '{}'),
+      favorites:JSON.parse(localStorage.getItem('lucc-favorites')  || '[]'),
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'lucca-core-backup.json'; a.click()
+    URL.revokeObjectURL(url)
+  }, [])
+
+  const handleImport = useCallback((e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const d = JSON.parse(ev.target.result)
+        if (d.customDashboards) localStorage.setItem('lucc-custom-dashboards', JSON.stringify(d.customDashboards))
+        if (d.tags)     localStorage.setItem('lucc-tags',       JSON.stringify(d.tags))
+        if (d.dashTags) localStorage.setItem('lucc-dash-tags',  JSON.stringify(d.dashTags))
+        if (d.notes)    localStorage.setItem('lucc-notes',      JSON.stringify(d.notes))
+        if (d.favorites)localStorage.setItem('lucc-favorites',  JSON.stringify(d.favorites))
+        window.location.reload()
+      } catch { alert('Arquivo inválido') }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }, [])
 
   const allDashboards = useMemo(() => [...staticDashboards, ...custom], [custom])
 
@@ -842,6 +945,12 @@ function App() {
     inDev:   allDashboards.filter(d => d.status === 'Em desenvolvimento').length,
     planned: allDashboards.filter(d => d.status === 'Planejamento').length,
   }), [allDashboards])
+
+  const avgProgress = useMemo(() => {
+    const withP = allDashboards.filter(d => d.progress !== undefined)
+    if (!withP.length) return null
+    return Math.round(withP.reduce((acc, d) => acc + d.progress, 0) / withP.length)
+  }, [allDashboards])
 
   const handleSelectDashboard = useCallback((d) => {
     track(d.id)
@@ -872,6 +981,7 @@ function App() {
       if (e.key === '1') setTab('hub')
       if (e.key === '2') setTab('tasks')
       if (e.key === '3') setTab('agenda')
+      if ((e.key === 'f' || e.key === 'F') && selected) toggleFavorite(selected.id)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -898,8 +1008,9 @@ function App() {
         return [...activeTags].some(id => dTagIds.includes(id))
       })
     }
+    if (activeStatus) result = result.filter(d => d.status === activeStatus)
     return result
-  }, [search, activeTags, getDashTagIds, allDashboards])
+  }, [search, activeTags, activeStatus, getDashTagIds, allDashboards])
 
   const sortedFiltered = useMemo(() => {
     const result = [...filtered]
@@ -910,6 +1021,17 @@ function App() {
     else result.sort((a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0))
     return result
   }, [filtered, sortBy, favorites, lastVisit])
+
+  const favCards  = useMemo(() => sortedFiltered.filter(d => favorites.has(d.id)),  [sortedFiltered, favorites])
+  const restCards = useMemo(() => sortedFiltered.filter(d => !favorites.has(d.id)), [sortedFiltered, favorites])
+  const hasSections = favCards.length > 0 && restCards.length > 0 && sortBy === 'default'
+
+  const cardProps = (d, i) => ({
+    key: d.id, dashboard: d, index: i,
+    onClick: handleSelectDashboard, query: search, lastVisit,
+    isFavorite: favorites.has(d.id), onToggleFavorite: toggleFavorite,
+    isLastVisited: d.id === lastVisitedId,
+  })
 
   return (
     <div className="hub">
@@ -943,8 +1065,24 @@ function App() {
           </button>
         </nav>
 
-        <div className="hub-sidebar-bottom">
+        <div style={{ flexGrow: 1 }} />
+
+        {tab === 'hub' && (stats.active > 0 || stats.inDev > 0) && (
+          <div className="sidebar-mini-stats">
+            {stats.active > 0 && <span>{stats.active} ativo{stats.active > 1 ? 's' : ''}</span>}
+            {stats.inDev > 0  && <span>{stats.inDev} em dev</span>}
+          </div>
+        )}
+
+        <div className="hub-sidebar-bottom" style={{ marginTop: 0 }}>
           <div className="hub-avatar" title="Lucca">L</div>
+          <button className="theme-btn" title="Exportar dados" onClick={handleExport}>
+            <Download size={14} strokeWidth={1.75} />
+          </button>
+          <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+          <button className="theme-btn" title="Importar dados" onClick={() => fileInputRef.current?.click()}>
+            <Upload size={14} strokeWidth={1.75} />
+          </button>
           <button className="theme-btn" onClick={toggle} aria-label="Alternar tema">
             {theme === 'dark'
               ? <Sun size={15} strokeWidth={1.75} />
@@ -958,7 +1096,7 @@ function App() {
       <div className="hub-main">
 
         {tab === 'hub' && (
-          <div className="hub-content">
+          <div className={`hub-content${selected ? ' panel-open' : ''}`}>
 
             {/* ── Greeting Hero ── */}
             <div className="hub-intro">
@@ -991,6 +1129,11 @@ function App() {
                     <strong>{stats.planned}</strong> planejado
                   </span>
                 )}
+                {avgProgress !== null && (
+                  <span className="stat-pill">
+                    <strong>{avgProgress}%</strong> médio
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1005,11 +1148,27 @@ function App() {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="search-input"
+                  onFocus={() => { if (!search && searchHistory.length) setShowHistory(true) }}
+                  onBlur={() => {
+                    if (search.trim()) saveToHistory(search.trim())
+                    setTimeout(() => setShowHistory(false), 150)
+                  }}
                 />
                 {search && (
                   <button className="search-clear" onClick={() => setSearch('')} aria-label="Limpar">
                     <X size={13} />
                   </button>
+                )}
+                {showHistory && !search && searchHistory.length > 0 && (
+                  <div className="search-history-drop">
+                    <span className="search-history-label">Buscas recentes</span>
+                    {searchHistory.map((q, i) => (
+                      <button key={i} className="search-history-item"
+                        onClick={() => { setSearch(q); setShowHistory(false) }}>
+                        <Clock size={11} /> {q}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
 
@@ -1101,6 +1260,24 @@ function App() {
               ))}
             </div>
 
+            {/* ── Status filter row ── */}
+            <div className="status-filter-row">
+              {['Ativo', 'Em desenvolvimento', 'Planejamento', 'Pausado'].map(s => (
+                <button
+                  key={s}
+                  className={`status-filter-btn${activeStatus === s ? ' status-filter-active' : ''}`}
+                  onClick={() => setActiveStatus(prev => prev === s ? null : s)}
+                >
+                  {statusConfig[s]?.label || s}
+                </button>
+              ))}
+              {activeStatus && (
+                <button className="status-filter-clear" onClick={() => setActiveStatus(null)}>
+                  <X size={10} /> Limpar
+                </button>
+              )}
+            </div>
+
             {search.trim() && (
               <p className="filter-count">
                 <strong>{sortedFiltered.length}</strong> de {allDashboards.length} resultados
@@ -1108,27 +1285,34 @@ function App() {
             )}
 
             {/* ── Grid ── */}
-            <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}${viewMode === 'compact' ? ' compact-view' : ''}`}>
-              {sortedFiltered.length > 0
-                ? sortedFiltered.map((d, i) => (
-                    <DashboardCard
-                      key={d.id}
-                      dashboard={d}
-                      index={i}
-                      onClick={handleSelectDashboard}
-                      query={search}
-                      lastVisit={lastVisit}
-                      isFavorite={favorites.has(d.id)}
-                      onToggleFavorite={toggleFavorite}
-                      isLastVisited={d.id === lastVisitedId}
-                    />
-                  ))
-                : <EmptyState query={search} />
-              }
-              {!search.trim() && activeTags.size === 0 && (
-                <AddProjectCard onClick={() => setShowAddModal(true)} />
-              )}
-            </main>
+            {sortedFiltered.length === 0 ? (
+              <EmptyState query={search} />
+            ) : hasSections ? (
+              <>
+                <div className="grid-section">
+                  <div className="grid-section-header"><Star size={11} /> Favoritos</div>
+                  <div className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}${viewMode === 'compact' ? ' compact-view' : ''}`}>
+                    {favCards.map((d, i) => <DashboardCard {...cardProps(d, i)} />)}
+                  </div>
+                </div>
+                <div className="grid-section">
+                  <div className="grid-section-header">Projetos</div>
+                  <div className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}${viewMode === 'compact' ? ' compact-view' : ''}`}>
+                    {restCards.map((d, i) => <DashboardCard {...cardProps(d, i)} />)}
+                    {!search.trim() && activeTags.size === 0 && !activeStatus && (
+                      <AddProjectCard onClick={() => setShowAddModal(true)} />
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}${viewMode === 'compact' ? ' compact-view' : ''}`}>
+                {sortedFiltered.map((d, i) => <DashboardCard {...cardProps(d, i)} />)}
+                {!search.trim() && activeTags.size === 0 && !activeStatus && (
+                  <AddProjectCard onClick={() => setShowAddModal(true)} />
+                )}
+              </main>
+            )}
 
             <LinksSection />
           </div>
@@ -1150,7 +1334,7 @@ function App() {
           dashTagIds={getDashTagIds(selected.id)}
           assignTag={assignTag}
           removeTagFromDash={removeTagFromDash}
-          onDelete={removeCustom}
+          onDelete={(id) => { setSelected(null); removeWithUndo(id) }}
           addAndAssignTag={addAndAssignTag}
         />
       )}
@@ -1169,6 +1353,14 @@ function App() {
           onClose={() => setCmdOpen(false)}
           onSelectProject={handleSelectDashboard}
         />
+      )}
+
+      {/* ── Undo Toast ── */}
+      {pendingDeleteId && (
+        <div className="undo-toast">
+          <span>Projeto removido</span>
+          <button className="undo-btn" onClick={undoRemove}>Desfazer</button>
+        </div>
       )}
     </div>
   )
