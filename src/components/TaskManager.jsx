@@ -2,6 +2,16 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { Plus, X, ChevronRight, ChevronDown, ClipboardList, Calendar, AlignLeft } from 'lucide-react'
 import { dashboards } from '../data/dashboards'
 
+// ── Date field constants ───────────────────────────────────────
+const MONTHS_PT = [
+  ['01','Jan'],['02','Fev'],['03','Mar'],['04','Abr'],
+  ['05','Mai'],['06','Jun'],['07','Jul'],['08','Ago'],
+  ['09','Set'],['10','Out'],['11','Nov'],['12','Dez'],
+]
+const CUR_YEAR = new Date().getFullYear()
+const YEARS = Array.from({ length: 6 }, (_, i) => String(CUR_YEAR + i))
+const DAYS  = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
+
 // ── Statuses ───────────────────────────────────────────────────
 export const STATUSES = [
   { id: 'creating', label: 'Criando',    color: '#818cf8' },
@@ -117,6 +127,45 @@ function StatusBadge({ status, onChange }) {
   )
 }
 
+// ── Date field (3 selects — day / month / year) ───────────────
+function DateField({ value, onChange }) {
+  const parts  = value ? value.split('-') : ['', '', '']
+  const [selY, setSelY] = useState(parts[0] || '')
+  const [selM, setSelM] = useState(parts[1] || '')
+  const [selD, setSelD] = useState(parts[2] || '')
+
+  const emit = (y, m, d) => onChange(y && m && d ? `${y}-${m}-${d}` : '')
+
+  return (
+    <div className="modal-date-row">
+      <select
+        className="modal-input modal-date-select"
+        value={selD}
+        onChange={e => { setSelD(e.target.value); emit(selY, selM, e.target.value) }}
+      >
+        <option value="">Dia</option>
+        {DAYS.map(d => <option key={d} value={d}>{parseInt(d)}</option>)}
+      </select>
+      <select
+        className="modal-input modal-date-select"
+        value={selM}
+        onChange={e => { setSelM(e.target.value); emit(selY, e.target.value, selD) }}
+      >
+        <option value="">Mês</option>
+        {MONTHS_PT.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+      <select
+        className="modal-input modal-date-select modal-date-year"
+        value={selY}
+        onChange={e => { setSelY(e.target.value); emit(e.target.value, selM, selD) }}
+      >
+        <option value="">Ano</option>
+        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+      </select>
+    </div>
+  )
+}
+
 // ── Status select (for modal) ─────────────────────────────────
 function StatusSelectField({ value, onChange }) {
   const statusObj = STATUSES.find(s => s.id === value) || STATUSES[1]
@@ -191,32 +240,27 @@ function TaskCreateModal({ onAdd, onClose }) {
             />
           </div>
 
-          {/* Data + Projeto */}
-          <div className="modal-row">
-            <div className="modal-field modal-field-half">
-              <label className="modal-label">
-                <Calendar size={11} /> Data
-              </label>
-              <input
-                type="date"
-                className="modal-input"
-                value={dueDate}
-                onChange={e => setDueDate(e.target.value)}
-              />
-            </div>
-            <div className="modal-field modal-field-half">
-              <label className="modal-label">Projeto</label>
-              <select
-                className="modal-input modal-select"
-                value={projectId}
-                onChange={e => setProjectId(e.target.value)}
-              >
-                <option value="">Nenhum</option>
-                {dashboards.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-            </div>
+          {/* Data */}
+          <div className="modal-field">
+            <label className="modal-label">
+              <Calendar size={11} /> Data
+            </label>
+            <DateField value={dueDate} onChange={setDueDate} />
+          </div>
+
+          {/* Projeto */}
+          <div className="modal-field">
+            <label className="modal-label">Projeto</label>
+            <select
+              className="modal-input modal-select"
+              value={projectId}
+              onChange={e => setProjectId(e.target.value)}
+            >
+              <option value="">Nenhum</option>
+              {dashboards.map(d => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Descrição */}
