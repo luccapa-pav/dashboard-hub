@@ -386,8 +386,8 @@ function App() {
   return (
     <div className="hub">
 
-      {/* ── Header ── */}
-      <header className="hub-header">
+      {/* ── Sidebar ── */}
+      <aside className="hub-sidebar">
         <div className="hub-brand">
           <span className="brand-dot" />
           <span className="brand-name">LUCCA CORE</span>
@@ -408,7 +408,7 @@ function App() {
           </button>
         </nav>
 
-        <div className="hub-header-right">
+        <div className="hub-sidebar-bottom">
           <div className="hub-avatar" title="Lucca">L</div>
           <button className="theme-btn" onClick={toggle} aria-label="Alternar tema" title="Atalho: T">
             {theme === 'dark'
@@ -417,116 +417,132 @@ function App() {
             }
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* ── Hub Tab ── */}
-      {tab === 'hub' && (
-        <>
-          {/* Greeting + Stats */}
-          <div className="hub-intro">
-            <h1>{getGreeting()}, Lucca</h1>
-            <p className="hub-subtitle">Aqui estão seus projetos e ferramentas</p>
-            <div className="hub-stats">
-              <span className="stat-pill">
-                <strong>{stats.total}</strong> projetos
-              </span>
-              {stats.active > 0 && (
-                <span className="stat-pill stat-pill-active">
-                  <span className="pulse-dot" />
-                  <strong>{stats.active}</strong> ativo
-                </span>
-              )}
-              {stats.inDev > 0 && (
+      {/* ── Main Content ── */}
+      <div className="hub-main">
+
+        {/* ── Hub Tab ── */}
+        {tab === 'hub' && (
+          <>
+            {/* Greeting + Stats */}
+            <div className="hub-intro">
+              <h1>{getGreeting()}, Lucca</h1>
+              <p className="hub-subtitle">Aqui estão seus projetos e ferramentas</p>
+              <div className="hub-stats">
                 <span className="stat-pill">
-                  <strong>{stats.inDev}</strong> em dev
+                  <strong>{stats.total}</strong> projetos
                 </span>
-              )}
-              {stats.planned > 0 && (
-                <span className="stat-pill">
-                  <strong>{stats.planned}</strong> planejado
-                </span>
-              )}
+                {stats.active > 0 && (
+                  <span className="stat-pill stat-pill-active">
+                    <span className="pulse-dot" />
+                    <strong>{stats.active}</strong> ativo
+                  </span>
+                )}
+                {stats.inDev > 0 && (
+                  <span className="stat-pill">
+                    <strong>{stats.inDev}</strong> em dev
+                  </span>
+                )}
+                {stats.planned > 0 && (
+                  <span className="stat-pill">
+                    <strong>{stats.planned}</strong> planejado
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Toolbar: search + view toggle + cmd palette */}
-          <div className="hub-toolbar">
-            <div className="hub-search">
-              <Search size={14} className="search-icon" />
-              <input
-                ref={searchRef}
-                type="text"
-                placeholder='Buscar projetos... (pressione "/")'
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="search-input"
-              />
-              {search && (
-                <button className="search-clear" onClick={() => setSearch('')} aria-label="Limpar">
-                  <X size={13} />
+            {/* Toolbar: search + view toggle + cmd palette */}
+            <div className="hub-toolbar">
+              <div className="hub-search">
+                <Search size={14} className="search-icon" />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  placeholder='Buscar projetos... (pressione "/")'
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="search-input"
+                />
+                {search && (
+                  <button className="search-clear" onClick={() => setSearch('')} aria-label="Limpar">
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              <div className="view-toggle">
+                <button
+                  className={`view-btn${viewMode === 'grid' ? ' view-btn-active' : ''}`}
+                  onClick={() => setViewMode('grid')}
+                  title="Grade (L)"
+                >
+                  <LayoutGrid size={14} />
                 </button>
-              )}
+                <button
+                  className={`view-btn${viewMode === 'list' ? ' view-btn-active' : ''}`}
+                  onClick={() => setViewMode('list')}
+                  title="Lista (L)"
+                >
+                  <List size={14} />
+                </button>
+              </div>
+
+              <button
+                className="cmd-trigger"
+                onClick={() => setCmdOpen(true)}
+                title="Paleta de comandos"
+              >
+                <Command size={13} />
+                <span>Buscar</span>
+                <kbd>⌘K</kbd>
+              </button>
             </div>
 
-            <div className="view-toggle">
-              <button
-                className={`view-btn${viewMode === 'grid' ? ' view-btn-active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                title="Grade (L)"
-              >
-                <LayoutGrid size={14} />
-              </button>
-              <button
-                className={`view-btn${viewMode === 'list' ? ' view-btn-active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="Lista (L)"
-              >
-                <List size={14} />
-              </button>
-            </div>
+            {/* Filter count */}
+            {search.trim() && (
+              <p className="filter-count">
+                <strong>{filtered.length}</strong> de {dashboards.length} resultados
+              </p>
+            )}
 
-            <button
-              className="cmd-trigger"
-              onClick={() => setCmdOpen(true)}
-              title="Paleta de comandos"
-            >
-              <Command size={13} />
-              <span>Buscar</span>
-              <kbd>⌘K</kbd>
-            </button>
-          </div>
+            {/* Grid / List */}
+            <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}`}>
+              {filtered.length > 0
+                ? filtered.map((d, i) => (
+                    <DashboardCard
+                      key={d.id}
+                      dashboard={d}
+                      index={i}
+                      onClick={handleSelectDashboard}
+                      query={search}
+                      lastVisit={lastVisit}
+                    />
+                  ))
+                : <EmptyState query={search} />
+              }
+            </main>
 
-          {/* Filter count */}
-          {search.trim() && (
-            <p className="filter-count">
-              <strong>{filtered.length}</strong> de {dashboards.length} resultados
-            </p>
-          )}
+            {/* Links Hub */}
+            <LinksSection />
+          </>
+        )}
 
-          {/* Grid / List */}
-          <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}`}>
-            {filtered.length > 0
-              ? filtered.map((d, i) => (
-                  <DashboardCard
-                    key={d.id}
-                    dashboard={d}
-                    index={i}
-                    onClick={handleSelectDashboard}
-                    query={search}
-                    lastVisit={lastVisit}
-                  />
-                ))
-              : <EmptyState query={search} />
-            }
-          </main>
+        {/* ── Tasks Tab ── */}
+        {tab === 'tasks' && <TaskManager />}
 
-          {/* Links Hub */}
-          <LinksSection />
-        </>
-      )}
+        {/* ── Shortcuts Bar ── */}
+        {tab === 'hub' && (
+          <footer className="hub-shortcuts">
+            <span><kbd>/</kbd> buscar</span>
+            <span><kbd>T</kbd> tema</span>
+            <span><kbd>L</kbd> layout</span>
+            <span><kbd>⌘K</kbd> paleta</span>
+            <span><kbd>Esc</kbd> fechar</span>
+          </footer>
+        )}
 
-      {/* ── Tasks Tab ── */}
-      {tab === 'tasks' && <TaskManager />}
+      </div>
 
       {/* ── Detail Panel ── */}
       {selected && (
@@ -547,16 +563,6 @@ function App() {
         />
       )}
 
-      {/* ── Shortcuts Bar ── */}
-      {tab === 'hub' && (
-        <footer className="hub-shortcuts">
-          <span><kbd>/</kbd> buscar</span>
-          <span><kbd>T</kbd> tema</span>
-          <span><kbd>L</kbd> layout</span>
-          <span><kbd>⌘K</kbd> paleta</span>
-          <span><kbd>Esc</kbd> fechar</span>
-        </footer>
-      )}
     </div>
   )
 }
