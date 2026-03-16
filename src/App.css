@@ -381,12 +381,52 @@
 .card {
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--bg-card);
+  border-left: 3px solid var(--border);
+  background: linear-gradient(160deg, var(--bg-card) 0%, #070707 100%);
   overflow: hidden;
   box-shadow: var(--shadow);
   cursor: pointer;
+  position: relative;
   animation: fadeInUp 0.35s ease both;
   animation-delay: calc(var(--i, 0) * 0.07s);
+}
+
+.card[data-status="Ativo"]              { border-left-color: #22c55e; }
+.card[data-status="Em desenvolvimento"] { border-left-color: #f59e0b; }
+.card[data-status="Planejamento"]       { border-left-color: #818cf8; }
+.card[data-status="Pausado"]            { border-left-color: #6b7280; }
+
+.card-last-visited {
+  box-shadow: 0 0 0 2px rgba(196,25,48,0.35), var(--shadow);
+}
+
+.card-star-btn {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 2;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--text-mid);
+  opacity: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card:hover .card-star-btn { opacity: 1; }
+.card-star-btn.star-active  { opacity: 1; color: #f59e0b; }
+.card-star-btn.star-active svg { fill: #f59e0b; }
+
+.card-favicon {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  margin-right: 5px;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .card:hover {
@@ -821,6 +861,84 @@
 .view-btn + .view-btn { border-left: 1px solid var(--border); }
 .view-btn.view-btn-active { background: var(--accent); color: #fff; }
 .view-btn:hover:not(.view-btn-active) { color: var(--white); }
+
+/* ── Sort dropdown ───────────────────────────────────────────── */
+.sort-wrap { position: relative; }
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-mid);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sort-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 200;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: var(--shadow);
+  min-width: 120px;
+  animation: fadeInUp 0.14s ease both;
+}
+.sort-drop-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 5px;
+  text-align: left;
+}
+.sort-drop-item:hover  { background: var(--accent-dim); color: var(--accent); }
+.sort-drop-active      { color: var(--accent); background: var(--accent-dim); }
+
+/* ── Tab badge ───────────────────────────────────────────────── */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 6px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Compact view ────────────────────────────────────────────── */
+.hub-grid.compact-view {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+.compact-view .card-preview { display: none; }
+.compact-view .card-body    { padding: 12px 14px; }
+
+/* ── Light theme card gradient fix ──────────────────────────── */
+[data-theme="light"] .card {
+  background: linear-gradient(160deg, var(--bg-card) 0%, #f0eded 100%);
+}
 
 /* ── Command palette trigger ─────────────────────────────────── */
 .cmd-trigger {

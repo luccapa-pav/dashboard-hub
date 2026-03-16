@@ -4,7 +4,7 @@ import {
   BarChart2, Users, ShoppingCart, Globe, Zap, Star,
   Sun, Moon, Search, X, ExternalLink, Clock, Tag, ArrowRight,
   Github, Database, Layers, LayoutGrid, FileText,
-  List, Link2, Calendar, Plus, Trash2, ChevronDown,
+  List, LayoutList, Link2, Calendar, Plus, Trash2, ChevronDown, ArrowUpDown,
 } from 'lucide-react'
 import { dashboards as staticDashboards } from './data/dashboards'
 import { links } from './data/links'
@@ -36,6 +36,14 @@ const STATUS_OPTIONS = [
   'Ativo', 'Em desenvolvimento', 'Planejamento', 'Pausado',
 ]
 
+const SORT_OPTIONS = [
+  { key: 'default',   label: 'Padrão'    },
+  { key: 'name',      label: 'Nome'      },
+  { key: 'status',    label: 'Status'    },
+  { key: 'progress',  label: 'Progresso' },
+  { key: 'lastVisit', label: 'Recentes'  },
+]
+
 const linkIconMap = {
   Github, Globe, Database, Layers, LayoutGrid, FileText,
 }
@@ -65,6 +73,13 @@ function relativeTime(ts) {
   if (hours < 24) return `há ${hours}h`
   const days = Math.floor(hours / 24)
   return days === 1 ? 'há 1 dia' : `há ${days} dias`
+}
+
+function getFavicon(url) {
+  try {
+    const domain = new URL(url).hostname
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`
+  } catch { return null }
 }
 
 function formatDate(str) {
@@ -233,6 +248,35 @@ function useTagSystem() {
     })
   }, [])
   return { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds, addAndAssignTag }
+}
+
+function useFavorites() {
+  const [favorites, setFavorites] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('lucc-favorites') || '[]')) }
+    catch { return new Set() }
+  })
+  const toggleFavorite = useCallback((id) => {
+    setFavorites(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      localStorage.setItem('lucc-favorites', JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+  return { favorites, toggleFavorite }
+}
+
+function usePendingTasks(tab) {
+  const count = (tasks) => tasks.reduce((acc, t) => {
+    return acc + (t.status !== 'done' ? 1 : 0) + count(t.children || [])
+  }, 0)
+  const read = () => {
+    try { return count(JSON.parse(localStorage.getItem('lucc-tasks') || '[]')) }
+    catch { return 0 }
+  }
+  const [pending, setPending] = useState(read)
+  useEffect(() => { setPending(read()) }, [tab])
+  return pending
 }
 
 // ── Progress Bar ───────────────────────────────────────────────
@@ -444,6 +488,14 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
   const [showTagDrop, setShowTagDrop] = useState(false)
   const [newTagInput, setNewTagInput] = useState(null)
   const [popupBlocked, setPopupBlocked] = useState(false)
+  const originalNote = useRef(getNote(dashboard.id))
+
+  const handleClose = useCallback(() => {
+    if (getNote(dashboard.id) !== originalNote.current) {
+      if (!window.confirm('As notas foram alteradas. Fechar painel?')) return
+    }
+    onClose()
+  }, [onClose, getNote, dashboard.id])
   const touchStartX = useRef(null)
   const last = lastVisit(dashboard.id)
   const note = getNote(dashboard.id)
@@ -460,10 +512,10 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
   }
 
   useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose() }
+    const handler = e => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
+  }, [handleClose])
 
   const handleTouchStart = e => { touchStartX.current = e.touches[0].clientX }
   const handleTouchMove = e => {
@@ -477,14 +529,14 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
 
   return (
     <>
-      <div className="panel-overlay" onClick={onClose} />
+      <div className="panel-overlay" onClick={handleClose} />
       <aside
         className="detail-panel"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <button className="panel-close" onClick={onClose} aria-label="Fechar">
+        <button className="panel-close" onClick={handleClose} aria-label="Fechar">
           <X size={15} />
         </button>
 
@@ -601,7 +653,7 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
             />
           </div>
 
-          <button className="panel-open-btn" onClick={handleOpen} disabled={opening}>
+          <button className="panel-open-btn" onClick={handleOpen} disabled={opening} title={dashboard.url}>
             {opening
               ? <span className="btn-spinner" />
               : <><ExternalLink size={14} />Abrir projeto</>
@@ -636,24 +688,44 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
 }
 
 // ── Dashboard Card ─────────────────────────────────────────────
-function DashboardCard({ dashboard, index, onClick, query, lastVisit }) {
+function DashboardCard({ dashboard, index, onClick, query, lastVisit, isFavorite, onToggleFavorite, isLastVisited }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
   const last = lastVisit(dashboard.id)
+  const favicon = getFavicon(dashboard.url)
 
   return (
     <div
-      className={`card${dashboard.isCustom ? ' card-custom' : ''}`}
+      className={`card${dashboard.isCustom ? ' card-custom' : ''}${isLastVisited ? ' card-last-visited' : ''}`}
       style={{ '--i': index }}
+      data-status={dashboard.status}
       onClick={() => onClick(dashboard)}
       role="button"
       tabIndex={0}
       onKeyDown={e => e.key === 'Enter' && onClick(dashboard)}
     >
+      <button
+        className={`card-star-btn${isFavorite ? ' star-active' : ''}`}
+        onClick={e => { e.stopPropagation(); onToggleFavorite(dashboard.id) }}
+        title={isFavorite ? 'Remover favorito' : 'Favoritar'}
+        aria-label={isFavorite ? 'Remover favorito' : 'Favoritar'}
+      >
+        <Star size={12} />
+      </button>
       <CardPreview Icon={Icon} />
       <div className="card-body">
         <div className="card-body-head">
-          <h3><Highlight text={dashboard.name} query={query} /></h3>
+          <h3>
+            {favicon && (
+              <img
+                src={favicon}
+                className="card-favicon"
+                alt=""
+                onError={e => { e.target.style.display = 'none' }}
+              />
+            )}
+            <Highlight text={dashboard.name} query={query} />
+          </h3>
           <span className={`status-badge ${status.cls}`}>
             {status.cls === 'status-active' && <span className="pulse-dot" />}
             {status.label}
@@ -745,16 +817,22 @@ function App() {
   const { getNote, setNote } = useNotes()
   const { custom, add: addCustom, remove: removeCustom } = useCustomDashboards()
   const { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds, addAndAssignTag } = useTagSystem()
-  const [tab, setTab] = useState('hub')
+  const { favorites, toggleFavorite } = useFavorites()
+  const [tab, setTab] = useState(() => localStorage.getItem('lucc-tab') || 'hub')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
   const [viewMode, setViewMode] = useState('grid')
+  const [sortBy, setSortBy] = useState('default')
+  const [showSortDrop, setShowSortDrop] = useState(false)
   const [cmdOpen, setCmdOpen] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [activeTags, setActiveTags] = useState(new Set())
   const [showTagInput, setShowTagInput] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const searchRef = useRef(null)
+  const pendingTasks = usePendingTasks(tab)
+
+  useEffect(() => { localStorage.setItem('lucc-tab', tab) }, [tab])
 
   const allDashboards = useMemo(() => [...staticDashboards, ...custom], [custom])
 
@@ -791,10 +869,22 @@ function App() {
       if (e.key === '/') { e.preventDefault(); searchRef.current?.focus() }
       if (e.key === 't' || e.key === 'T') toggle()
       if (e.key === 'l' || e.key === 'L') setViewMode(v => v === 'grid' ? 'list' : 'grid')
+      if (e.key === '1') setTab('hub')
+      if (e.key === '2') setTab('tasks')
+      if (e.key === '3') setTab('agenda')
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [toggle])
+
+  const lastVisitedId = useMemo(() => {
+    let maxTs = 0, maxId = null
+    allDashboards.forEach(d => {
+      const ts = lastVisit(d.id)
+      if (ts && ts > maxTs) { maxTs = ts; maxId = d.id }
+    })
+    return maxId
+  }, [allDashboards, lastVisit])
 
   const filtered = useMemo(() => {
     let result = allDashboards.filter(d =>
@@ -810,6 +900,16 @@ function App() {
     }
     return result
   }, [search, activeTags, getDashTagIds, allDashboards])
+
+  const sortedFiltered = useMemo(() => {
+    const result = [...filtered]
+    if (sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name))
+    else if (sortBy === 'status') result.sort((a, b) => a.status.localeCompare(b.status))
+    else if (sortBy === 'progress') result.sort((a, b) => (b.progress || 0) - (a.progress || 0))
+    else if (sortBy === 'lastVisit') result.sort((a, b) => (lastVisit(b.id) || 0) - (lastVisit(a.id) || 0))
+    else result.sort((a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0))
+    return result
+  }, [filtered, sortBy, favorites, lastVisit])
 
   return (
     <div className="hub">
@@ -833,6 +933,7 @@ function App() {
             onClick={() => setTab('tasks')}
           >
             Tarefas
+            {pendingTasks > 0 && <span className="tab-badge">{pendingTasks}</span>}
           </button>
           <button
             className={`tab-btn${tab === 'agenda' ? ' tab-active' : ''}`}
@@ -912,6 +1013,27 @@ function App() {
                 )}
               </div>
 
+              <div className="sort-wrap">
+                <button className="sort-btn" onClick={() => setShowSortDrop(v => !v)}>
+                  <ArrowUpDown size={13} />
+                  <span>{SORT_OPTIONS.find(s => s.key === sortBy)?.label}</span>
+                  <ChevronDown size={11} className={showSortDrop ? 'chevron-open' : ''} />
+                </button>
+                {showSortDrop && (
+                  <div className="sort-dropdown">
+                    {SORT_OPTIONS.map(opt => (
+                      <button
+                        key={opt.key}
+                        className={`sort-drop-item${sortBy === opt.key ? ' sort-drop-active' : ''}`}
+                        onClick={() => { setSortBy(opt.key); setShowSortDrop(false) }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="view-toggle">
                 <button
                   className={`view-btn${viewMode === 'grid' ? ' view-btn-active' : ''}`}
@@ -926,6 +1048,13 @@ function App() {
                   title="Lista"
                 >
                   <List size={14} />
+                </button>
+                <button
+                  className={`view-btn${viewMode === 'compact' ? ' view-btn-active' : ''}`}
+                  onClick={() => setViewMode('compact')}
+                  title="Compacto"
+                >
+                  <LayoutList size={14} />
                 </button>
               </div>
             </div>
@@ -974,14 +1103,14 @@ function App() {
 
             {search.trim() && (
               <p className="filter-count">
-                <strong>{filtered.length}</strong> de {allDashboards.length} resultados
+                <strong>{sortedFiltered.length}</strong> de {allDashboards.length} resultados
               </p>
             )}
 
             {/* ── Grid ── */}
-            <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}`}>
-              {filtered.length > 0
-                ? filtered.map((d, i) => (
+            <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}${viewMode === 'compact' ? ' compact-view' : ''}`}>
+              {sortedFiltered.length > 0
+                ? sortedFiltered.map((d, i) => (
                     <DashboardCard
                       key={d.id}
                       dashboard={d}
@@ -989,6 +1118,9 @@ function App() {
                       onClick={handleSelectDashboard}
                       query={search}
                       lastVisit={lastVisit}
+                      isFavorite={favorites.has(d.id)}
+                      onToggleFavorite={toggleFavorite}
+                      isLastVisited={d.id === lastVisitedId}
                     />
                   ))
                 : <EmptyState query={search} />
