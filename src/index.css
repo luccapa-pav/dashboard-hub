@@ -1,40 +1,40 @@
 /* ── Tokens: Dark (padrão) ──────────────────────────────────── */
 :root,
 [data-theme="dark"] {
-  --bg:           #000000;
-  --bg-card:      #070707;
-  --bg-card-h:    #0c0c0c;
-  --border:       #333333;
+  --bg:           #030303;
+  --bg-card:      #0a0a0a;
+  --bg-card-h:    #111111;
+  --border:       #2a2a2a;
   --border-h:     rgba(196, 25, 48, 0.5);
-  --text:         #555555;
-  --text-mid:     #888888;
+  --text:         #4a4a4a;
+  --text-mid:     #8a8a8a;
   --text-h:       #c41930;
   --accent:       #c41930;
   --accent-hi:    #e8192c;
-  --accent-dim:   rgba(196, 25, 48, 0.08);
-  --accent-glow:  rgba(196, 25, 48, 0.25);
-  --white:        #e8e8e8;
+  --accent-dim:   rgba(196, 25, 48, 0.12);
+  --accent-glow:  rgba(196, 25, 48, 0.30);
+  --white:        #f0f0f0;
   --shadow:       0 2px 16px rgba(0,0,0,0.9);
   --shadow-h:     0 0 0 1px rgba(196,25,48,0.2), 0 8px 40px rgba(0,0,0,1), 0 0 32px rgba(196,25,48,0.1);
 }
 
 /* ── Tokens: Light ──────────────────────────────────────────── */
 [data-theme="light"] {
-  --bg:           #f2f2f2;
+  --bg:           #f7f4f4;
   --bg-card:      #ffffff;
-  --bg-card-h:    #fafafa;
-  --border:       #e0e0e0;
-  --border-h:     rgba(185, 28, 28, 0.35);
-  --text:         #b0b0b0;
-  --text-mid:     #888888;
+  --bg-card-h:    #fdf9f9;
+  --border:       #e8e0e0;
+  --border-h:     rgba(185, 28, 28, 0.3);
+  --text:         #999999;
+  --text-mid:     #777777;
   --text-h:       #b91c1c;
-  --accent:       #b91c1c;
-  --accent-hi:    #dc2626;
-  --accent-dim:   rgba(185, 28, 28, 0.06);
-  --accent-glow:  rgba(185, 28, 28, 0.18);
-  --white:        #111111;
-  --shadow:       0 2px 8px rgba(0,0,0,0.07);
-  --shadow-h:     0 0 0 1px rgba(185,28,28,0.15), 0 8px 24px rgba(0,0,0,0.1);
+  --accent:       #c41930;
+  --accent-hi:    #e8192c;
+  --accent-dim:   rgba(196, 25, 48, 0.08);
+  --accent-glow:  rgba(196, 25, 48, 0.20);
+  --white:        #1a1a1a;
+  --shadow:       0 2px 12px rgba(185,28,28,0.06), 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-h:     0 0 0 1px rgba(185,28,28,0.18), 0 8px 30px rgba(185,28,28,0.10);
 }
 
 /* ── Transitions ────────────────────────────────────────────── */

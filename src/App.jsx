@@ -4,12 +4,13 @@ import {
   BarChart2, Users, ShoppingCart, Globe, Zap, Star,
   Sun, Moon, Search, X, ExternalLink, Clock, Tag, ArrowRight,
   Github, Database, Layers, LayoutGrid, FileText,
-  List, Command, Link2,
+  List, Command, Link2, Calendar, Plus,
 } from 'lucide-react'
 import { dashboards } from './data/dashboards'
 import { links } from './data/links'
 import { CommandPalette } from './components/CommandPalette'
 import { TaskManager } from './components/TaskManager'
+import { CalendarTab } from './components/CalendarTab'
 import './App.css'
 
 // ── Icon maps ──────────────────────────────────────────────────
@@ -72,6 +73,19 @@ function Highlight({ text, query }) {
 }
 
 // ── Hooks ──────────────────────────────────────────────────────
+function useTime() {
+  const [time, setTime] = useState(() =>
+    new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  )
+  useEffect(() => {
+    const id = setInterval(() =>
+      setTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+    , 1000)
+    return () => clearInterval(id)
+  }, [])
+  return time
+}
+
 function useTheme() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem('lucc-theme') || 'dark'
@@ -116,6 +130,64 @@ function useNotes() {
   return { getNote, setNote }
 }
 
+function useTagSystem() {
+  const [tags, setTags] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lucc-tags') || '[]') }
+    catch { return [] }
+  })
+  const [dashTags, setDashTags] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lucc-dash-tags') || '{}') }
+    catch { return {} }
+  })
+
+  const addTag = useCallback((name) => {
+    setTags(prev => {
+      const next = [...prev, { id: Date.now().toString(), name }]
+      localStorage.setItem('lucc-tags', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const deleteTag = useCallback((tagId) => {
+    setTags(prev => {
+      const next = prev.filter(t => t.id !== tagId)
+      localStorage.setItem('lucc-tags', JSON.stringify(next))
+      return next
+    })
+    setDashTags(prev => {
+      const next = { ...prev }
+      Object.keys(next).forEach(k => { next[k] = next[k].filter(t => t !== tagId) })
+      localStorage.setItem('lucc-dash-tags', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const assignTag = useCallback((dashId, tagId) => {
+    setDashTags(prev => {
+      const current = prev[dashId] || []
+      if (current.includes(tagId)) return prev
+      const next = { ...prev, [dashId]: [...current, tagId] }
+      localStorage.setItem('lucc-dash-tags', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const removeTagFromDash = useCallback((dashId, tagId) => {
+    setDashTags(prev => {
+      const current = prev[dashId] || []
+      const next = { ...prev, [dashId]: current.filter(t => t !== tagId) }
+      localStorage.setItem('lucc-dash-tags', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
+  const getDashTagIds = useCallback((dashId) => {
+    return dashTags[dashId] || []
+  }, [dashTags])
+
+  return { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds }
+}
+
 // ── Progress Bar ───────────────────────────────────────────────
 function ProgressBar({ value = 0, className = '' }) {
   return (
@@ -143,13 +215,16 @@ function CardPreview({ Icon }) {
 }
 
 // ── Detail Panel ───────────────────────────────────────────────
-function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote }) {
+function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, dashTagIds, assignTag, removeTagFromDash }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
   const [opening, setOpening] = useState(false)
+  const [showTagDrop, setShowTagDrop] = useState(false)
   const touchStartX = useRef(null)
   const last = lastVisit(dashboard.id)
   const note = getNote(dashboard.id)
+
+  const unassignedTags = tags.filter(t => !dashTagIds.includes(t.id))
 
   const handleOpen = () => {
     setOpening(true)
@@ -211,14 +286,51 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote }) {
             </div>
           )}
 
-          {dashboard.stack?.length > 0 && (
-            <div className="panel-stack">
-              <span className="panel-label">Stack</span>
-              <div className="stack-tags">
-                {dashboard.stack.map(s => <span key={s} className="stack-tag">{s}</span>)}
-              </div>
+          <div className="panel-stack">
+            <span className="panel-label">Tags</span>
+            <div className="stack-tags">
+              {dashTagIds.map(id => {
+                const tag = tags.find(t => t.id === id)
+                if (!tag) return null
+                return (
+                  <span
+                    key={id}
+                    className="stack-tag panel-tag-removable"
+                    onClick={() => removeTagFromDash(dashboard.id, id)}
+                    title="Clique para remover"
+                  >
+                    {tag.name} <span className="tag-x">×</span>
+                  </span>
+                )
+              })}
+              {unassignedTags.length > 0 && (
+                <div className="tag-drop-wrap">
+                  <button
+                    className="tag-add-btn tag-add-btn-sm"
+                    onClick={() => setShowTagDrop(v => !v)}
+                  >
+                    <Plus size={10} /> Tag
+                  </button>
+                  {showTagDrop && (
+                    <div className="tag-dropdown">
+                      {unassignedTags.map(t => (
+                        <button
+                          key={t.id}
+                          className="tag-drop-item"
+                          onClick={() => {
+                            assignTag(dashboard.id, t.id)
+                            setShowTagDrop(false)
+                          }}
+                        >
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div className="panel-updated">
             <Clock size={11} />
@@ -336,14 +448,19 @@ function EmptyState({ query }) {
 
 // ── App ────────────────────────────────────────────────────────
 function App() {
+  const time = useTime()
   const { theme, toggle } = useTheme()
   const { track, lastVisit } = useActivity()
   const { getNote, setNote } = useNotes()
+  const { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds } = useTagSystem()
   const [tab, setTab] = useState('hub')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
   const [viewMode, setViewMode] = useState('grid')
   const [cmdOpen, setCmdOpen] = useState(false)
+  const [activeTags, setActiveTags] = useState(new Set())
+  const [showTagInput, setShowTagInput] = useState(false)
+  const [tagInput, setTagInput] = useState('')
   const searchRef = useRef(null)
 
   const stats = useMemo(() => ({
@@ -358,6 +475,14 @@ function App() {
     setTab('hub')
     setSelected(d)
   }, [track])
+
+  const toggleActiveTag = useCallback((tagId) => {
+    setActiveTags(prev => {
+      const next = new Set(prev)
+      next.has(tagId) ? next.delete(tagId) : next.add(tagId)
+      return next
+    })
+  }, [])
 
   // Atalhos de teclado
   useEffect(() => {
@@ -377,11 +502,20 @@ function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [toggle])
 
-  const filtered = dashboards.filter(d =>
-    d.name.toLowerCase().includes(search.toLowerCase()) ||
-    d.description.toLowerCase().includes(search.toLowerCase()) ||
-    d.category.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = useMemo(() => {
+    let result = dashboards.filter(d =>
+      d.name.toLowerCase().includes(search.toLowerCase()) ||
+      d.description.toLowerCase().includes(search.toLowerCase()) ||
+      d.category.toLowerCase().includes(search.toLowerCase())
+    )
+    if (activeTags.size > 0) {
+      result = result.filter(d => {
+        const dTagIds = getDashTagIds(d.id)
+        return [...activeTags].some(id => dTagIds.includes(id))
+      })
+    }
+    return result
+  }, [search, activeTags, getDashTagIds])
 
   return (
     <div className="hub">
@@ -406,6 +540,12 @@ function App() {
           >
             Tarefas
           </button>
+          <button
+            className={`tab-btn${tab === 'agenda' ? ' tab-active' : ''}`}
+            onClick={() => setTab('agenda')}
+          >
+            Agenda
+          </button>
         </nav>
 
         <div className="hub-sidebar-bottom">
@@ -424,10 +564,13 @@ function App() {
 
         {/* ── Hub Tab ── */}
         {tab === 'hub' && (
-          <>
+          <div className="hub-content">
             {/* Greeting + Stats */}
             <div className="hub-intro">
-              <h1>{getGreeting()}, Lucca</h1>
+              <h1>
+                {getGreeting()}, Lucca
+                <span className="greeting-time">· {time}</span>
+              </h1>
               <p className="hub-subtitle">Aqui estão seus projetos e ferramentas</p>
               <div className="hub-stats">
                 <span className="stat-pill">
@@ -452,14 +595,14 @@ function App() {
               </div>
             </div>
 
-            {/* Toolbar: search + view toggle + cmd palette */}
+            {/* Toolbar: search + view toggle */}
             <div className="hub-toolbar">
               <div className="hub-search">
                 <Search size={14} className="search-icon" />
                 <input
                   ref={searchRef}
                   type="text"
-                  placeholder='Buscar projetos... (pressione "/")'
+                  placeholder="Buscar projetos..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   className="search-input"
@@ -487,16 +630,48 @@ function App() {
                   <List size={14} />
                 </button>
               </div>
+            </div>
 
-              <button
-                className="cmd-trigger"
-                onClick={() => setCmdOpen(true)}
-                title="Paleta de comandos"
-              >
-                <Command size={13} />
-                <span>Buscar</span>
-                <kbd>⌘K</kbd>
-              </button>
+            {/* Tag filter row */}
+            <div className="tag-filter-row">
+              {showTagInput ? (
+                <input
+                  autoFocus
+                  className="tag-add-input"
+                  placeholder="Nome da tag..."
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && tagInput.trim()) {
+                      addTag(tagInput.trim())
+                      setTagInput('')
+                      setShowTagInput(false)
+                    }
+                    if (e.key === 'Escape') {
+                      setTagInput('')
+                      setShowTagInput(false)
+                    }
+                  }}
+                  onBlur={() => { if (!tagInput.trim()) setShowTagInput(false) }}
+                />
+              ) : (
+                <button className="tag-add-btn" onClick={() => setShowTagInput(true)}>
+                  <Plus size={11} /> Nova tag
+                </button>
+              )}
+              {tags.map(tag => (
+                <button
+                  key={tag.id}
+                  className={`tag-pill${activeTags.has(tag.id) ? ' tag-pill-active' : ''}`}
+                  onClick={() => toggleActiveTag(tag.id)}
+                >
+                  {tag.name}
+                  <span
+                    className="tag-pill-x"
+                    onClick={e => { e.stopPropagation(); deleteTag(tag.id) }}
+                  >×</span>
+                </button>
+              ))}
             </div>
 
             {/* Filter count */}
@@ -525,22 +700,14 @@ function App() {
 
             {/* Links Hub */}
             <LinksSection />
-          </>
+          </div>
         )}
 
         {/* ── Tasks Tab ── */}
         {tab === 'tasks' && <TaskManager />}
 
-        {/* ── Shortcuts Bar ── */}
-        {tab === 'hub' && (
-          <footer className="hub-shortcuts">
-            <span><kbd>/</kbd> buscar</span>
-            <span><kbd>T</kbd> tema</span>
-            <span><kbd>L</kbd> layout</span>
-            <span><kbd>⌘K</kbd> paleta</span>
-            <span><kbd>Esc</kbd> fechar</span>
-          </footer>
-        )}
+        {/* ── Agenda Tab ── */}
+        {tab === 'agenda' && <CalendarTab />}
 
       </div>
 
@@ -552,6 +719,10 @@ function App() {
           lastVisit={lastVisit}
           getNote={getNote}
           setNote={setNote}
+          tags={tags}
+          dashTagIds={getDashTagIds(selected.id)}
+          assignTag={assignTag}
+          removeTagFromDash={removeTagFromDash}
         />
       )}
 
