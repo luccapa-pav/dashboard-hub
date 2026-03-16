@@ -4,9 +4,9 @@ import {
   BarChart2, Users, ShoppingCart, Globe, Zap, Star,
   Sun, Moon, Search, X, ExternalLink, Clock, Tag, ArrowRight,
   Github, Database, Layers, LayoutGrid, FileText,
-  List, Command, Link2, Calendar, Plus,
+  List, Link2, Calendar, Plus, Trash2, ChevronDown,
 } from 'lucide-react'
-import { dashboards } from './data/dashboards'
+import { dashboards as staticDashboards } from './data/dashboards'
 import { links } from './data/links'
 import { CommandPalette } from './components/CommandPalette'
 import { TaskManager } from './components/TaskManager'
@@ -18,6 +18,23 @@ const iconMap = {
   Scissors, TrendingUp, Workflow, Target,
   BarChart: BarChart2, Users, ShoppingCart, Globe, Zap, Star,
 }
+
+const ICON_OPTIONS = [
+  { key: 'Globe',       label: 'Globe'      },
+  { key: 'BarChart',    label: 'Analytics'  },
+  { key: 'TrendingUp',  label: 'Trend'      },
+  { key: 'Scissors',    label: 'Scissors'   },
+  { key: 'Workflow',    label: 'Workflow'   },
+  { key: 'Target',      label: 'Target'     },
+  { key: 'Users',       label: 'Users'      },
+  { key: 'ShoppingCart',label: 'Commerce'   },
+  { key: 'Zap',         label: 'Zap'        },
+  { key: 'Star',        label: 'Star'       },
+]
+
+const STATUS_OPTIONS = [
+  'Ativo', 'Em desenvolvimento', 'Planejamento', 'Pausado',
+]
 
 const linkIconMap = {
   Github, Globe, Database, Layers, LayoutGrid, FileText,
@@ -130,6 +147,28 @@ function useNotes() {
   return { getNote, setNote }
 }
 
+function useCustomDashboards() {
+  const [custom, setCustom] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lucc-custom-dashboards') || '[]') }
+    catch { return [] }
+  })
+  const add = useCallback((data) => {
+    setCustom(prev => {
+      const next = [...prev, { ...data, id: `c-${Date.now()}`, isCustom: true }]
+      localStorage.setItem('lucc-custom-dashboards', JSON.stringify(next))
+      return next
+    })
+  }, [])
+  const remove = useCallback((id) => {
+    setCustom(prev => {
+      const next = prev.filter(d => d.id !== id)
+      localStorage.setItem('lucc-custom-dashboards', JSON.stringify(next))
+      return next
+    })
+  }, [])
+  return { custom, add, remove }
+}
+
 function useTagSystem() {
   const [tags, setTags] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lucc-tags') || '[]') }
@@ -139,7 +178,6 @@ function useTagSystem() {
     try { return JSON.parse(localStorage.getItem('lucc-dash-tags') || '{}') }
     catch { return {} }
   })
-
   const addTag = useCallback((name) => {
     setTags(prev => {
       const next = [...prev, { id: Date.now().toString(), name }]
@@ -147,7 +185,6 @@ function useTagSystem() {
       return next
     })
   }, [])
-
   const deleteTag = useCallback((tagId) => {
     setTags(prev => {
       const next = prev.filter(t => t.id !== tagId)
@@ -161,7 +198,6 @@ function useTagSystem() {
       return next
     })
   }, [])
-
   const assignTag = useCallback((dashId, tagId) => {
     setDashTags(prev => {
       const current = prev[dashId] || []
@@ -171,7 +207,6 @@ function useTagSystem() {
       return next
     })
   }, [])
-
   const removeTagFromDash = useCallback((dashId, tagId) => {
     setDashTags(prev => {
       const current = prev[dashId] || []
@@ -180,11 +215,9 @@ function useTagSystem() {
       return next
     })
   }, [])
-
   const getDashTagIds = useCallback((dashId) => {
     return dashTags[dashId] || []
   }, [dashTags])
-
   return { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds }
 }
 
@@ -214,8 +247,183 @@ function CardPreview({ Icon }) {
   )
 }
 
+// ── Add Project Modal ──────────────────────────────────────────
+function AddProjectModal({ onAdd, onClose }) {
+  const [form, setForm] = useState({
+    name: '',
+    url: '',
+    description: '',
+    category: '',
+    status: 'Planejamento',
+    icon: 'Globe',
+    progress: 0,
+  })
+  const [iconOpen, setIconOpen] = useState(false)
+  const [statusOpen, setStatusOpen] = useState(false)
+
+  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
+  const valid = form.name.trim() && form.url.trim()
+
+  const handleSubmit = () => {
+    if (!valid) return
+    onAdd({
+      ...form,
+      longDescription: form.description,
+      updatedAt: new Date().toISOString().split('T')[0],
+    })
+    onClose()
+  }
+
+  useEffect(() => {
+    const h = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [onClose])
+
+  const SelectedIcon = iconMap[form.icon] || Globe
+
+  return (
+    <div className="task-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="task-modal add-modal">
+        <div className="add-modal-header">
+          <span className="add-modal-icon-wrap"><Plus size={16} /></span>
+          <h3 className="add-modal-title">Novo Projeto</h3>
+          <button className="task-modal-close" onClick={onClose}><X size={14} /></button>
+        </div>
+
+        <div className="add-modal-body">
+          {/* Name */}
+          <div className="add-field">
+            <label className="add-label">Nome <span className="modal-req">*</span></label>
+            <input
+              className="add-input"
+              placeholder="Ex: Meu Dashboard"
+              value={form.name}
+              onChange={e => set('name', e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          {/* URL */}
+          <div className="add-field">
+            <label className="add-label">URL <span className="modal-req">*</span></label>
+            <input
+              className="add-input"
+              placeholder="https://..."
+              value={form.url}
+              onChange={e => set('url', e.target.value)}
+            />
+          </div>
+
+          {/* Description */}
+          <div className="add-field">
+            <label className="add-label">Descrição</label>
+            <input
+              className="add-input"
+              placeholder="Breve descrição do projeto"
+              value={form.description}
+              onChange={e => set('description', e.target.value)}
+            />
+          </div>
+
+          {/* Category + Icon row */}
+          <div className="add-row">
+            <div className="add-field add-field-half">
+              <label className="add-label">Categoria</label>
+              <input
+                className="add-input"
+                placeholder="Ex: CRM"
+                value={form.category}
+                onChange={e => set('category', e.target.value)}
+              />
+            </div>
+
+            <div className="add-field add-field-half">
+              <label className="add-label">Ícone</label>
+              <div className="add-select-wrap">
+                <button
+                  className="add-select-btn"
+                  onClick={() => { setIconOpen(v => !v); setStatusOpen(false) }}
+                >
+                  <SelectedIcon size={14} />
+                  <span>{ICON_OPTIONS.find(i => i.key === form.icon)?.label}</span>
+                  <ChevronDown size={12} className={iconOpen ? 'chevron-open' : ''} />
+                </button>
+                {iconOpen && (
+                  <div className="add-dropdown">
+                    {ICON_OPTIONS.map(opt => {
+                      const Ic = iconMap[opt.key] || Globe
+                      return (
+                        <button
+                          key={opt.key}
+                          className={`add-drop-item${form.icon === opt.key ? ' add-drop-active' : ''}`}
+                          onClick={() => { set('icon', opt.key); setIconOpen(false) }}
+                        >
+                          <Ic size={13} /> {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="add-field">
+            <label className="add-label">Status</label>
+            <div className="add-select-wrap">
+              <button
+                className="add-select-btn"
+                onClick={() => { setStatusOpen(v => !v); setIconOpen(false) }}
+              >
+                <span className={`add-status-dot status-dot-${form.status.replace(/ /g, '-').toLowerCase()}`} />
+                <span>{form.status}</span>
+                <ChevronDown size={12} className={statusOpen ? 'chevron-open' : ''} />
+              </button>
+              {statusOpen && (
+                <div className="add-dropdown">
+                  {STATUS_OPTIONS.map(s => (
+                    <button
+                      key={s}
+                      className={`add-drop-item${form.status === s ? ' add-drop-active' : ''}`}
+                      onClick={() => { set('status', s); setStatusOpen(false) }}
+                    >
+                      <span className={`add-status-dot status-dot-${s.replace(/ /g, '-').toLowerCase()}`} />
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div className="add-field">
+            <label className="add-label">Progresso — {form.progress}%</label>
+            <input
+              type="range"
+              className="add-range"
+              min={0} max={100}
+              value={form.progress}
+              onChange={e => set('progress', Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div className="add-modal-footer">
+          <button className="add-cancel-btn" onClick={onClose}>Cancelar</button>
+          <button className="add-submit-btn" onClick={handleSubmit} disabled={!valid}>
+            <Plus size={14} /> Adicionar projeto
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Detail Panel ───────────────────────────────────────────────
-function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, dashTagIds, assignTag, removeTagFromDash }) {
+function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, dashTagIds, assignTag, removeTagFromDash, onDelete }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
   const [opening, setOpening] = useState(false)
@@ -223,7 +431,6 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
   const touchStartX = useRef(null)
   const last = lastVisit(dashboard.id)
   const note = getNote(dashboard.id)
-
   const unassignedTags = tags.filter(t => !dashTagIds.includes(t.id))
 
   const handleOpen = () => {
@@ -357,6 +564,15 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
               : <><ExternalLink size={14} />Abrir projeto</>
             }
           </button>
+
+          {dashboard.isCustom && (
+            <button
+              className="panel-delete-btn"
+              onClick={() => { onDelete(dashboard.id); onClose() }}
+            >
+              <Trash2 size={13} /> Remover projeto
+            </button>
+          )}
         </div>
       </aside>
     </>
@@ -371,7 +587,7 @@ function DashboardCard({ dashboard, index, onClick, query, lastVisit }) {
 
   return (
     <div
-      className="card"
+      className={`card${dashboard.isCustom ? ' card-custom' : ''}`}
       style={{ '--i': index }}
       onClick={() => onClick(dashboard)}
       role="button"
@@ -379,7 +595,6 @@ function DashboardCard({ dashboard, index, onClick, query, lastVisit }) {
       onKeyDown={e => e.key === 'Enter' && onClick(dashboard)}
     >
       <CardPreview Icon={Icon} />
-
       <div className="card-body">
         <div className="card-body-head">
           <h3><Highlight text={dashboard.name} query={query} /></h3>
@@ -393,13 +608,33 @@ function DashboardCard({ dashboard, index, onClick, query, lastVisit }) {
           <ProgressBar value={dashboard.progress} className="card-progress-bar" />
         )}
       </div>
-
       <div className="card-footer">
         <span className="category-tag">{dashboard.category}</span>
         {last
           ? <span className="card-hint last-visit-hint"><Clock size={10} />{relativeTime(last)}</span>
           : <span className="card-hint">Ver detalhes <ArrowRight size={11} /></span>
         }
+      </div>
+    </div>
+  )
+}
+
+// ── Add Project Card ───────────────────────────────────────────
+function AddProjectCard({ onClick }) {
+  return (
+    <div
+      className="card add-project-card"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && onClick()}
+    >
+      <div className="add-project-inner">
+        <div className="add-project-icon">
+          <Plus size={20} strokeWidth={1.5} />
+        </div>
+        <span className="add-project-label">Novo Projeto</span>
+        <span className="add-project-hint">Clique para adicionar</span>
       </div>
     </div>
   )
@@ -452,23 +687,27 @@ function App() {
   const { theme, toggle } = useTheme()
   const { track, lastVisit } = useActivity()
   const { getNote, setNote } = useNotes()
+  const { custom, add: addCustom, remove: removeCustom } = useCustomDashboards()
   const { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds } = useTagSystem()
   const [tab, setTab] = useState('hub')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
   const [viewMode, setViewMode] = useState('grid')
   const [cmdOpen, setCmdOpen] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
   const [activeTags, setActiveTags] = useState(new Set())
   const [showTagInput, setShowTagInput] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const searchRef = useRef(null)
 
+  const allDashboards = useMemo(() => [...staticDashboards, ...custom], [custom])
+
   const stats = useMemo(() => ({
-    total:   dashboards.length,
-    active:  dashboards.filter(d => d.status === 'Ativo').length,
-    inDev:   dashboards.filter(d => d.status === 'Em desenvolvimento').length,
-    planned: dashboards.filter(d => d.status === 'Planejamento').length,
-  }), [])
+    total:   allDashboards.length,
+    active:  allDashboards.filter(d => d.status === 'Ativo').length,
+    inDev:   allDashboards.filter(d => d.status === 'Em desenvolvimento').length,
+    planned: allDashboards.filter(d => d.status === 'Planejamento').length,
+  }), [allDashboards])
 
   const handleSelectDashboard = useCallback((d) => {
     track(d.id)
@@ -484,7 +723,6 @@ function App() {
     })
   }, [])
 
-  // Atalhos de teclado
   useEffect(() => {
     const handler = e => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -503,10 +741,10 @@ function App() {
   }, [toggle])
 
   const filtered = useMemo(() => {
-    let result = dashboards.filter(d =>
+    let result = allDashboards.filter(d =>
       d.name.toLowerCase().includes(search.toLowerCase()) ||
       d.description.toLowerCase().includes(search.toLowerCase()) ||
-      d.category.toLowerCase().includes(search.toLowerCase())
+      (d.category || '').toLowerCase().includes(search.toLowerCase())
     )
     if (activeTags.size > 0) {
       result = result.filter(d => {
@@ -515,7 +753,7 @@ function App() {
       })
     }
     return result
-  }, [search, activeTags, getDashTagIds])
+  }, [search, activeTags, getDashTagIds, allDashboards])
 
   return (
     <div className="hub">
@@ -550,7 +788,7 @@ function App() {
 
         <div className="hub-sidebar-bottom">
           <div className="hub-avatar" title="Lucca">L</div>
-          <button className="theme-btn" onClick={toggle} aria-label="Alternar tema" title="Atalho: T">
+          <button className="theme-btn" onClick={toggle} aria-label="Alternar tema">
             {theme === 'dark'
               ? <Sun size={15} strokeWidth={1.75} />
               : <Moon size={15} strokeWidth={1.75} />
@@ -562,15 +800,19 @@ function App() {
       {/* ── Main Content ── */}
       <div className="hub-main">
 
-        {/* ── Hub Tab ── */}
         {tab === 'hub' && (
           <div className="hub-content">
-            {/* Greeting + Stats */}
+
+            {/* ── Greeting Hero ── */}
             <div className="hub-intro">
-              <h1>
-                {getGreeting()}, Lucca
-                <span className="greeting-time">· {time}</span>
-              </h1>
+              <div className="greeting-hero">
+                <span className="greeting-salut">{getGreeting()}</span>
+                <h1 className="greeting-name">Lucca</h1>
+                <div className="greeting-time-pill">
+                  <Clock size={11} />
+                  {time}
+                </div>
+              </div>
               <p className="hub-subtitle">Aqui estão seus projetos e ferramentas</p>
               <div className="hub-stats">
                 <span className="stat-pill">
@@ -595,7 +837,7 @@ function App() {
               </div>
             </div>
 
-            {/* Toolbar: search + view toggle */}
+            {/* ── Toolbar ── */}
             <div className="hub-toolbar">
               <div className="hub-search">
                 <Search size={14} className="search-icon" />
@@ -618,21 +860,21 @@ function App() {
                 <button
                   className={`view-btn${viewMode === 'grid' ? ' view-btn-active' : ''}`}
                   onClick={() => setViewMode('grid')}
-                  title="Grade (L)"
+                  title="Grade"
                 >
                   <LayoutGrid size={14} />
                 </button>
                 <button
                   className={`view-btn${viewMode === 'list' ? ' view-btn-active' : ''}`}
                   onClick={() => setViewMode('list')}
-                  title="Lista (L)"
+                  title="Lista"
                 >
                   <List size={14} />
                 </button>
               </div>
             </div>
 
-            {/* Tag filter row */}
+            {/* ── Tag filter row ── */}
             <div className="tag-filter-row">
               {showTagInput ? (
                 <input
@@ -674,14 +916,13 @@ function App() {
               ))}
             </div>
 
-            {/* Filter count */}
             {search.trim() && (
               <p className="filter-count">
-                <strong>{filtered.length}</strong> de {dashboards.length} resultados
+                <strong>{filtered.length}</strong> de {allDashboards.length} resultados
               </p>
             )}
 
-            {/* Grid / List */}
+            {/* ── Grid ── */}
             <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}`}>
               {filtered.length > 0
                 ? filtered.map((d, i) => (
@@ -696,19 +937,17 @@ function App() {
                   ))
                 : <EmptyState query={search} />
               }
+              {!search.trim() && activeTags.size === 0 && (
+                <AddProjectCard onClick={() => setShowAddModal(true)} />
+              )}
             </main>
 
-            {/* Links Hub */}
             <LinksSection />
           </div>
         )}
 
-        {/* ── Tasks Tab ── */}
         {tab === 'tasks' && <TaskManager />}
-
-        {/* ── Agenda Tab ── */}
         {tab === 'agenda' && <CalendarTab />}
-
       </div>
 
       {/* ── Detail Panel ── */}
@@ -723,6 +962,15 @@ function App() {
           dashTagIds={getDashTagIds(selected.id)}
           assignTag={assignTag}
           removeTagFromDash={removeTagFromDash}
+          onDelete={removeCustom}
+        />
+      )}
+
+      {/* ── Add Project Modal ── */}
+      {showAddModal && (
+        <AddProjectModal
+          onAdd={addCustom}
+          onClose={() => setShowAddModal(false)}
         />
       )}
 
@@ -733,7 +981,6 @@ function App() {
           onSelectProject={handleSelectDashboard}
         />
       )}
-
     </div>
   )
 }
