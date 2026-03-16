@@ -191,21 +191,56 @@ function DatePickerField({ value, onChange }) {
   )
 }
 
-// ── Status select (for modal) ─────────────────────────────────
-function StatusSelectField({ value, onChange }) {
-  const statusObj = STATUSES.find(s => s.id === value) || STATUSES[1]
+// ── Custom Select Field (dropdown genérico) ───────────────────
+function SelectField({ value, onChange, options, placeholder = 'Selecionar' }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
+
+  const selected = options.find(o => o.value === value)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = e => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
   return (
-    <div className="modal-status-wrap">
-      <span className="modal-status-preview" style={{ background: statusObj.color }} />
-      <select
-        className="modal-input modal-status-select"
-        value={value}
-        onChange={e => onChange(e.target.value)}
+    <div className="sf-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="modal-input sf-trigger"
+        onClick={() => setOpen(v => !v)}
       >
-        {STATUSES.map(s => (
-          <option key={s.id} value={s.id}>{s.label}</option>
-        ))}
-      </select>
+        {selected?.dot && (
+          <span className="sf-dot" style={{ background: selected.dot }} />
+        )}
+        <span className={selected ? 'sf-val' : 'sf-placeholder'}>
+          {selected?.label || placeholder}
+        </span>
+        <ChevronDown size={13} className={`sf-chevron${open ? ' sf-chevron-open' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="sf-dropdown">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`sf-item${opt.value === value ? ' sf-item-active' : ''}`}
+              onMouseDown={() => { onChange(opt.value); setOpen(false) }}
+            >
+              {opt.dot && (
+                <span className="sf-dot sf-dot-item" style={{ background: opt.dot }} />
+              )}
+              <span className="sf-item-label">{opt.label}</span>
+              {opt.value === value && <span className="sf-check">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -276,16 +311,15 @@ function TaskCreateModal({ onAdd, onClose }) {
           {/* Projeto */}
           <div className="modal-field">
             <label className="modal-label">Projeto</label>
-            <select
-              className="modal-input modal-select"
+            <SelectField
               value={projectId}
-              onChange={e => setProjectId(e.target.value)}
-            >
-              <option value="">Nenhum</option>
-              {dashboards.map(d => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
+              onChange={setProjectId}
+              placeholder="Nenhum"
+              options={[
+                { value: '', label: 'Nenhum' },
+                ...dashboards.map(d => ({ value: d.id, label: d.name })),
+              ]}
+            />
           </div>
 
           {/* Descrição */}
@@ -305,7 +339,11 @@ function TaskCreateModal({ onAdd, onClose }) {
           {/* Status */}
           <div className="modal-field">
             <label className="modal-label">Status inicial</label>
-            <StatusSelectField value={status} onChange={setStatus} />
+            <SelectField
+              value={status}
+              onChange={setStatus}
+              options={STATUSES.map(s => ({ value: s.id, label: s.label, dot: s.color }))}
+            />
           </div>
 
           {/* Ações */}
