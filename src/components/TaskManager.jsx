@@ -117,22 +117,21 @@ function StatusBadge({ status, onChange }) {
   )
 }
 
-// ── Status selector (for modal) ────────────────────────────────
-function StatusSelector({ value, onChange }) {
+// ── Status select (for modal) ─────────────────────────────────
+function StatusSelectField({ value, onChange }) {
+  const statusObj = STATUSES.find(s => s.id === value) || STATUSES[1]
   return (
-    <div className="modal-status-grid">
-      {STATUSES.map(s => (
-        <button
-          key={s.id}
-          type="button"
-          className={`modal-status-opt${value === s.id ? ' modal-status-opt-active' : ''}`}
-          style={{ '--sc': s.color }}
-          onClick={() => onChange(s.id)}
-        >
-          <span className="modal-status-dot" />
-          {s.label}
-        </button>
-      ))}
+    <div className="modal-status-wrap">
+      <span className="modal-status-preview" style={{ background: statusObj.color }} />
+      <select
+        className="modal-input modal-status-select"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      >
+        {STATUSES.map(s => (
+          <option key={s.id} value={s.id}>{s.label}</option>
+        ))}
+      </select>
     </div>
   )
 }
@@ -165,8 +164,10 @@ function TaskCreateModal({ onAdd, onClose }) {
   }
 
   return (
-    <>
-      <div className="task-modal-overlay" onClick={onClose} />
+    <div
+      className="task-modal-overlay"
+      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
+    >
       <div className="task-modal" role="dialog" aria-modal="true" aria-label="Nova Tarefa">
         <div className="task-modal-header">
           <h3 className="task-modal-title">Nova Tarefa</h3>
@@ -235,7 +236,7 @@ function TaskCreateModal({ onAdd, onClose }) {
           {/* Status */}
           <div className="modal-field">
             <label className="modal-label">Status inicial</label>
-            <StatusSelector value={status} onChange={setStatus} />
+            <StatusSelectField value={status} onChange={setStatus} />
           </div>
 
           {/* Ações */}
@@ -250,7 +251,7 @@ function TaskCreateModal({ onAdd, onClose }) {
           </div>
         </form>
       </div>
-    </>
+    </div>
   )
 }
 
