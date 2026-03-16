@@ -1127,7 +1127,6 @@
   background: #0d0d0d;
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 20px;
-  overflow: hidden;
   animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.04),
@@ -1151,6 +1150,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 22px 0;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
 }
 
 .task-modal-title {
@@ -1246,9 +1247,10 @@
 .sf-trigger {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   min-height: 42px;
 }
 
@@ -1259,8 +1261,8 @@
   flex-shrink: 0;
 }
 
-.sf-val         { flex: 1; color: #e8e8e8; font-size: 13px; }
-.sf-placeholder { flex: 1; color: #505050; font-size: 13px; }
+.sf-val         { color: #e8e8e8; font-size: 13px; }
+.sf-placeholder { color: #505050; font-size: 13px; }
 
 .sf-chevron {
   color: var(--accent);
@@ -1290,6 +1292,7 @@
 .sf-item {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   width: 100%;
   padding: 9px 12px;
@@ -1297,7 +1300,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   font-family: inherit;
   transition: background 0.1s;
 }
