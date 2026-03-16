@@ -11,6 +11,10 @@
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }
 }
+@keyframes slideInUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -1071,77 +1075,238 @@
   border: 1px solid rgba(34,197,94,0.2);
 }
 
-/* ── Add form ─────────────────────────────────────────────────── */
-.task-add-form {
+/* ── Nova Tarefa CTA button ───────────────────────────────────── */
+.task-add-cta {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 24px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.task-add-row {
-  display: flex;
-  gap: 8px;
-}
-
-.task-add-input {
-  flex: 1;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--white);
-  font-size: 13px;
-  font-family: inherit;
-  outline: none;
-}
-
-.task-add-input:focus { border-color: var(--accent); }
-.task-add-input::placeholder { color: var(--text); }
-
-.task-add-select {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text-mid);
-  font-size: 12px;
-  font-family: inherit;
-  outline: none;
-  cursor: pointer;
-  max-width: 140px;
-
-  @media (max-width: 540px) { display: none; }
-}
-
-.task-add-select:focus { border-color: var(--accent); }
-
-.task-add-btn {
+  align-items: center;
+  gap: 7px;
   padding: 0 16px;
   height: 38px;
-  border-radius: 8px;
+  border-radius: 9px;
   border: none;
   background: var(--accent);
   color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 12px rgba(196,25,48,0.25);
+}
+
+.task-add-cta:hover {
+  background: var(--accent-hi);
+  box-shadow: 0 4px 18px rgba(196,25,48,0.4);
+}
+
+/* ── Task Create Modal ────────────────────────────────────────── */
+.task-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  animation: fadeIn 0.15s ease both;
+}
+
+.task-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  z-index: 301;
+  animation: fadeInUp 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+
+  @media (max-width: 520px) {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    animation: slideInUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+}
+
+.task-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 0;
+}
+
+.task-modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.01em;
+}
+
+.task-modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-mid);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.task-modal-close:hover { border-color: var(--accent); color: var(--accent); }
+
+.task-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 20px 20px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
+}
+
+.modal-row {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-field-half { flex: 1; min-width: 0; }
+
+.modal-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mid);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.modal-req { color: var(--accent); }
+
+.modal-input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--white);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.modal-input:focus        { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(196,25,48,0.1); }
+.modal-input::placeholder { color: var(--text); }
+
+.modal-select {
+  cursor: pointer;
+  color: var(--text-mid);
+}
+
+.modal-select:focus { color: var(--white); }
+
+.modal-textarea { resize: vertical; min-height: 72px; }
+
+/* ── Modal status selector grid ──────────────────────────────── */
+.modal-status-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modal-status-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: transparent;
+  color: var(--sc);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.modal-status-opt:hover { background: rgba(255,255,255,0.04); }
+
+.modal-status-opt-active {
+  background: color-mix(in srgb, var(--sc) 14%, transparent);
+  border-color: color-mix(in srgb, var(--sc) 40%, transparent);
+}
+
+.modal-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sc);
+  flex-shrink: 0;
+}
+
+/* ── Modal action buttons ─────────────────────────────────────── */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+}
+
+.modal-btn-cancel {
+  padding: 0 16px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.modal-btn-cancel:hover { border-color: #444; color: var(--white); }
+
+.modal-btn-submit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
-  flex-shrink: 0;
-  align-self: flex-end;
+  cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 }
 
-.task-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.task-add-btn:hover:not(:disabled) { background: var(--accent-hi); }
+.modal-btn-submit:disabled       { opacity: 0.35; cursor: not-allowed; }
+.modal-btn-submit:hover:not(:disabled) { background: var(--accent-hi); }
 
 /* ── Empty state ──────────────────────────────────────────────── */
 .task-empty {
@@ -1217,13 +1382,20 @@
   background: var(--border);
 }
 
+/* ── Main content area (title + meta) ────────────────────────── */
+.ti-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 /* ── Title ────────────────────────────────────────────────────── */
 .ti-title {
-  flex: 1;
   font-size: 13px;
   color: var(--white);
   line-height: 1.4;
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1232,6 +1404,15 @@
 .ti-title-done {
   text-decoration: line-through;
   color: var(--text-mid);
+}
+
+/* ── Meta row (project, date, description) ───────────────────── */
+.ti-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 0;
 }
 
 /* ── Project tag ──────────────────────────────────────────────── */
@@ -1243,6 +1424,33 @@
   letter-spacing: 0.04em;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ── Due date ─────────────────────────────────────────────────── */
+.ti-date {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-mid);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ti-date-overdue { color: var(--accent); }
+.ti-date-today   { color: #22c55e; }
+.ti-date-soon    { color: #f59e0b; }
+
+/* ── Description ──────────────────────────────────────────────── */
+.ti-desc {
+  font-size: 10px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+  opacity: 0.75;
 }
 
 /* ── Progress % ───────────────────────────────────────────────── */

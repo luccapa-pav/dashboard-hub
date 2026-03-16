@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react'
-import { Plus, X, ChevronRight, ChevronDown, ClipboardList } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { Plus, X, ChevronRight, ChevronDown, ClipboardList, Calendar, AlignLeft } from 'lucide-react'
 import { dashboards } from '../data/dashboards'
 
 // ── Statuses ───────────────────────────────────────────────────
@@ -19,14 +19,16 @@ function getProgress(task) {
 }
 
 // ── Tree helpers ───────────────────────────────────────────────
-function makeTask(title, projectId = null) {
+function makeTask(title, projectId = null, opts = {}) {
   return {
     id: `t${Date.now()}${Math.random().toString(36).slice(2, 5)}`,
     title: title.trim(),
     projectId,
-    status: 'todo',
+    status: opts.status || 'todo',
     children: [],
     createdAt: Date.now(),
+    dueDate: opts.dueDate || null,
+    description: opts.description || '',
   }
 }
 
@@ -59,6 +61,19 @@ function countActive(tasks) {
   }, 0)
 }
 
+function formatDueDate(dateStr) {
+  if (!dateStr) return null
+  const date = new Date(dateStr + 'T00:00:00')
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const diff = Math.round((date - today) / 86400000)
+  if (diff < 0) return { label: `${Math.abs(diff)}d atraso`, variant: 'overdue' }
+  if (diff === 0) return { label: 'Hoje', variant: 'today' }
+  if (diff === 1) return { label: 'Amanhã', variant: 'soon' }
+  if (diff <= 7) return { label: `${diff} dias`, variant: 'soon' }
+  return { label: date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }), variant: '' }
+}
+
 // ── Hook ───────────────────────────────────────────────────────
 function useTasks() {
   const [tasks, setTasks] = useState(() => {
@@ -76,10 +91,10 @@ function useTasks() {
 
   return {
     tasks,
-    addTask:    (title, pid)    => save(cur => [makeTask(title, pid), ...cur]),
-    addSubtask: (parentId, t)   => save(cur => treeAddChild(cur, parentId, makeTask(t))),
-    setStatus:  (id, status)    => save(cur => treeUpdate(cur, id, t => ({ ...t, status }))),
-    deleteTask: id              => save(cur => treeDelete(cur, id)),
+    addTask:    (title, pid, opts)  => save(cur => [makeTask(title, pid, opts), ...cur]),
+    addSubtask: (parentId, t)       => save(cur => treeAddChild(cur, parentId, makeTask(t))),
+    setStatus:  (id, status)        => save(cur => treeUpdate(cur, id, t => ({ ...t, status }))),
+    deleteTask: id                  => save(cur => treeDelete(cur, id)),
   }
 }
 
@@ -102,6 +117,143 @@ function StatusBadge({ status, onChange }) {
   )
 }
 
+// ── Status selector (for modal) ────────────────────────────────
+function StatusSelector({ value, onChange }) {
+  return (
+    <div className="modal-status-grid">
+      {STATUSES.map(s => (
+        <button
+          key={s.id}
+          type="button"
+          className={`modal-status-opt${value === s.id ? ' modal-status-opt-active' : ''}`}
+          style={{ '--sc': s.color }}
+          onClick={() => onChange(s.id)}
+        >
+          <span className="modal-status-dot" />
+          {s.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── Task Create Modal ──────────────────────────────────────────
+function TaskCreateModal({ onAdd, onClose }) {
+  const [title,       setTitle]       = useState('')
+  const [dueDate,     setDueDate]     = useState('')
+  const [projectId,   setProjectId]   = useState('')
+  const [description, setDescription] = useState('')
+  const [status,      setStatus]      = useState('todo')
+  const titleRef = useRef(null)
+
+  useEffect(() => {
+    titleRef.current?.focus()
+    const handler = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  const submit = e => {
+    e.preventDefault()
+    if (!title.trim()) return
+    onAdd(title, projectId || null, {
+      dueDate:     dueDate || null,
+      description: description.trim(),
+      status,
+    })
+    onClose()
+  }
+
+  return (
+    <>
+      <div className="task-modal-overlay" onClick={onClose} />
+      <div className="task-modal" role="dialog" aria-modal="true" aria-label="Nova Tarefa">
+        <div className="task-modal-header">
+          <h3 className="task-modal-title">Nova Tarefa</h3>
+          <button className="task-modal-close" onClick={onClose} aria-label="Fechar">
+            <X size={15} />
+          </button>
+        </div>
+
+        <form className="task-modal-form" onSubmit={submit}>
+          {/* Nome */}
+          <div className="modal-field">
+            <label className="modal-label">
+              Nome <span className="modal-req">*</span>
+            </label>
+            <input
+              ref={titleRef}
+              className="modal-input"
+              placeholder="O que precisa ser feito?"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+            />
+          </div>
+
+          {/* Data + Projeto */}
+          <div className="modal-row">
+            <div className="modal-field modal-field-half">
+              <label className="modal-label">
+                <Calendar size={11} /> Data
+              </label>
+              <input
+                type="date"
+                className="modal-input"
+                value={dueDate}
+                onChange={e => setDueDate(e.target.value)}
+              />
+            </div>
+            <div className="modal-field modal-field-half">
+              <label className="modal-label">Projeto</label>
+              <select
+                className="modal-input modal-select"
+                value={projectId}
+                onChange={e => setProjectId(e.target.value)}
+              >
+                <option value="">Nenhum</option>
+                {dashboards.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Descrição */}
+          <div className="modal-field">
+            <label className="modal-label">
+              <AlignLeft size={11} /> Descrição
+            </label>
+            <textarea
+              className="modal-input modal-textarea"
+              placeholder="Detalhes opcionais..."
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          {/* Status */}
+          <div className="modal-field">
+            <label className="modal-label">Status inicial</label>
+            <StatusSelector value={status} onChange={setStatus} />
+          </div>
+
+          {/* Ações */}
+          <div className="modal-actions">
+            <button type="button" className="modal-btn-cancel" onClick={onClose}>
+              Cancelar
+            </button>
+            <button type="submit" className="modal-btn-submit" disabled={!title.trim()}>
+              <Plus size={14} />
+              Criar Tarefa
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  )
+}
+
 // ── Recursive Task Item ────────────────────────────────────────
 function TaskItem({ task, depth, hooks, expanded, onToggle }) {
   const { addSubtask, setStatus, deleteTask } = hooks
@@ -111,6 +263,7 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
   const project   = task.projectId ? dashboards.find(d => d.id === task.projectId) : null
   const indent    = depth * 18
   const statusObj = STATUSES.find(s => s.id === task.status) || STATUSES[1]
+  const due       = formatDueDate(task.dueDate)
 
   const [adding,     setAdding]     = useState(false)
   const [childTitle, setChildTitle] = useState('')
@@ -151,11 +304,23 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
           }
         </button>
 
-        <span className={`ti-title${task.status === 'done' ? ' ti-title-done' : ''}`}>
-          {task.title}
-        </span>
-
-        {project && <span className="ti-proj">{project.name}</span>}
+        <div className="ti-main">
+          <span className={`ti-title${task.status === 'done' ? ' ti-title-done' : ''}`}>
+            {task.title}
+          </span>
+          <div className="ti-meta">
+            {project && <span className="ti-proj">{project.name}</span>}
+            {due && (
+              <span className={`ti-date ti-date-${due.variant}`}>
+                <Calendar size={10} />
+                {due.label}
+              </span>
+            )}
+            {task.description && (
+              <span className="ti-desc">{task.description}</span>
+            )}
+          </div>
+        </div>
 
         {hasKids && (
           <span className="ti-pct" style={{ color: progress === 100 ? '#22c55e' : 'var(--text-mid)' }}>
@@ -229,56 +394,13 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
   )
 }
 
-// ── Top-level add form ─────────────────────────────────────────
-function AddTaskForm({ onAdd }) {
-  const [title,   setTitle]   = useState('')
-  const [project, setProject] = useState('')
-  const inputRef = useRef(null)
-
-  const submit = e => {
-    e.preventDefault()
-    if (!title.trim()) return
-    onAdd(title, project || null)
-    setTitle('')
-    setProject('')
-    inputRef.current?.focus()
-  }
-
-  return (
-    <form className="task-add-form" onSubmit={submit}>
-      <div className="task-add-row">
-        <input
-          ref={inputRef}
-          className="task-add-input"
-          placeholder="Adicione uma nova tarefa..."
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-        />
-        <select
-          className="task-add-select"
-          value={project}
-          onChange={e => setProject(e.target.value)}
-        >
-          <option value="">Projeto</option>
-          {dashboards.map(d => (
-            <option key={d.id} value={d.id}>{d.name}</option>
-          ))}
-        </select>
-      </div>
-      <button className="task-add-btn" type="submit" disabled={!title.trim()}>
-        <Plus size={14} />
-        Adicionar
-      </button>
-    </form>
-  )
-}
-
 // ── TaskManager ────────────────────────────────────────────────
 export function TaskManager() {
   const taskHooks = useTasks()
   const { tasks } = taskHooks
 
-  const [expanded, setExpanded] = useState(() => new Set())
+  const [expanded,  setExpanded]  = useState(() => new Set())
+  const [modalOpen, setModalOpen] = useState(false)
 
   const toggle = useCallback(id => {
     setExpanded(prev => {
@@ -286,6 +408,20 @@ export function TaskManager() {
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
+  }, [])
+
+  // Atalho N → abre modal (fora de campos de texto)
+  useEffect(() => {
+    const handler = e => {
+      const tag = document.activeElement.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault()
+        setModalOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
   }, [])
 
   const active = countActive(tasks)
@@ -311,15 +447,24 @@ export function TaskManager() {
             </div>
           )}
         </div>
-      </div>
 
-      <AddTaskForm onAdd={taskHooks.addTask} />
+        <button
+          className="task-add-cta"
+          onClick={() => setModalOpen(true)}
+          title="Nova tarefa (N)"
+        >
+          <Plus size={15} />
+          Nova Tarefa
+        </button>
+      </div>
 
       {tasks.length === 0 && (
         <div className="task-empty">
           <ClipboardList size={32} strokeWidth={1.2} />
           <p>Nenhuma tarefa ainda</p>
-          <span>Use o campo acima para criar sua primeira tarefa</span>
+          <span>
+            Clique em <strong>Nova Tarefa</strong> ou pressione <kbd>N</kbd>
+          </span>
         </div>
       )}
 
@@ -336,6 +481,13 @@ export function TaskManager() {
             />
           ))}
         </div>
+      )}
+
+      {modalOpen && (
+        <TaskCreateModal
+          onAdd={taskHooks.addTask}
+          onClose={() => setModalOpen(false)}
+        />
       )}
     </div>
   )
