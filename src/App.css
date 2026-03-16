@@ -1050,10 +1050,11 @@
   padding: 2px 10px;
 }
 
+/* ── Add form ─────────────────────────────────────────────────── */
 .task-add-form {
   display: flex;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .task-add-input {
@@ -1105,126 +1106,229 @@
 .task-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .task-add-btn:hover:not(:disabled) { background: var(--accent-hi); }
 
-.task-columns {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  align-items: start;
-
-  @media (max-width: 640px) { grid-template-columns: 1fr; }
-}
-
-.task-column {
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  overflow: hidden;
-}
-
-.task-column-header {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+/* ── Empty state ──────────────────────────────────────────────── */
+.task-empty {
+  text-align: center;
+  padding: 56px 0 32px;
   color: var(--text-mid);
 }
+.task-empty p    { font-size: 14px; margin: 0 0 4px; color: var(--white); }
+.task-empty span { font-size: 12px; }
 
-.task-column-count {
-  margin-left: auto;
-  background: var(--bg);
-  border-radius: 100px;
-  padding: 1px 7px;
-  font-size: 10px;
-  color: var(--text);
-}
-
-.task-column-body {
-  padding: 8px;
+/* ── Tree container ───────────────────────────────────────────── */
+.task-tree {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-height: 100px;
+  gap: 3px;
 }
 
-.task-column-empty {
-  text-align: center;
-  padding: 20px 10px;
-  font-size: 12px;
-  color: var(--text);
-  opacity: 0.5;
-}
+/* ── Task item ────────────────────────────────────────────────── */
+.ti { animation: fadeInUp 0.2s ease both; }
 
-.task-card {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  animation: fadeInUp 0.2s ease both;
-}
-
-.task-card-top {
+.ti-row {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 4px;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  min-height: 38px;
 }
 
-.task-title {
+.ti-row:hover { border-color: #2e2e2e; }
+
+/* ── Expand button ────────────────────────────────────────────── */
+.ti-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-mid);
+  padding: 0;
+  border-radius: 4px;
+}
+.ti-expand:hover { color: var(--accent); }
+
+.ti-leaf {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+/* ── Title ────────────────────────────────────────────────────── */
+.ti-title {
   flex: 1;
-  margin: 0;
   font-size: 13px;
   color: var(--white);
   line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.task-delete {
+.ti-title-done {
+  text-decoration: line-through;
+  color: var(--text-mid);
+}
+
+/* ── Project tag ──────────────────────────────────────────────── */
+.ti-proj {
+  font-size: 9px;
+  color: var(--accent);
+  opacity: 0.65;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Progress % ───────────────────────────────────────────────── */
+.ti-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-mid);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── Status badge (click to cycle) ───────────────────────────── */
+.ti-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  border: 1px solid transparent;
   background: transparent;
-  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--sc);
+}
+
+.ti-status:hover { background: rgba(255,255,255,0.04); }
+
+.ti-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sc);
+  flex-shrink: 0;
+}
+
+.ti-status-lbl { color: var(--sc); }
+
+/* ── Action buttons ───────────────────────────────────────────── */
+.ti-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--text);
   cursor: pointer;
-  padding: 2px;
-  border-radius: 3px;
-  display: flex;
-  flex-shrink: 0;
-  margin-top: 1px;
+  padding: 0;
+  border-radius: 5px;
 }
 
-.task-delete:hover { color: var(--accent); }
+.ti-btn:hover          { border-color: var(--border); color: var(--white); }
+.ti-btn-del:hover      { border-color: rgba(196,25,48,0.4); color: var(--accent); }
 
-.task-project {
-  font-size: 10px;
-  color: var(--accent);
-  opacity: 0.7;
+/* ── Progress bar under task ──────────────────────────────────── */
+.ti-bar-wrap {
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 2px 10px 2px;
+}
+
+.ti-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── Add subtask inline form ──────────────────────────────────── */
+.ti-add-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px;
+  animation: fadeInUp 0.15s ease both;
+}
+
+.ti-add-input {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--white);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.ti-add-input::placeholder { color: var(--text); }
+
+.ti-add-ok {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-family: inherit;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  margin-bottom: 8px;
-  display: block;
+  cursor: pointer;
 }
 
-.task-actions {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
+.ti-add-ok:disabled        { opacity: 0.4; cursor: not-allowed; }
+.ti-add-ok:hover:not(:disabled) { background: var(--accent-hi); }
 
-.task-move-btn {
-  font-size: 10px;
-  padding: 3px 8px;
+.ti-add-cancel {
+  width: 24px;
+  height: 24px;
   border-radius: 5px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-mid);
   cursor: pointer;
-  font-family: inherit;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.task-move-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ti-add-cancel:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── Children container ───────────────────────────────────────── */
+.ti-children {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 3px;
+}
 
 /* ── Shortcuts Bar ───────────────────────────────────────────── */
 .hub-shortcuts {
