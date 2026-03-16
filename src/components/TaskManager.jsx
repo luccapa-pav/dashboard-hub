@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Plus, X, ChevronRight, ChevronDown } from 'lucide-react'
+import { Plus, X, ChevronRight, ChevronDown, ClipboardList } from 'lucide-react'
 import { dashboards } from '../data/dashboards'
 
 // ── Statuses ───────────────────────────────────────────────────
@@ -66,17 +66,20 @@ function useTasks() {
     catch { return [] }
   })
 
-  const save = useCallback(next => {
-    setTasks(next)
-    localStorage.setItem('lucc-tasks', JSON.stringify(next))
+  const save = useCallback(updater => {
+    setTasks(cur => {
+      const next = typeof updater === 'function' ? updater(cur) : updater
+      try { localStorage.setItem('lucc-tasks', JSON.stringify(next)) } catch {}
+      return next
+    })
   }, [])
 
   return {
     tasks,
-    addTask:    (title, pid)    => save([makeTask(title, pid), ...tasks]),
-    addSubtask: (parentId, t)   => save(treeAddChild(tasks, parentId, makeTask(t))),
-    setStatus:  (id, status)    => save(treeUpdate(tasks, id, t => ({ ...t, status }))),
-    deleteTask: id              => save(treeDelete(tasks, id)),
+    addTask:    (title, pid)    => save(cur => [makeTask(title, pid), ...cur]),
+    addSubtask: (parentId, t)   => save(cur => treeAddChild(cur, parentId, makeTask(t))),
+    setStatus:  (id, status)    => save(cur => treeUpdate(cur, id, t => ({ ...t, status }))),
+    deleteTask: id              => save(cur => treeDelete(cur, id)),
   }
 }
 
@@ -91,7 +94,7 @@ function StatusBadge({ status, onChange }) {
       className="ti-status"
       onClick={cycle}
       title={`${s.label} — clique para avançar`}
-      style={{ '--sc': s.color, borderColor: `${s.color}50` }}
+      style={{ '--sc': s.color, borderColor: `${s.color}30` }}
     >
       <span className="ti-status-dot" />
       <span className="ti-status-lbl">{s.label}</span>
@@ -106,7 +109,8 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
   const hasKids   = task.children?.length > 0
   const isOpen    = expanded.has(task.id)
   const project   = task.projectId ? dashboards.find(d => d.id === task.projectId) : null
-  const indent    = depth * 20
+  const indent    = depth * 18
+  const statusObj = STATUSES.find(s => s.id === task.status) || STATUSES[1]
 
   const [adding,     setAdding]     = useState(false)
   const [childTitle, setChildTitle] = useState('')
@@ -124,14 +128,22 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
     addSubtask(task.id, childTitle)
     setChildTitle('')
     setAdding(false)
-    // auto-expand so new child is visible
     if (!isOpen) onToggle(task.id)
   }
 
   return (
     <div className="ti">
       {/* Main row */}
-      <div className="ti-row" style={{ marginLeft: indent }}>
+      <div
+        className="ti-row"
+        style={{
+          marginLeft: indent,
+          '--status-color': statusObj.color,
+        }}
+      >
+        {/* Left status stripe */}
+        <span className="ti-stripe" />
+
         <button className="ti-expand" onClick={() => onToggle(task.id)}>
           {hasKids
             ? (isOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />)
@@ -146,23 +158,33 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
         {project && <span className="ti-proj">{project.name}</span>}
 
         {hasKids && (
-          <span className="ti-pct">{progress}%</span>
+          <span className="ti-pct" style={{ color: progress === 100 ? '#22c55e' : 'var(--text-mid)' }}>
+            {progress}%
+          </span>
         )}
 
         <StatusBadge status={task.status} onChange={s => setStatus(task.id, s)} />
 
-        <button className="ti-btn" onClick={openAdd} title="Adicionar subtarefa">
-          <Plus size={11} />
-        </button>
-        <button className="ti-btn ti-btn-del" onClick={() => deleteTask(task.id)} title="Remover">
-          <X size={11} />
-        </button>
+        <div className="ti-actions">
+          <button className="ti-btn" onClick={openAdd} title="Adicionar subtarefa">
+            <Plus size={11} />
+          </button>
+          <button className="ti-btn ti-btn-del" onClick={() => deleteTask(task.id)} title="Remover">
+            <X size={11} />
+          </button>
+        </div>
       </div>
 
       {/* Progress bar */}
       {hasKids && (
-        <div className="ti-bar-wrap" style={{ marginLeft: indent + 28 }}>
-          <div className="ti-bar-fill" style={{ width: `${progress}%` }} />
+        <div className="ti-bar-wrap" style={{ marginLeft: indent + 26 }}>
+          <div
+            className="ti-bar-fill"
+            style={{
+              width: `${progress}%`,
+              background: progress === 100 ? '#22c55e' : 'var(--accent)',
+            }}
+          />
         </div>
       )}
 
@@ -170,7 +192,7 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
       {adding && (
         <form
           className="ti-add-child"
-          style={{ marginLeft: indent + 28 }}
+          style={{ marginLeft: indent + 26 }}
           onSubmit={submitChild}
         >
           <input
@@ -181,8 +203,10 @@ function TaskItem({ task, depth, hooks, expanded, onToggle }) {
             onChange={e => setChildTitle(e.target.value)}
             onKeyDown={e => e.key === 'Escape' && setAdding(false)}
           />
-          <button className="ti-add-ok" type="submit" disabled={!childTitle.trim()}>OK</button>
-          <button className="ti-add-cancel" type="button" onClick={() => setAdding(false)}>×</button>
+          <button className="ti-add-ok" type="submit" disabled={!childTitle.trim()}>Adicionar</button>
+          <button className="ti-add-cancel" type="button" onClick={() => setAdding(false)}>
+            <X size={11} />
+          </button>
         </form>
       )}
 
@@ -214,7 +238,7 @@ function AddTaskForm({ onAdd }) {
   const submit = e => {
     e.preventDefault()
     if (!title.trim()) return
-    onAdd(title, project ? parseInt(project) : null)
+    onAdd(title, project || null)
     setTitle('')
     setProject('')
     inputRef.current?.focus()
@@ -222,25 +246,28 @@ function AddTaskForm({ onAdd }) {
 
   return (
     <form className="task-add-form" onSubmit={submit}>
-      <input
-        ref={inputRef}
-        className="task-add-input"
-        placeholder="Nova tarefa..."
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-      />
-      <select
-        className="task-add-select"
-        value={project}
-        onChange={e => setProject(e.target.value)}
-      >
-        <option value="">Projeto</option>
-        {dashboards.map(d => (
-          <option key={d.id} value={d.id}>{d.name}</option>
-        ))}
-      </select>
+      <div className="task-add-row">
+        <input
+          ref={inputRef}
+          className="task-add-input"
+          placeholder="Adicione uma nova tarefa..."
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+        />
+        <select
+          className="task-add-select"
+          value={project}
+          onChange={e => setProject(e.target.value)}
+        >
+          <option value="">Projeto</option>
+          {dashboards.map(d => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+      </div>
       <button className="task-add-btn" type="submit" disabled={!title.trim()}>
         <Plus size={14} />
+        Adicionar
       </button>
     </form>
   )
@@ -262,37 +289,54 @@ export function TaskManager() {
   }, [])
 
   const active = countActive(tasks)
+  const done   = tasks.filter(t => t.status === 'done').length
 
   return (
     <div className="task-manager">
       <div className="task-header">
-        <h2 className="task-header-title">Tarefas</h2>
-        {active > 0 && (
-          <span className="task-header-count">{active} ativa{active !== 1 ? 's' : ''}</span>
-        )}
+        <div className="task-header-left">
+          <h2 className="task-header-title">Tarefas</h2>
+          {tasks.length > 0 && (
+            <div className="task-header-stats">
+              {active > 0 && (
+                <span className="task-stat task-stat-active">
+                  {active} ativa{active !== 1 ? 's' : ''}
+                </span>
+              )}
+              {done > 0 && (
+                <span className="task-stat task-stat-done">
+                  {done} concluída{done !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <AddTaskForm onAdd={taskHooks.addTask} />
 
       {tasks.length === 0 && (
         <div className="task-empty">
+          <ClipboardList size={32} strokeWidth={1.2} />
           <p>Nenhuma tarefa ainda</p>
-          <span>Adicione sua primeira tarefa acima</span>
+          <span>Use o campo acima para criar sua primeira tarefa</span>
         </div>
       )}
 
-      <div className="task-tree">
-        {tasks.map(task => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            depth={0}
-            hooks={taskHooks}
-            expanded={expanded}
-            onToggle={toggle}
-          />
-        ))}
-      </div>
+      {tasks.length > 0 && (
+        <div className="task-tree">
+          {tasks.map(task => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              depth={0}
+              hooks={taskHooks}
+              expanded={expanded}
+              onToggle={toggle}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

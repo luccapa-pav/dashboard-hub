@@ -1028,9 +1028,15 @@
 
 .task-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.task-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .task-header-title {
@@ -1041,20 +1047,45 @@
   letter-spacing: -0.02em;
 }
 
-.task-header-count {
-  font-size: 12px;
-  color: var(--text-mid);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+.task-header-stats {
+  display: flex;
+  gap: 6px;
+}
+
+.task-stat {
+  font-size: 11px;
   border-radius: 100px;
   padding: 2px 10px;
+  font-weight: 600;
+}
+
+.task-stat-active {
+  color: #f59e0b;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
+}
+
+.task-stat-done {
+  color: #22c55e;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.2);
 }
 
 /* ── Add form ─────────────────────────────────────────────────── */
 .task-add-form {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.task-add-row {
+  display: flex;
+  gap: 8px;
 }
 
 .task-add-input {
@@ -1090,7 +1121,7 @@
 .task-add-select:focus { border-color: var(--accent); }
 
 .task-add-btn {
-  width: 38px;
+  padding: 0 16px;
   height: 38px;
   border-radius: 8px;
   border: none;
@@ -1100,10 +1131,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
   flex-shrink: 0;
+  align-self: flex-end;
+  transition: background 0.15s, opacity 0.15s;
 }
 
-.task-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.task-add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .task-add-btn:hover:not(:disabled) { background: var(--accent-hi); }
 
 /* ── Empty state ──────────────────────────────────────────────── */
@@ -1111,15 +1148,19 @@
   text-align: center;
   padding: 56px 0 32px;
   color: var(--text-mid);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
-.task-empty p    { font-size: 14px; margin: 0 0 4px; color: var(--white); }
+.task-empty p    { font-size: 14px; margin: 0; color: var(--white); }
 .task-empty span { font-size: 12px; }
 
 /* ── Tree container ───────────────────────────────────────────── */
 .task-tree {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 /* ── Task item ────────────────────────────────────────────────── */
@@ -1128,15 +1169,28 @@
 .ti-row {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 10px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 8px 10px 8px 0;
+  border-radius: 9px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  min-height: 38px;
+  min-height: 40px;
+  overflow: hidden;
+  transition: border-color 0.15s;
 }
 
 .ti-row:hover { border-color: #2e2e2e; }
+.ti-row:hover .ti-btn { opacity: 1; }
+
+/* Left colored stripe */
+.ti-stripe {
+  width: 3px;
+  align-self: stretch;
+  flex-shrink: 0;
+  background: var(--status-color, #6b7280);
+  border-radius: 0 2px 2px 0;
+  margin-right: 2px;
+}
 
 /* ── Expand button ────────────────────────────────────────────── */
 .ti-expand {
@@ -1234,23 +1288,44 @@
 .ti-status-lbl { color: var(--sc); }
 
 /* ── Action buttons ───────────────────────────────────────────── */
+.ti-actions {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
 .ti-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--text);
+  color: var(--text-mid);
   cursor: pointer;
   padding: 0;
-  border-radius: 5px;
+  border-radius: 6px;
+  /* always visible on touch, barely visible on desktop */
+  opacity: 0.5;
+  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
 }
 
-.ti-btn:hover          { border-color: var(--border); color: var(--white); }
-.ti-btn-del:hover      { border-color: rgba(196,25,48,0.4); color: var(--accent); }
+/* on desktop: hidden until row hover (handled by .ti-row:hover .ti-btn) */
+@media (hover: hover) {
+  .ti-btn { opacity: 0; }
+  .ti-row:hover .ti-btn { opacity: 1; }
+}
+
+/* on touch: always visible */
+@media (hover: none) {
+  .ti-btn { opacity: 0.6; }
+}
+
+.ti-btn:hover          { border-color: var(--border); color: var(--white); opacity: 1; }
+.ti-btn-del:hover      { border-color: rgba(196,25,48,0.3); color: var(--accent); opacity: 1; }
 
 /* ── Progress bar under task ──────────────────────────────────── */
 .ti-bar-wrap {
@@ -1273,13 +1348,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px 5px;
+  padding: 6px 10px 6px;
   animation: fadeInUp 0.15s ease both;
+  background: rgba(255,255,255,0.02);
+  border-radius: 0 0 8px 8px;
+  margin-top: 1px;
 }
 
 .ti-add-input {
   flex: 1;
-  padding: 6px 10px;
+  padding: 7px 10px;
   border-radius: 6px;
   border: 1px solid var(--accent);
   background: var(--bg);
@@ -1290,34 +1368,37 @@
 }
 
 .ti-add-input::placeholder { color: var(--text); }
+.ti-add-input:focus { box-shadow: 0 0 0 2px rgba(196,25,48,0.15); }
 
 .ti-add-ok {
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
   border: none;
   background: var(--accent);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
 }
 
 .ti-add-ok:disabled        { opacity: 0.4; cursor: not-allowed; }
 .ti-add-ok:hover:not(:disabled) { background: var(--accent-hi); }
 
 .ti-add-cancel {
-  width: 24px;
-  height: 24px;
-  border-radius: 5px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-mid);
   cursor: pointer;
-  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
 }
 
 .ti-add-cancel:hover { color: var(--accent); border-color: var(--accent); }
