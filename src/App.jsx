@@ -218,7 +218,21 @@ function useTagSystem() {
   const getDashTagIds = useCallback((dashId) => {
     return dashTags[dashId] || []
   }, [dashTags])
-  return { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds }
+  const addAndAssignTag = useCallback((dashId, name) => {
+    const id = Date.now().toString()
+    setTags(prev => {
+      const next = [...prev, { id, name }]
+      localStorage.setItem('lucc-tags', JSON.stringify(next))
+      return next
+    })
+    setDashTags(prev => {
+      const current = prev[dashId] || []
+      const next = { ...prev, [dashId]: [...current, id] }
+      localStorage.setItem('lucc-dash-tags', JSON.stringify(next))
+      return next
+    })
+  }, [])
+  return { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds, addAndAssignTag }
 }
 
 // ── Progress Bar ───────────────────────────────────────────────
@@ -423,11 +437,12 @@ function AddProjectModal({ onAdd, onClose }) {
 }
 
 // ── Detail Panel ───────────────────────────────────────────────
-function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, dashTagIds, assignTag, removeTagFromDash, onDelete }) {
+function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, dashTagIds, assignTag, removeTagFromDash, onDelete, addAndAssignTag }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
   const [opening, setOpening] = useState(false)
   const [showTagDrop, setShowTagDrop] = useState(false)
+  const [newTagInput, setNewTagInput] = useState(null)
   const touchStartX = useRef(null)
   const last = lastVisit(dashboard.id)
   const note = getNote(dashboard.id)
@@ -510,32 +525,57 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
                   </span>
                 )
               })}
-              {unassignedTags.length > 0 && (
-                <div className="tag-drop-wrap">
-                  <button
-                    className="tag-add-btn tag-add-btn-sm"
-                    onClick={() => setShowTagDrop(v => !v)}
-                  >
-                    <Plus size={10} /> Tag
-                  </button>
-                  {showTagDrop && (
-                    <div className="tag-dropdown">
-                      {unassignedTags.map(t => (
-                        <button
-                          key={t.id}
-                          className="tag-drop-item"
-                          onClick={() => {
-                            assignTag(dashboard.id, t.id)
-                            setShowTagDrop(false)
+              <div className="tag-drop-wrap">
+                <button
+                  className="tag-add-btn tag-add-btn-sm"
+                  onClick={() => setShowTagDrop(v => !v)}
+                >
+                  <Plus size={10} /> Tag
+                </button>
+                {showTagDrop && (
+                  <div className="tag-dropdown">
+                    {unassignedTags.map(t => (
+                      <button
+                        key={t.id}
+                        className="tag-drop-item"
+                        onClick={() => {
+                          assignTag(dashboard.id, t.id)
+                          setShowTagDrop(false)
+                        }}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                    <div className="tag-drop-divider" />
+                    {newTagInput !== null ? (
+                      <div className="tag-drop-create">
+                        <input
+                          autoFocus
+                          className="tag-drop-input"
+                          placeholder="Nome da tag..."
+                          value={newTagInput}
+                          onChange={e => setNewTagInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && newTagInput.trim()) {
+                              addAndAssignTag(dashboard.id, newTagInput.trim())
+                              setNewTagInput(null)
+                              setShowTagDrop(false)
+                            }
+                            if (e.key === 'Escape') setNewTagInput(null)
                           }}
-                        >
-                          {t.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        className="tag-drop-item tag-drop-create-btn"
+                        onClick={() => setNewTagInput('')}
+                      >
+                        <Plus size={11} /> Criar nova tag
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -688,7 +728,7 @@ function App() {
   const { track, lastVisit } = useActivity()
   const { getNote, setNote } = useNotes()
   const { custom, add: addCustom, remove: removeCustom } = useCustomDashboards()
-  const { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds } = useTagSystem()
+  const { tags, addTag, deleteTag, assignTag, removeTagFromDash, getDashTagIds, addAndAssignTag } = useTagSystem()
   const [tab, setTab] = useState('hub')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
@@ -963,6 +1003,7 @@ function App() {
           assignTag={assignTag}
           removeTagFromDash={removeTagFromDash}
           onDelete={removeCustom}
+          addAndAssignTag={addAndAssignTag}
         />
       )}
 
