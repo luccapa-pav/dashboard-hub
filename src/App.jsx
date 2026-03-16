@@ -1,33 +1,61 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   Scissors, TrendingUp, Workflow, Target,
   BarChart2, Users, ShoppingCart, Globe, Zap, Star,
   Sun, Moon, Search, X, ExternalLink, Clock, Tag, ArrowRight,
+  Github, Database, Layers, LayoutGrid, FileText,
+  List, Command, Link2,
 } from 'lucide-react'
 import { dashboards } from './data/dashboards'
+import { links } from './data/links'
+import { CommandPalette } from './components/CommandPalette'
+import { TaskManager } from './components/TaskManager'
 import './App.css'
 
-// ── Maps ─────────────────────────────────────────────────────
+// ── Icon maps ──────────────────────────────────────────────────
 const iconMap = {
   Scissors, TrendingUp, Workflow, Target,
   BarChart: BarChart2, Users, ShoppingCart, Globe, Zap, Star,
 }
 
-const statusConfig = {
-  'Ativo':              { label: 'Ativo',        cls: 'status-active' },
-  'Em desenvolvimento': { label: 'Em dev',        cls: 'status-dev'   },
-  'Planejamento':       { label: 'Planejamento',  cls: 'status-plan'  },
-  'Pausado':            { label: 'Pausado',       cls: 'status-paused'},
+const linkIconMap = {
+  Github, Globe, Database, Layers, LayoutGrid, FileText,
 }
 
-// ── Helpers ───────────────────────────────────────────────────
+// ── Status config ──────────────────────────────────────────────
+const statusConfig = {
+  'Ativo':              { label: 'Ativo',       cls: 'status-active' },
+  'Em desenvolvimento': { label: 'Em dev',       cls: 'status-dev'   },
+  'Planejamento':       { label: 'Planejamento', cls: 'status-plan'  },
+  'Pausado':            { label: 'Pausado',      cls: 'status-paused'},
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Bom dia'
+  if (h < 18) return 'Boa tarde'
+  return 'Boa noite'
+}
+
+function relativeTime(ts) {
+  if (!ts) return null
+  const mins = Math.floor((Date.now() - ts) / 60000)
+  if (mins < 1) return 'agora mesmo'
+  if (mins < 60) return `há ${mins}min`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `há ${hours}h`
+  const days = Math.floor(hours / 24)
+  return days === 1 ? 'há 1 dia' : `há ${days} dias`
+}
+
 function formatDate(str) {
   return new Date(str).toLocaleDateString('pt-BR', {
     day: '2-digit', month: 'short', year: 'numeric',
   })
 }
 
-// Destaca o trecho buscado no texto
+// ── Highlight ──────────────────────────────────────────────────
 function Highlight({ text, query }) {
   if (!query.trim()) return <>{text}</>
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -43,7 +71,7 @@ function Highlight({ text, query }) {
   )
 }
 
-// ── Theme ─────────────────────────────────────────────────────
+// ── Hooks ──────────────────────────────────────────────────────
 function useTheme() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem('lucc-theme') || 'dark'
@@ -56,7 +84,48 @@ function useTheme() {
   return { theme, toggle }
 }
 
-// ── Card Preview ──────────────────────────────────────────────
+function useActivity() {
+  const [activity, setActivity] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lucc-activity') || '{}') }
+    catch { return {} }
+  })
+  const track = useCallback((id) => {
+    setActivity(prev => {
+      const next = { ...prev, [id]: Date.now() }
+      localStorage.setItem('lucc-activity', JSON.stringify(next))
+      return next
+    })
+  }, [])
+  const lastVisit = useCallback((id) => activity[id] || null, [activity])
+  return { track, lastVisit }
+}
+
+function useNotes() {
+  const [notes, setNotes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lucc-notes') || '{}') }
+    catch { return {} }
+  })
+  const setNote = useCallback((id, text) => {
+    setNotes(prev => {
+      const next = { ...prev, [id]: text }
+      localStorage.setItem('lucc-notes', JSON.stringify(next))
+      return next
+    })
+  }, [])
+  const getNote = useCallback((id) => notes[id] || '', [notes])
+  return { getNote, setNote }
+}
+
+// ── Progress Bar ───────────────────────────────────────────────
+function ProgressBar({ value = 0, className = '' }) {
+  return (
+    <div className={`progress-track ${className}`}>
+      <div className="progress-fill" style={{ width: `${value}%` }} />
+    </div>
+  )
+}
+
+// ── Card Preview ───────────────────────────────────────────────
 function CardPreview({ Icon }) {
   return (
     <div className="card-preview">
@@ -73,12 +142,14 @@ function CardPreview({ Icon }) {
   )
 }
 
-// ── Detail Panel ──────────────────────────────────────────────
-function DetailPanel({ dashboard, onClose }) {
+// ── Detail Panel ───────────────────────────────────────────────
+function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
   const [opening, setOpening] = useState(false)
   const touchStartX = useRef(null)
+  const last = lastVisit(dashboard.id)
+  const note = getNote(dashboard.id)
 
   const handleOpen = () => {
     setOpening(true)
@@ -88,21 +159,16 @@ function DetailPanel({ dashboard, onClose }) {
     }, 500)
   }
 
-  // Fechar com Escape
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Swipe para fechar (mobile)
-  const handleTouchStart = e => {
-    touchStartX.current = e.touches[0].clientX
-  }
+  const handleTouchStart = e => { touchStartX.current = e.touches[0].clientX }
   const handleTouchMove = e => {
     if (touchStartX.current === null) return
-    const diff = e.touches[0].clientX - touchStartX.current
-    if (diff > 72) {
+    if (e.touches[0].clientX - touchStartX.current > 72) {
       onClose()
       touchStartX.current = null
     }
@@ -138,6 +204,13 @@ function DetailPanel({ dashboard, onClose }) {
           <h2>{dashboard.name}</h2>
           <p className="panel-desc">{dashboard.longDescription || dashboard.description}</p>
 
+          {dashboard.progress !== undefined && (
+            <div className="panel-stack">
+              <span className="panel-label">Progresso — {dashboard.progress}%</span>
+              <ProgressBar value={dashboard.progress} className="panel-progress-bar" />
+            </div>
+          )}
+
           {dashboard.stack?.length > 0 && (
             <div className="panel-stack">
               <span className="panel-label">Stack</span>
@@ -147,12 +220,24 @@ function DetailPanel({ dashboard, onClose }) {
             </div>
           )}
 
-          {dashboard.updatedAt && (
-            <div className="panel-updated">
-              <Clock size={11} />
-              <span>Atualizado em {formatDate(dashboard.updatedAt)}</span>
-            </div>
-          )}
+          <div className="panel-updated">
+            <Clock size={11} />
+            {last
+              ? <span>Visitado {relativeTime(last)}</span>
+              : <span>Atualizado em {formatDate(dashboard.updatedAt)}</span>
+            }
+          </div>
+
+          <div className="panel-stack">
+            <span className="panel-label">Notas</span>
+            <textarea
+              className="notes-textarea"
+              placeholder="Adicione notas sobre este projeto..."
+              value={note}
+              onChange={e => setNote(dashboard.id, e.target.value)}
+              rows={3}
+            />
+          </div>
 
           <button className="panel-open-btn" onClick={handleOpen} disabled={opening}>
             {opening
@@ -166,10 +251,11 @@ function DetailPanel({ dashboard, onClose }) {
   )
 }
 
-// ── Dashboard Card ────────────────────────────────────────────
-function DashboardCard({ dashboard, index, onClick, query }) {
+// ── Dashboard Card ─────────────────────────────────────────────
+function DashboardCard({ dashboard, index, onClick, query, lastVisit }) {
   const Icon = iconMap[dashboard.icon] || BarChart2
   const status = statusConfig[dashboard.status] || { label: dashboard.status, cls: 'status-plan' }
+  const last = lastVisit(dashboard.id)
 
   return (
     <div
@@ -191,17 +277,53 @@ function DashboardCard({ dashboard, index, onClick, query }) {
           </span>
         </div>
         <p><Highlight text={dashboard.description} query={query} /></p>
+        {dashboard.progress !== undefined && (
+          <ProgressBar value={dashboard.progress} className="card-progress-bar" />
+        )}
       </div>
 
       <div className="card-footer">
         <span className="category-tag">{dashboard.category}</span>
-        <span className="card-hint">Ver detalhes <ArrowRight size={11} /></span>
+        {last
+          ? <span className="card-hint last-visit-hint"><Clock size={10} />{relativeTime(last)}</span>
+          : <span className="card-hint">Ver detalhes <ArrowRight size={11} /></span>
+        }
       </div>
     </div>
   )
 }
 
-// ── Empty State ───────────────────────────────────────────────
+// ── Links Section ──────────────────────────────────────────────
+function LinksSection() {
+  return (
+    <section className="hub-links">
+      <div className="hub-links-header">
+        <span className="hub-links-title">Ferramentas</span>
+        <Link2 size={13} />
+      </div>
+      <div className="links-grid">
+        {links.map(link => {
+          const Icon = linkIconMap[link.icon] || Globe
+          return (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link-card"
+            >
+              <Icon size={17} strokeWidth={1.5} />
+              <span className="link-name">{link.name}</span>
+              <span className="link-cat">{link.category}</span>
+            </a>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+// ── Empty State ────────────────────────────────────────────────
 function EmptyState({ query }) {
   return (
     <div className="empty-state">
@@ -212,23 +334,44 @@ function EmptyState({ query }) {
   )
 }
 
-// ── App ───────────────────────────────────────────────────────
+// ── App ────────────────────────────────────────────────────────
 function App() {
   const { theme, toggle } = useTheme()
+  const { track, lastVisit } = useActivity()
+  const { getNote, setNote } = useNotes()
+  const [tab, setTab] = useState('hub')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
+  const [viewMode, setViewMode] = useState('grid')
+  const [cmdOpen, setCmdOpen] = useState(false)
   const searchRef = useRef(null)
+
+  const stats = useMemo(() => ({
+    total:   dashboards.length,
+    active:  dashboards.filter(d => d.status === 'Ativo').length,
+    inDev:   dashboards.filter(d => d.status === 'Em desenvolvimento').length,
+    planned: dashboards.filter(d => d.status === 'Planejamento').length,
+  }), [])
+
+  const handleSelectDashboard = useCallback((d) => {
+    track(d.id)
+    setTab('hub')
+    setSelected(d)
+  }, [track])
 
   // Atalhos de teclado
   useEffect(() => {
     const handler = e => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        searchRef.current?.focus()
+        setCmdOpen(v => !v)
+        return
       }
-      if ((e.key === 't' || e.key === 'T') && document.activeElement.tagName !== 'INPUT') {
-        toggle()
-      }
+      if (document.activeElement.tagName === 'INPUT' ||
+          document.activeElement.tagName === 'TEXTAREA') return
+      if (e.key === '/') { e.preventDefault(); searchRef.current?.focus() }
+      if (e.key === 't' || e.key === 'T') toggle()
+      if (e.key === 'l' || e.key === 'L') setViewMode(v => v === 'grid' ? 'list' : 'grid')
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -240,75 +383,180 @@ function App() {
     d.category.toLowerCase().includes(search.toLowerCase())
   )
 
-  const isFiltering = search.trim().length > 0
-
   return (
     <div className="hub">
+
+      {/* ── Header ── */}
       <header className="hub-header">
         <div className="hub-brand">
           <span className="brand-dot" />
           <span className="brand-name">LUCCA CORE</span>
         </div>
-        <button className="theme-btn" onClick={toggle} aria-label="Alternar tema" title="Atalho: T">
-          {theme === 'dark'
-            ? <Sun size={15} strokeWidth={1.75} />
-            : <Moon size={15} strokeWidth={1.75} />
-          }
-        </button>
+
+        <nav className="hub-tabs-nav">
+          <button
+            className={`tab-btn${tab === 'hub' ? ' tab-active' : ''}`}
+            onClick={() => setTab('hub')}
+          >
+            Hub
+          </button>
+          <button
+            className={`tab-btn${tab === 'tasks' ? ' tab-active' : ''}`}
+            onClick={() => setTab('tasks')}
+          >
+            Tarefas
+          </button>
+        </nav>
+
+        <div className="hub-header-right">
+          <div className="hub-avatar" title="Lucca">L</div>
+          <button className="theme-btn" onClick={toggle} aria-label="Alternar tema" title="Atalho: T">
+            {theme === 'dark'
+              ? <Sun size={15} strokeWidth={1.75} />
+              : <Moon size={15} strokeWidth={1.75} />
+            }
+          </button>
+        </div>
       </header>
 
-      <div className="hub-intro">
-        <h1>Seus projetos</h1>
-        <p className="hub-subtitle">Acesse e gerencie todos os seus dashboards</p>
-        <p className="hub-count">
-          {isFiltering
-            ? <><strong>{filtered.length}</strong> de {dashboards.length} projetos</>
-            : <><strong>{dashboards.length}</strong> projetos</>
-          }
-        </p>
-      </div>
+      {/* ── Hub Tab ── */}
+      {tab === 'hub' && (
+        <>
+          {/* Greeting + Stats */}
+          <div className="hub-intro">
+            <h1>{getGreeting()}, Lucca</h1>
+            <p className="hub-subtitle">Aqui estão seus projetos e ferramentas</p>
+            <div className="hub-stats">
+              <span className="stat-pill">
+                <strong>{stats.total}</strong> projetos
+              </span>
+              {stats.active > 0 && (
+                <span className="stat-pill stat-pill-active">
+                  <span className="pulse-dot" />
+                  <strong>{stats.active}</strong> ativo
+                </span>
+              )}
+              {stats.inDev > 0 && (
+                <span className="stat-pill">
+                  <strong>{stats.inDev}</strong> em dev
+                </span>
+              )}
+              {stats.planned > 0 && (
+                <span className="stat-pill">
+                  <strong>{stats.planned}</strong> planejado
+                </span>
+              )}
+            </div>
+          </div>
 
-      <div className="hub-search">
-        <Search size={14} className="search-icon" />
-        <input
-          ref={searchRef}
-          type="text"
-          placeholder='Buscar projetos... (pressione "/")'
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="search-input"
-        />
-        {search && (
-          <button className="search-clear" onClick={() => setSearch('')} aria-label="Limpar">
-            <X size={13} />
-          </button>
-        )}
-      </div>
+          {/* Toolbar: search + view toggle + cmd palette */}
+          <div className="hub-toolbar">
+            <div className="hub-search">
+              <Search size={14} className="search-icon" />
+              <input
+                ref={searchRef}
+                type="text"
+                placeholder='Buscar projetos... (pressione "/")'
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="search-input"
+              />
+              {search && (
+                <button className="search-clear" onClick={() => setSearch('')} aria-label="Limpar">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
 
-      <main className="hub-grid">
-        {filtered.length > 0
-          ? filtered.map((d, i) => (
-            <DashboardCard
-              key={d.id}
-              dashboard={d}
-              index={i}
-              onClick={setSelected}
-              query={search}
-            />
-          ))
-          : <EmptyState query={search} />
-        }
-      </main>
+            <div className="view-toggle">
+              <button
+                className={`view-btn${viewMode === 'grid' ? ' view-btn-active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grade (L)"
+              >
+                <LayoutGrid size={14} />
+              </button>
+              <button
+                className={`view-btn${viewMode === 'list' ? ' view-btn-active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="Lista (L)"
+              >
+                <List size={14} />
+              </button>
+            </div>
 
-      {selected && (
-        <DetailPanel dashboard={selected} onClose={() => setSelected(null)} />
+            <button
+              className="cmd-trigger"
+              onClick={() => setCmdOpen(true)}
+              title="Paleta de comandos"
+            >
+              <Command size={13} />
+              <span>Buscar</span>
+              <kbd>⌘K</kbd>
+            </button>
+          </div>
+
+          {/* Filter count */}
+          {search.trim() && (
+            <p className="filter-count">
+              <strong>{filtered.length}</strong> de {dashboards.length} resultados
+            </p>
+          )}
+
+          {/* Grid / List */}
+          <main className={`hub-grid${viewMode === 'list' ? ' list-view' : ''}`}>
+            {filtered.length > 0
+              ? filtered.map((d, i) => (
+                  <DashboardCard
+                    key={d.id}
+                    dashboard={d}
+                    index={i}
+                    onClick={handleSelectDashboard}
+                    query={search}
+                    lastVisit={lastVisit}
+                  />
+                ))
+              : <EmptyState query={search} />
+            }
+          </main>
+
+          {/* Links Hub */}
+          <LinksSection />
+        </>
       )}
 
-      <footer className="hub-shortcuts">
-        <span><kbd>/</kbd> buscar</span>
-        <span><kbd>T</kbd> tema</span>
-        <span><kbd>Esc</kbd> fechar</span>
-      </footer>
+      {/* ── Tasks Tab ── */}
+      {tab === 'tasks' && <TaskManager />}
+
+      {/* ── Detail Panel ── */}
+      {selected && (
+        <DetailPanel
+          dashboard={selected}
+          onClose={() => setSelected(null)}
+          lastVisit={lastVisit}
+          getNote={getNote}
+          setNote={setNote}
+        />
+      )}
+
+      {/* ── Command Palette ── */}
+      {cmdOpen && (
+        <CommandPalette
+          onClose={() => setCmdOpen(false)}
+          onSelectProject={handleSelectDashboard}
+        />
+      )}
+
+      {/* ── Shortcuts Bar ── */}
+      {tab === 'hub' && (
+        <footer className="hub-shortcuts">
+          <span><kbd>/</kbd> buscar</span>
+          <span><kbd>T</kbd> tema</span>
+          <span><kbd>L</kbd> layout</span>
+          <span><kbd>⌘K</kbd> paleta</span>
+          <span><kbd>Esc</kbd> fechar</span>
+        </footer>
+      )}
     </div>
   )
 }

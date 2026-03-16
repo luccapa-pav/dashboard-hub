@@ -10,6 +10,7 @@ export const dashboards = [
     icon: 'Scissors',
     stack: ['React', 'Supabase', 'Tailwind'],
     updatedAt: '2026-03-13',
+    progress: 45,
   },
   {
     id: 2,
@@ -22,6 +23,7 @@ export const dashboards = [
     icon: 'TrendingUp',
     stack: ['React', 'Recharts'],
     updatedAt: '2026-03-13',
+    progress: 10,
   },
   {
     id: 3,
@@ -34,5 +36,6 @@ export const dashboards = [
     icon: 'Workflow',
     stack: ['React', 'N8N'],
     updatedAt: '2026-03-13',
+    progress: 5,
   },
 ]
