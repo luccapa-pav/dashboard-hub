@@ -1,16 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Plus, X, ChevronRight, ChevronDown, ClipboardList, Calendar, AlignLeft } from 'lucide-react'
+import { DayPicker } from 'react-day-picker'
+import { ptBR } from 'react-day-picker/locale'
+import 'react-day-picker/style.css'
 import { dashboards } from '../data/dashboards'
-
-// ── Date field constants ───────────────────────────────────────
-const MONTHS_PT = [
-  ['01','Jan'],['02','Fev'],['03','Mar'],['04','Abr'],
-  ['05','Mai'],['06','Jun'],['07','Jul'],['08','Ago'],
-  ['09','Set'],['10','Out'],['11','Nov'],['12','Dez'],
-]
-const CUR_YEAR = new Date().getFullYear()
-const YEARS = Array.from({ length: 6 }, (_, i) => String(CUR_YEAR + i))
-const DAYS  = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
 
 // ── Statuses ───────────────────────────────────────────────────
 export const STATUSES = [
@@ -127,41 +120,73 @@ function StatusBadge({ status, onChange }) {
   )
 }
 
-// ── Date field (3 selects — day / month / year) ───────────────
-function DateField({ value, onChange }) {
-  const parts  = value ? value.split('-') : ['', '', '']
-  const [selY, setSelY] = useState(parts[0] || '')
-  const [selM, setSelM] = useState(parts[1] || '')
-  const [selD, setSelD] = useState(parts[2] || '')
+// ── Date Picker (calendar popover) ────────────────────────────
+function DatePickerField({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
 
-  const emit = (y, m, d) => onChange(y && m && d ? `${y}-${m}-${d}` : '')
+  const selected = value ? new Date(value + 'T00:00:00') : undefined
+
+  const displayValue = selected
+    ? selected.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+    : ''
+
+  useEffect(() => {
+    if (!open) return
+    const handler = e => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleSelect = date => {
+    if (date) {
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      onChange(`${y}-${m}-${d}`)
+    } else {
+      onChange('')
+    }
+    setOpen(false)
+  }
 
   return (
-    <div className="modal-date-row">
-      <select
-        className="modal-input modal-date-select"
-        value={selD}
-        onChange={e => { setSelD(e.target.value); emit(selY, selM, e.target.value) }}
+    <div className="dp-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="modal-input dp-trigger"
+        onClick={() => setOpen(v => !v)}
       >
-        <option value="">Dia</option>
-        {DAYS.map(d => <option key={d} value={d}>{parseInt(d)}</option>)}
-      </select>
-      <select
-        className="modal-input modal-date-select"
-        value={selM}
-        onChange={e => { setSelM(e.target.value); emit(selY, e.target.value, selD) }}
-      >
-        <option value="">Mês</option>
-        {MONTHS_PT.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-      <select
-        className="modal-input modal-date-select modal-date-year"
-        value={selY}
-        onChange={e => { setSelY(e.target.value); emit(e.target.value, selM, selD) }}
-      >
-        <option value="">Ano</option>
-        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-      </select>
+        <Calendar size={13} className="dp-icon" />
+        <span className={selected ? 'dp-val' : 'dp-placeholder'}>
+          {displayValue || 'Selecionar data'}
+        </span>
+        {selected && (
+          <span
+            role="button"
+            className="dp-clear"
+            onMouseDown={e => { e.stopPropagation(); onChange(''); setOpen(false) }}
+            aria-label="Limpar data"
+          >
+            <X size={11} />
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="dp-popover">
+          <DayPicker
+            mode="single"
+            selected={selected}
+            onSelect={handleSelect}
+            locale={ptBR}
+            weekStartsOn={0}
+            showOutsideDays
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -245,7 +270,7 @@ function TaskCreateModal({ onAdd, onClose }) {
             <label className="modal-label">
               <Calendar size={11} /> Data
             </label>
-            <DateField value={dueDate} onChange={setDueDate} />
+            <DatePickerField value={dueDate} onChange={setDueDate} />
           </div>
 
           {/* Projeto */}

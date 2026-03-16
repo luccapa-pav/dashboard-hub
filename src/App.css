@@ -1249,29 +1249,184 @@
 
 .modal-textarea { resize: vertical; min-height: 76px; line-height: 1.6; }
 
-/* ── Date field (3 selects) ───────────────────────────────────── */
-.modal-date-row {
+/* ── Date Picker (calendar popover) ──────────────────────────── */
+.dp-wrap {
+  position: relative;
+}
+
+.dp-trigger {
   display: flex;
-  gap: 6px;
-}
-
-.modal-date-select {
-  flex: 1;
-  min-width: 0;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
-  color: #b0b0b0;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 24px;
-  text-align: center;
+  text-align: left;
+  min-height: 42px;
 }
 
-.modal-date-select:focus { color: #e0e0e0; }
+.dp-icon   { color: #555; flex-shrink: 0; }
+.dp-val    { flex: 1; color: #e0e0e0; font-size: 13px; }
+.dp-placeholder { flex: 1; color: #444; font-size: 13px; }
 
-.modal-date-year { flex: 1.5; }
+.dp-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: #555;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: color 0.15s, background 0.15s;
+}
+.dp-clear:hover { color: var(--accent); background: rgba(196,25,48,0.08); }
+
+.dp-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 400;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 24px 80px rgba(0, 0, 0, 0.95),
+    0 8px 32px rgba(0, 0, 0, 0.7);
+  animation: fadeInUp 0.15s ease both;
+
+  /* CSS variables — override react-day-picker defaults */
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: rgba(196, 25, 48, 0.14);
+  --rdp-selected-border: 2px solid var(--accent);
+  --rdp-today-color: var(--accent);
+  --rdp-day-height: 34px;
+  --rdp-day-width: 34px;
+  --rdp-day_button-border-radius: 8px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-outside-opacity: 0.2;
+  --rdp-disabled-opacity: 0.2;
+}
+
+/* Root */
+.dp-popover .rdp-root {
+  color: #a0a0a0;
+  font-family: inherit;
+  font-size: 13px;
+  --rdp-font-family: inherit;
+}
+
+/* Month caption (Month Year title) */
+.dp-popover .rdp-month_caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.dp-popover .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0f0f0;
+  letter-spacing: -0.01em;
+}
+
+/* Navigation buttons */
+.dp-popover .rdp-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.dp-popover .rdp-button_previous,
+.dp-popover .rdp-button_next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.dp-popover .rdp-button_previous:hover,
+.dp-popover .rdp-button_next:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #d0d0d0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Weekday headers */
+.dp-popover .rdp-weekdays {
+  margin-bottom: 4px;
+}
+
+.dp-popover .rdp-weekday {
+  font-size: 10px;
+  font-weight: 700;
+  color: #383838;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: 34px;
+  text-align: center;
+  padding: 4px 0;
+}
+
+/* Day cells */
+.dp-popover .rdp-day {
+  width: 34px;
+  height: 34px;
+}
+
+.dp-popover .rdp-day_button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #909090;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp-popover .rdp-day_button:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #e8e8e8;
+}
+
+/* Selected day */
+.dp-popover .rdp-selected .rdp-day_button {
+  background: var(--accent) !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(196, 25, 48, 0.45);
+}
+
+/* Today (not selected) */
+.dp-popover .rdp-today:not(.rdp-selected) .rdp-day_button {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Outside days */
+.dp-popover .rdp-outside .rdp-day_button { color: #2a2a2a; }
+
+/* Disabled days */
+.dp-popover .rdp-disabled .rdp-day_button { color: #2a2a2a; cursor: not-allowed; }
 
 /* ── Modal status select ──────────────────────────────────────── */
 .modal-status-wrap {
