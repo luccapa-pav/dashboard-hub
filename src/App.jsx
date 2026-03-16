@@ -443,6 +443,7 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
   const [opening, setOpening] = useState(false)
   const [showTagDrop, setShowTagDrop] = useState(false)
   const [newTagInput, setNewTagInput] = useState(null)
+  const [popupBlocked, setPopupBlocked] = useState(false)
   const touchStartX = useRef(null)
   const last = lastVisit(dashboard.id)
   const note = getNote(dashboard.id)
@@ -450,8 +451,10 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
 
   const handleOpen = () => {
     setOpening(true)
+    setPopupBlocked(false)
     setTimeout(() => {
-      window.open(dashboard.url, '_blank', 'noopener,noreferrer')
+      const win = window.open(dashboard.url, '_blank', 'noopener,noreferrer')
+      if (!win) setPopupBlocked(true)
       setOpening(false)
     }, 500)
   }
@@ -604,6 +607,19 @@ function DetailPanel({ dashboard, onClose, lastVisit, getNote, setNote, tags, da
               : <><ExternalLink size={14} />Abrir projeto</>
             }
           </button>
+          {popupBlocked && (
+            <div className="popup-blocked-msg">
+              <span>Popup bloqueado pelo navegador.</span>
+              <a
+                href={dashboard.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setPopupBlocked(false)}
+              >
+                Abrir mesmo assim →
+              </a>
+            </div>
+          )}
 
           {dashboard.isCustom && (
             <button

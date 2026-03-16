@@ -753,6 +753,27 @@
 
 .panel-open-btn:disabled { opacity: 0.7; cursor: default; }
 
+.popup-blocked-msg {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-glow);
+  font-size: 12px;
+  color: var(--text-mid);
+  margin-top: 8px;
+}
+.popup-blocked-msg a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.popup-blocked-msg a:hover { text-decoration: underline; }
+
 .btn-spinner {
   width: 15px;
   height: 15px;
