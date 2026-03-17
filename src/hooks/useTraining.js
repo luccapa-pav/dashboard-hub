@@ -64,6 +64,7 @@ function loadData() {
         weekDay: d.weekDay !== undefined
           ? d.weekDay
           : (Array.isArray(d.weekDays) && d.weekDays.length > 0 ? d.weekDays[0] : ((i % 6) + 1)),
+        plannedCardio: d.plannedCardio || [],
         exercises: (d.exercises || []).map(e => {
           if (e.sets) return e
           const n = e.defaultSets || 3
@@ -166,6 +167,39 @@ export function useTraining() {
     }))
   }, [save])
 
+  const addPlannedCardio = useCallback((routineId, dayId, item) => {
+    save(cur => ({
+      ...cur,
+      routines: cur.routines.map(r => {
+        if (r.id !== routineId) return r
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => {
+            if (d.id !== dayId) return d
+            const entry = { id: makeId(), ...item }
+            return { ...d, plannedCardio: [...(d.plannedCardio || []), entry] }
+          }),
+        }
+      }),
+    }))
+  }, [save])
+
+  const deletePlannedCardio = useCallback((routineId, dayId, cardioId) => {
+    save(cur => ({
+      ...cur,
+      routines: cur.routines.map(r => {
+        if (r.id !== routineId) return r
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => {
+            if (d.id !== dayId) return d
+            return { ...d, plannedCardio: (d.plannedCardio || []).filter(c => c.id !== cardioId) }
+          }),
+        }
+      }),
+    }))
+  }, [save])
+
   // ── Exercises ─────────────────────────────────────────────────
   const addExercise = useCallback((
     routineId, trainingDayId, name,
@@ -247,7 +281,22 @@ export function useTraining() {
   }, [save])
 
   // ── Sessions ──────────────────────────────────────────────────
-  const startSession = useCallback((routineId, trainingDayId = null) => {
+  const startSession = useCallback((routineId, trainingDayId = null, exercises = []) => {
+    const initialSets = {}
+    exercises.forEach(ex => {
+      if (Array.isArray(ex.sets) && ex.sets.length > 0) {
+        initialSets[ex.id] = ex.sets.map((s, i) => {
+          const repsNum = parseInt(String(s.reps), 10)
+          return {
+            id: makeId(),
+            setNumber: i + 1,
+            reps: isNaN(repsNum) ? 12 : repsNum,
+            weightKg: 0,
+            completed: false,
+          }
+        })
+      }
+    })
     const session = {
       id: makeId(),
       userId: ANON_USER_ID,
@@ -256,7 +305,7 @@ export function useTraining() {
       startedAt: new Date().toISOString(),
       finishedAt: null,
       completed: false,
-      sets: {}, // { exerciseId: [{ id, setNumber, reps, weightKg, completed }] }
+      sets: initialSets,
       cardio: [],
       notes: '',
     }
@@ -438,6 +487,7 @@ export function useTraining() {
     addRoutine, updateRoutine, deleteRoutine,
     // Training Days
     addTrainingDay, updateTrainingDay, deleteTrainingDay,
+    addPlannedCardio, deletePlannedCardio,
     // Exercises
     addExercise, updateExercise, deleteExercise, reorderExercises,
     // Sessions
