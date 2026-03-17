@@ -5497,3 +5497,69 @@ kbd {
   width: 30px !important;
   height: 30px !important;
 }
+
+/* ────────────────────────────────────────────────────────────── */
+/* REFINAMENTO UI – Batch 9                                       */
+/* ────────────────────────────────────────────────────────────── */
+
+/* 1. Day header: actions LEFT, badge RIGHT */
+.training-day-actions {
+  left: 0 !important;
+  right: auto !important;
+}
+.training-day-title-row .day-badge-week {
+  position: absolute !important;
+  right: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  left: auto !important;
+  /* Premium accent style — same family as .routine-active-badge */
+  color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
+  opacity: 1 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  padding: 3px 9px !important;
+  border-radius: 20px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+/* 2. Stepper numbers larger + set row centered */
+.stepper-val {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  min-width: 40px !important;
+  height: 34px !important;
+}
+.stepper-btn {
+  height: 34px !important;
+  font-size: 17px !important;
+  padding: 2px 8px !important;
+}
+.stepper-input {
+  font-size: 18px !important;
+  height: 34px !important;
+  width: 44px !important;
+}
+.set-unit-label {
+  font-size: 12px !important;
+}
+.set-sep {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--text-mid) !important;
+}
+.set-row-main-col .set-row-fields {
+  justify-content: center !important;
+  gap: 12px !important;
+}
+.set-field-wrap {
+  align-items: center !important;
+}
+
+/* 3. Registrar max-width: aproveitando telas largas */
+.registrar-inner {
+  max-width: 1100px !important;
+}

@@ -785,12 +785,6 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           </div>
         ) : (
           <div className="training-day-title-row">
-            <div className="training-day-label-group">
-              <span className="training-day-label">{day.label}</span>
-              {day.weekDay !== undefined && (
-                <span className="day-badge-week">{DAYS[day.weekDay]}</span>
-              )}
-            </div>
             <div className="training-day-actions">
               <button className="routine-edit-btn" onClick={startEdit}>
                 <Edit2 size={12} />
@@ -802,6 +796,10 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
                 <Trash2 size={12} />
               </button>
             </div>
+            <span className="training-day-label">{day.label}</span>
+            {day.weekDay !== undefined && (
+              <span className="day-badge-week">{DAYS[day.weekDay]}</span>
+            )}
           </div>
         )}
       </div>
