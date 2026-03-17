@@ -389,14 +389,16 @@ export function useTraining() {
   }, [save])
 
   // ── Cardio ────────────────────────────────────────────────────
-  const addCardio = useCallback((sessionId, type = 'Corrida', durationMin = 30, distanceKm = 0) => {
+  const addCardio = useCallback((sessionId, type = 'Corrida', durationHrs = 0, durationMin = 30, speedKmh = 0) => {
+    const totalH = durationHrs + durationMin / 60
+    const distanceKm = +(totalH * speedKmh).toFixed(2)
     save(cur => ({
       ...cur,
       sessions: cur.sessions.map(s => {
         if (s.id !== sessionId) return s
         return {
           ...s,
-          cardio: [...s.cardio, { id: makeId(), type, durationMin, distanceKm }],
+          cardio: [...s.cardio, { id: makeId(), type, durationHrs, durationMin, speedKmh, distanceKm }],
         }
       }),
     }))

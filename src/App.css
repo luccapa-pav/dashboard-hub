@@ -4470,3 +4470,74 @@ kbd {
   border-radius: 6px;
   margin-bottom: 2px;
 }
+
+/* ── Routine card header: centered title + abs actions ───────── */
+.routine-card-header {
+  position: relative;
+}
+.routine-card-title-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0 56px; /* leave space for abs actions on right */
+  text-align: center;
+}
+.routine-card-actions-abs {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── New routine button + form centered ──────────────────────── */
+.new-routine-btn-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.add-routine-form-centered {
+  max-width: 480px;
+  margin: 0 auto 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.add-routine-form-centered .add-ex-actions {
+  justify-content: center;
+}
+
+/* ── Exercise goal banner ────────────────────────────────────── */
+.ex-goal-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: rgba(196,25,48,0.1);
+  border: 1px solid rgba(196,25,48,0.2);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.ex-goal-meta {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-hi);
+  letter-spacing: 0.02em;
+}
+.ex-goal-prev {
+  font-size: 10px;
+  color: var(--text-mid);
+}
+
+/* ── Cardio auto-distance display ────────────────────────────── */
+.cardio-dist-auto {
+  font-size: 11px;
+  font-weight: 700;
+  color: #22c55e;
+  background: rgba(34,197,94,0.1);
+  border-radius: 5px;
+  padding: 1px 6px;
+}

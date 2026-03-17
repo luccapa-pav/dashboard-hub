@@ -31,6 +31,22 @@ function setsToVariations(sets) {
 
 const DRAFT_KEY = (id) => `training-draft-ex-${id}`
 
+// Gets the meta description from exercise planned sets (e.g. "8-12" or "12 / 8-10")
+function getExerciseMeta(sets) {
+  if (!sets || sets.length === 0) return null
+  const unique = [...new Set(sets.map(s => String(s.reps)))]
+  return unique.join(' / ') + ' reps'
+}
+
+// Formats previous session summary for history banner
+function formatPrevSummary(prevSessionSets) {
+  if (!prevSessionSets || prevSessionSets.length === 0) return null
+  const n = prevSessionSets.length
+  const avgW = prevSessionSets.reduce((a, s) => a + (s.weightKg || 0), 0) / n
+  const avgR = Math.round(prevSessionSets.reduce((a, s) => a + (s.reps || 0), 0) / n)
+  return `${n}×${avgR} @ ${avgW.toFixed(1)}kg`
+}
+
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
@@ -159,11 +175,14 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
       {expanded && (
         <div className="ex-card-body">
-          {history.length > 0 && (
-            <div className="ex-last-session">
-              Última: {history[0].sets.length}×{lastReps} @ {lastWeight}kg
-            </div>
-          )}
+          <div className="ex-goal-banner">
+            {getExerciseMeta(exercise.sets) && (
+              <span className="ex-goal-meta">Meta: {getExerciseMeta(exercise.sets)}</span>
+            )}
+            {history.length > 0 && formatPrevSummary(history[0].sets) && (
+              <span className="ex-goal-prev">Semana passada: {formatPrevSummary(history[0].sets)}</span>
+            )}
+          </div>
           {sets.map((set, idx) => (
             <SetRow
               key={set.id}
@@ -174,12 +193,6 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
               onDelete={() => onDeleteSet(exercise.id, set.id)}
             />
           ))}
-          <button
-            className="training-add-set-btn ex-add-extra-btn"
-            onClick={() => onAddSet(exercise.id, parseDefaultReps(lastReps), lastWeight)}
-          >
-            <Plus size={13} /> Série extra
-          </button>
         </div>
       )}
     </div>
@@ -509,8 +522,10 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
   const [editWeekDay, setEditWeekDay] = useState(day.weekDay ?? 1)
   const [showCardioForm, setShowCardioForm] = useState(false)
   const [cardioType, setCardioType] = useState('Corrida')
+  const [cardioHrs, setCardioHrs] = useState(0)
   const [cardioDur, setCardioDur] = useState(30)
-  const [cardioDist, setCardioDist] = useState(0)
+  const [cardioSpeed, setCardioSpeed] = useState(0)
+  const cardioDist = +((cardioHrs + cardioDur / 60) * cardioSpeed).toFixed(2)
 
   const startEdit = () => {
     setEditLabel(day.label)
@@ -589,8 +604,10 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           {(day.plannedCardio || []).map(c => (
             <div key={c.id} className="planned-cardio-row">
               <span className="planned-cardio-type">{c.type}</span>
-              <span className="planned-cardio-detail">{c.durationMin} min</span>
-              {c.distanceKm > 0 && <span className="planned-cardio-detail">{c.distanceKm} km</span>}
+              {(c.durationHrs > 0) && <span className="planned-cardio-detail">{c.durationHrs}h</span>}
+              {(c.durationMin > 0) && <span className="planned-cardio-detail">{c.durationMin}min</span>}
+              {(c.speedKmh > 0) && <span className="planned-cardio-detail">{c.speedKmh}km/h</span>}
+              {(c.distanceKm > 0) && <span className="planned-cardio-detail">= {Number(c.distanceKm).toFixed(1)}km</span>}
               <button className="set-del-btn" onClick={() => onDeletePlannedCardio(c.id)}><X size={10} /></button>
             </div>
           ))}
@@ -598,16 +615,19 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
             <div className="cardio-add-form planned-cardio-form">
               <CustomSelect value={cardioType} onChange={setCardioType} options={CARDIO_TYPES} placeholder="Tipo" />
               <div className="cardio-form-row">
-                <input type="number" className="training-input ex-count-input" min={5} step={5} value={cardioDur} onChange={e => setCardioDur(+e.target.value || 30)} />
+                <input type="number" className="training-input ex-count-input" min={0} step={1} value={cardioHrs} onChange={e => setCardioHrs(+e.target.value || 0)} />
+                <span className="cardio-unit">h</span>
+                <input type="number" className="training-input ex-count-input" min={0} step={5} value={cardioDur} onChange={e => setCardioDur(+e.target.value || 0)} />
                 <span className="cardio-unit">min</span>
-                <input type="number" className="training-input ex-count-input" min={0} step={0.5} value={cardioDist} onChange={e => setCardioDist(+e.target.value || 0)} />
-                <span className="cardio-unit">km</span>
+                <input type="number" className="training-input ex-count-input" min={0} step={0.5} value={cardioSpeed} onChange={e => setCardioSpeed(+e.target.value || 0)} />
+                <span className="cardio-unit">km/h</span>
+                {cardioDist > 0 && <span className="cardio-dist-auto">{cardioDist.toFixed(1)} km</span>}
               </div>
               <div className="add-ex-actions">
                 <button className="training-add-set-btn" onClick={() => {
-                  onAddPlannedCardio({ type: cardioType, durationMin: cardioDur, distanceKm: cardioDist })
+                  onAddPlannedCardio({ type: cardioType, durationHrs: cardioHrs, durationMin: cardioDur, speedKmh: cardioSpeed, distanceKm: cardioDist })
                   setShowCardioForm(false)
-                  setCardioDur(30); setCardioDist(0)
+                  setCardioHrs(0); setCardioDur(30); setCardioSpeed(0)
                 }}>Salvar</button>
                 <button className="set-del-btn" onClick={() => setShowCardioForm(false)}><X size={14} /></button>
               </div>
@@ -655,11 +675,11 @@ function RoutineCard({
           </div>
         ) : (
           <>
-            <div className="routine-card-title">
+            <div className="routine-card-title-centered">
               <span className="routine-card-name">{routine.name}</span>
               {isActive && <span className="routine-active-badge">ativa</span>}
             </div>
-            <div className="routine-card-actions" onClick={e => e.stopPropagation()}>
+            <div className="routine-card-actions routine-card-actions-abs" onClick={e => e.stopPropagation()}>
               <button className="routine-edit-btn" onClick={() => { setEditingName(true); setEditName(routine.name) }}>
                 <Edit2 size={14} />
               </button>
@@ -821,8 +841,10 @@ function RegistrarScreen({ training }) {
   const elapsed = useTimer(!!session && !session?.completed)
   const [showCardioForm, setShowCardioForm] = useState(false)
   const [cardioType, setCardioType] = useState('Corrida')
+  const [cardioHrs, setCardioHrs] = useState(0)
   const [cardioDur, setCardioDur] = useState(30)
-  const [cardioDist, setCardioDist] = useState(0)
+  const [cardioSpeed, setCardioSpeed] = useState(0)
+  const cardioDist = +((cardioHrs + cardioDur / 60) * cardioSpeed).toFixed(2)
 
   if (!activeRoutine) {
     return (
@@ -896,7 +918,6 @@ function RegistrarScreen({ training }) {
       {/* Timer Hero */}
       <div className="session-timer-hero">
         <div className="timer-hero-clock">
-          <Clock size={16} className="timer-hero-icon" />
           <span className="timer-hero-time">{formatDuration(elapsed)}</span>
         </div>
         <div className="timer-hero-info">
@@ -936,16 +957,24 @@ function RegistrarScreen({ training }) {
             <Plus size={14} /> Adicionar
           </button>
         </div>
-        {session.cardio.map(c => (
-          <div key={c.id} className="cardio-row">
-            <span className="cardio-type">{c.type}</span>
-            <Stepper value={c.durationMin} onChange={v => updateCardio(session.id, c.id, { durationMin: v })} step={5} min={5} />
-            <span className="cardio-unit">min</span>
-            <Stepper value={c.distanceKm} onChange={v => updateCardio(session.id, c.id, { distanceKm: v })} step={0.5} min={0} decimals={1} />
-            <span className="cardio-unit">km</span>
-            <button className="set-del-btn" onClick={() => deleteCardio(session.id, c.id)}><X size={12} /></button>
-          </div>
-        ))}
+        {session.cardio.map(c => {
+          const h = c.durationHrs ?? 0
+          const m = c.durationMin ?? 30
+          const s = c.speedKmh ?? 0
+          return (
+            <div key={c.id} className="cardio-row">
+              <span className="cardio-type">{c.type}</span>
+              <Stepper value={h} onChange={v => updateCardio(session.id, c.id, { durationHrs: v, distanceKm: +((v + m / 60) * s).toFixed(2) })} step={1} min={0} />
+              <span className="cardio-unit">h</span>
+              <Stepper value={m} onChange={v => updateCardio(session.id, c.id, { durationMin: v, distanceKm: +((h + v / 60) * s).toFixed(2) })} step={5} min={0} />
+              <span className="cardio-unit">min</span>
+              <Stepper value={s} onChange={v => updateCardio(session.id, c.id, { speedKmh: v, distanceKm: +((h + m / 60) * v).toFixed(2) })} step={0.5} min={0} decimals={1} />
+              <span className="cardio-unit">km/h</span>
+              {c.distanceKm > 0 && <span className="cardio-dist-auto">{Number(c.distanceKm).toFixed(1)} km</span>}
+              <button className="set-del-btn" onClick={() => deleteCardio(session.id, c.id)}><X size={12} /></button>
+            </div>
+          )
+        })}
         {showCardioForm && (
           <div className="cardio-add-form">
             <CustomSelect
@@ -955,14 +984,18 @@ function RegistrarScreen({ training }) {
               placeholder="Tipo"
             />
             <div className="cardio-form-row">
-              <Stepper value={cardioDur} onChange={setCardioDur} step={5} min={5} />
-              <span>min</span>
-              <Stepper value={cardioDist} onChange={setCardioDist} step={0.5} min={0} decimals={1} />
-              <span>km</span>
+              <Stepper value={cardioHrs} onChange={setCardioHrs} step={1} min={0} />
+              <span className="cardio-unit">h</span>
+              <Stepper value={cardioDur} onChange={setCardioDur} step={5} min={0} />
+              <span className="cardio-unit">min</span>
+              <Stepper value={cardioSpeed} onChange={setCardioSpeed} step={0.5} min={0} decimals={1} />
+              <span className="cardio-unit">km/h</span>
+              {cardioDist > 0 && <span className="cardio-dist-auto">{cardioDist.toFixed(1)} km</span>}
             </div>
             <button className="training-add-set-btn" onClick={() => {
-              addCardio(session.id, cardioType, cardioDur, cardioDist)
+              addCardio(session.id, cardioType, cardioHrs, cardioDur, cardioSpeed)
               setShowCardioForm(false)
+              setCardioHrs(0); setCardioDur(30); setCardioSpeed(0)
             }}>
               Confirmar
             </button>
