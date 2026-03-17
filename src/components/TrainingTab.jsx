@@ -761,6 +761,8 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
             equipment={EQUIPMENT}
           />
         ))}
+      </div>
+      <div className="training-day-footer">
         <AddExerciseForm
           onAdd={(name, muscle, equip, sets) => onAddExercise(name, muscle, equip, sets)}
           muscleGroups={MUSCLE_GROUPS}

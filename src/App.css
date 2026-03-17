@@ -5408,3 +5408,36 @@ kbd {
   padding: 20px 20px 16px !important;
   margin-bottom: 12px !important;
 }
+
+/* ────────────────────────────────────────────────────────────── */
+/* REFINAMENTO UI – Batch 7                                       */
+/* ────────────────────────────────────────────────────────────── */
+
+/* 1. Compactar linhas de série no Registrar */
+.training-set-row {
+  padding: 5px 6px !important;
+  gap: 6px !important;
+}
+.set-row-main-col { gap: 2px !important; }
+.set-row-main-col .set-row-fields { gap: 4px !important; }
+
+/* 2. Centralizar botão "+ Adicionar exercício" */
+.routine-add-ex-btn {
+  align-self: center !important;
+  display: flex !important;
+  justify-content: center !important;
+  width: auto !important;
+}
+
+/* 3. Centralizar header do cardio planejado */
+.day-cardio-header { justify-content: center !important; }
+
+/* 4. Flex footer para alinhar linha do cardio entre cards */
+.training-day-card { height: 100% !important; }
+.training-day-exercises { flex: 1 !important; }
+.training-day-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 4px;
+}
