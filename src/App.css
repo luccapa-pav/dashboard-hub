@@ -5139,7 +5139,7 @@ kbd {
 .routine-exercise-row {
   padding: 11px 14px !important;
   gap: 10px !important;
-  align-items: flex-start !important;
+  align-items: center !important;
 }
 .routine-ex-name {
   font-size: 13px !important;
@@ -5148,8 +5148,22 @@ kbd {
   white-space: normal !important;
   line-height: 1.3;
 }
-.routine-ex-tags { margin-top: 2px !important; }
-.routine-ex-sets-display { margin-top: 3px !important; }
+.routine-ex-tags { margin-top: 4px !important; }
+.routine-ex-sets-display {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  align-items: flex-end !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+.routine-ex-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
 .routine-ex-set-chip {
   display: inline-flex !important;
   align-items: center !important;
