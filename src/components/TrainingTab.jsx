@@ -214,7 +214,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
   const [justChecked, setJustChecked] = useState(false)
   return (
     <div className={`training-set-row${set.completed ? ' set-done' : ''}${justChecked ? ' set-just-checked' : ''}`}>
-      <span className="set-num">Série {set.setNumber}</span>
+      <span className="set-num">{set.setNumber}ª SÉRIE</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
           <div className="set-field-wrap">
@@ -228,9 +228,6 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
           </div>
           <span className="set-sep">×</span>
           <div className="set-field-wrap">
-            {prevSet && !set.completed && (
-              <span className="set-ghost-hint">↺ {Number(prevSet.weightKg).toFixed(1)}kg</span>
-            )}
             <div className="set-field-compact">
               <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
               <span className="set-unit-label">kg</span>
@@ -247,6 +244,15 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
           </div>
         )}
       </div>
+      {prevSet && !set.completed && (
+        <div className="set-prev-panel">
+          <span className="set-prev-panel-icon">↺</span>
+          <div className="set-prev-panel-data">
+            <span className="set-prev-panel-label">Anterior</span>
+            <span className="set-prev-panel-values">{prevSet.reps} reps • {Number(prevSet.weightKg).toFixed(1)} kg</span>
+          </div>
+        </div>
+      )}
       <div className="set-meta-col">
         {isPR && set.weightKg > 0 && (
           <span className="set-pr-badge" title="Personal Record!">🏆 PR</span>

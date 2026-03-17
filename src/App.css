@@ -5564,16 +5564,68 @@ kbd {
   max-width: 1100px !important;
 }
 
-/* ── Batch 10: "Série N" label destacado ────────────────────── */
+/* ── Batch 10 → 11: ordinal badge + prev panel ──────────────── */
+
+/* 1. Ordinal badge "1ª SÉRIE" */
 .set-num {
-  font-size: 11px !important;
-  font-weight: 700 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
   color: var(--accent) !important;
-  background: color-mix(in srgb, var(--accent) 12%, transparent) !important;
+  background: color-mix(in srgb, var(--accent) 14%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent) !important;
   border-radius: 6px !important;
-  padding: 2px 7px !important;
+  padding: 3px 8px !important;
   min-width: unset !important;
   white-space: nowrap !important;
-  letter-spacing: 0.02em !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
   flex-shrink: 0 !important;
+}
+
+/* 2. Painel de Desafio Anterior */
+.set-prev-panel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(34, 197, 94, 0.09);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: 8px;
+  padding: 4px 9px;
+  flex-shrink: 0;
+  min-width: 96px;
+}
+.set-prev-panel-icon {
+  font-size: 13px;
+  color: #22c55e;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.set-prev-panel-data {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.set-prev-panel-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #22c55e;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.8;
+  line-height: 1;
+}
+.set-prev-panel-values {
+  font-size: 12px;
+  font-weight: 700;
+  color: #22c55e;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* 3. Compactação da linha */
+.training-set-row {
+  padding: 5px 4px !important;
+}
+.set-row-main-col {
+  gap: 1px !important;
 }
