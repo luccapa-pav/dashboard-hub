@@ -217,19 +217,26 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
       <span className="set-num">S{set.setNumber}</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
-          <div className="set-field-compact">
-            <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
-            <span className="set-unit-label">reps</span>
+          <div className="set-field-wrap">
+            {plannedReps && !set.completed && (
+              <span className="set-ghost-hint">Meta: {plannedReps}</span>
+            )}
+            <div className="set-field-compact">
+              <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
+              <span className="set-unit-label">reps</span>
+            </div>
           </div>
           <span className="set-sep">×</span>
-          <div className="set-field-compact">
-            <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
-            <span className="set-unit-label">kg</span>
+          <div className="set-field-wrap">
+            {prevSet && !set.completed && (
+              <span className="set-ghost-hint">↺ {Number(prevSet.weightKg).toFixed(1)}kg</span>
+            )}
+            <div className="set-field-compact">
+              <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
+              <span className="set-unit-label">kg</span>
+            </div>
           </div>
         </div>
-        {prevSet && (
-          <span className="set-prev-inline">Anterior: {prevSet.reps} reps @ {Number(prevSet.weightKg).toFixed(1)}kg</span>
-        )}
         {weightSuggestions.length > 0 && !set.completed && (
           <div className="weight-chips">
             {weightSuggestions.map((w, i) => (
@@ -243,9 +250,6 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
       <div className="set-meta-col">
         {isPR && set.weightKg > 0 && (
           <span className="set-pr-badge" title="Personal Record!">🏆 PR</span>
-        )}
-        {!isPR && plannedReps && (
-          <span className="set-meta-goal" title="Meta planejada">↗{plannedReps}</span>
         )}
         {set.completed && set.weightKg > 0 && set.reps > 1 && (
           <span className="set-1rm" title="1RM estimado (Epley)">
