@@ -60,6 +60,26 @@ function formatDate(iso) {
   return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
 }
 
+// Counts consecutive days with at least one completed session (going back from today)
+function calcStreak(sessions) {
+  const completed = sessions.filter(s => s.completed)
+  if (completed.length === 0) return 0
+  const trainingDays = new Set(completed.map(s => new Date(s.startedAt).toDateString()))
+  let streak = 0
+  const today = new Date()
+  for (let i = 0; i <= 365; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() - i)
+    const key = d.toDateString()
+    if (trainingDays.has(key)) {
+      streak++
+    } else if (i > 0) {
+      break
+    }
+  }
+  return streak
+}
+
 function calcVolume(sets) {
   return Object.values(sets || {}).flat().reduce((acc, s) => acc + (s.reps * s.weightKg), 0)
 }
@@ -168,7 +188,7 @@ function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
 
 // ── SetRow ────────────────────────────────────────────────────
 // ── SetRow ────────────────────────────────────────────────────
-function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, isPR }) {
+function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, isPR, weightSuggestions = [] }) {
   return (
     <div className={`training-set-row${set.completed ? ' set-done' : ''}`}>
       <span className="set-num">S{set.setNumber}</span>
@@ -182,6 +202,15 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
           <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
           <span className="set-unit-label">kg</span>
         </div>
+        {weightSuggestions.length > 0 && !set.completed && (
+          <div className="weight-chips">
+            {weightSuggestions.map((w, i) => (
+              <button key={i} className="weight-chip" onClick={() => onUpdate({ weightKg: w })}>
+                {Number(w).toFixed(1)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="set-meta-col">
         {isPR && set.weightKg > 0 && (
@@ -192,6 +221,11 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
         )}
         {prevSet && (
           <span className="set-meta-prev" title="Treino anterior">{prevSet.reps}×{Number(prevSet.weightKg).toFixed(1)}kg</span>
+        )}
+        {set.completed && set.weightKg > 0 && set.reps > 1 && (
+          <span className="set-1rm" title="1RM estimado (Epley)">
+            ~{Math.round(set.weightKg * (1 + set.reps / 30))}kg
+          </span>
         )}
       </div>
       <button
@@ -235,6 +269,11 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
     return Math.max(best, maxW)
   }, 0)
 
+  const weightSuggestions = [...new Set(
+    history.flatMap(h => (h.sets || []).map(s => s.weightKg))
+      .filter(w => w > 0)
+  )].slice(0, 3)
+
   return (
     <div className={`training-exercise-card${allDone ? ' ex-card-done' : ''}`}>
       <div className="ex-card-header" onClick={() => setExpanded(e => !e)}>
@@ -272,6 +311,7 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
               onDelete={() => onDeleteSet(exercise.id, set.id)}
               onCompleted={() => restTimer?.start(90)}
               isPR={set.completed && set.weightKg > 0 && set.weightKg > bestHistWeight}
+              weightSuggestions={weightSuggestions}
             />
           ))}
         </div>
@@ -915,7 +955,10 @@ function RegistrarScreen({ training }) {
     addCardio, updateCardio, deleteCardio,
     exerciseHistory,
     updateSession,
+    sessions,
   } = training
+
+  const startScreenStreak = calcStreak(sessions || [])
 
   const [manualDay, setManualDay] = useState(null)
   const session = todaySession
@@ -979,6 +1022,9 @@ function RegistrarScreen({ training }) {
 
     return (
       <div className="training-start-screen">
+        {startScreenStreak > 1 && (
+          <div className="start-streak-pill">🔥 {startScreenStreak} dias seguidos</div>
+        )}
         <div className="training-start-info">
           <Dumbbell size={32} strokeWidth={1.2} />
           <h3>{activeRoutine.name}</h3>
@@ -995,6 +1041,9 @@ function RegistrarScreen({ training }) {
   const sessionExercises = activeDay?.exercises || []
   const completedSets = Object.values(session.sets).flat().filter(s => s.completed).length
   const totalSets     = Object.values(session.sets).flat().length
+  const liveVolume = Object.values(session.sets).flat()
+    .filter(s => s.completed && s.weightKg > 0)
+    .reduce((a, s) => a + (s.reps || 0) * (s.weightKg || 0), 0)
 
   return (
     <div className="training-registrar">
@@ -1007,6 +1056,9 @@ function RegistrarScreen({ training }) {
         <div className="timer-hero-info">
           {activeDay && <span className="timer-hero-day">{activeDay.label}</span>}
           <span className="timer-hero-sets">{completedSets}/{totalSets} séries concluídas</span>
+          {liveVolume > 0 && (
+            <span className="timer-hero-volume">{liveVolume.toFixed(0)} kg vol.</span>
+          )}
         </div>
         <button className="session-abort-btn-hero" onClick={() => { if (confirm('Cancelar treino?')) deleteSession(session.id) }}>
           <X size={13} /> Cancelar
@@ -1237,8 +1289,21 @@ function HistoricoScreen({ training }) {
   const { sessions, currentWeekSessions, deleteSession } = training
   const completed = [...sessions].filter(s => s.completed).reverse()
 
+  const streak = calcStreak(sessions)
+
   return (
     <div className="training-historico">
+      {streak > 0 && (
+        <div className="streak-banner">
+          <span className="streak-fire">🔥</span>
+          <div className="streak-info">
+            <span className="streak-count">{streak}</span>
+            <span className="streak-label">dia{streak !== 1 ? 's' : ''} seguido{streak !== 1 ? 's' : ''}</span>
+          </div>
+          {streak >= 7 && <span className="streak-badge">Semana completa!</span>}
+          {streak >= 30 && <span className="streak-badge streak-badge-gold">Mês épico! 🏆</span>}
+        </div>
+      )}
       <WeekSummaryBar sessions={completed} />
       <div className="historico-stats">
         <div className="hstat">

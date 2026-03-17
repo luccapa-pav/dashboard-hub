@@ -4723,3 +4723,106 @@ kbd {
   margin-top: 4px;
 }
 .summary-close-btn:hover { background: var(--accent-hi); }
+
+/* ── Streak Banner (HistoricoScreen) ─────────────────────────── */
+.streak-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(196,25,48,0.12) 0%, rgba(196,25,48,0.06) 100%);
+  border: 1px solid rgba(196,25,48,0.25);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  animation: fadeInUp 0.3s ease both;
+}
+.streak-fire { font-size: 28px; line-height: 1; }
+.streak-info { display: flex; align-items: baseline; gap: 6px; flex: 1; }
+.streak-count {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--white);
+  font-family: 'Montserrat', system-ui, sans-serif;
+  line-height: 1;
+}
+.streak-label {
+  font-size: 13px;
+  color: var(--text-mid);
+  font-weight: 500;
+}
+.streak-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-hi);
+  background: var(--accent-dim);
+  border: 1px solid rgba(196,25,48,0.3);
+  border-radius: 6px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.streak-badge-gold {
+  color: #fbbf24;
+  background: rgba(251,191,36,0.1);
+  border-color: rgba(251,191,36,0.3);
+}
+
+/* ── Streak pill on start screen ─────────────────────────────── */
+.start-streak-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(196,25,48,0.1);
+  border: 1px solid rgba(196,25,48,0.25);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-hi);
+  margin-bottom: 16px;
+  animation: fadeInUp 0.3s ease both;
+}
+
+/* ── Live volume in timer ────────────────────────────────────── */
+.timer-hero-volume {
+  font-size: 11px;
+  font-weight: 700;
+  color: #22c55e;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+/* ── Weight suggestion chips ─────────────────────────────────── */
+.weight-chips {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.weight-chip {
+  background: var(--bg-card-h);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-mid);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.1s;
+}
+.weight-chip:hover {
+  border-color: var(--accent);
+  color: var(--white);
+  background: var(--accent-dim);
+}
+
+/* ── 1RM estimator ───────────────────────────────────────────── */
+.set-1rm {
+  font-size: 9px;
+  font-weight: 700;
+  color: #60a5fa;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  opacity: 0.85;
+}
