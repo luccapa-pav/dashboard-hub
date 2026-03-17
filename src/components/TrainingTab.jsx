@@ -3,6 +3,12 @@ import { Dumbbell, Plus, Trash2, ChevronDown, ChevronUp, Play, Check, X, Clock, 
 import { useTraining } from '../hooks/useTraining'
 
 // ── Helpers ───────────────────────────────────────────────────
+function parseDefaultReps(val) {
+  if (typeof val === 'number') return val
+  const n = parseInt(String(val), 10)
+  return isNaN(n) ? 12 : n
+}
+
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
@@ -106,7 +112,7 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
           ))}
           <button
             className="training-add-set-btn"
-            onClick={() => onAddSet(exercise.id, lastReps, lastWeight)}
+            onClick={() => onAddSet(exercise.id, parseDefaultReps(lastReps), lastWeight)}
           >
             <Plus size={14} /> Adicionar série
           </button>
@@ -138,11 +144,49 @@ function DaySelector({ selected, onChange, days }) {
   )
 }
 
+// ── CustomSelect ──────────────────────────────────────────────
+function CustomSelect({ value, onChange, options, placeholder = 'Selecionar' }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div className="cs-wrap" ref={ref}>
+      <button type="button" className="add-select-btn" onClick={() => setOpen(v => !v)}>
+        <span className={value ? '' : 'cs-placeholder'}>{value || placeholder}</span>
+        <ChevronDown size={13} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+      </button>
+      {open && (
+        <div className="sf-dropdown">
+          {options.map(opt => (
+            <button key={opt} type="button"
+              className={`sf-item${value === opt ? ' sf-item-active' : ''}`}
+              onClick={() => { onChange(opt); setOpen(false) }}
+            >
+              {opt}
+              {value === opt && <Check size={12} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── AddExerciseForm ───────────────────────────────────────────
 function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
   const [name, setName] = useState('')
   const [muscle, setMuscle] = useState('')
   const [equip, setEquip] = useState('')
+  const [defaultSets, setDefaultSets] = useState(3)
+  const [defaultReps, setDefaultReps] = useState('12')
+  const [defaultWeight, setDefaultWeight] = useState(0)
   const [open, setOpen] = useState(false)
 
   if (!open) {
@@ -162,19 +206,32 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
         onChange={e => setName(e.target.value)}
         autoFocus
       />
-      <select className="training-select" value={muscle} onChange={e => setMuscle(e.target.value)}>
-        <option value="">Grupo muscular</option>
-        {muscleGroups.map(m => <option key={m}>{m}</option>)}
-      </select>
-      <select className="training-select" value={equip} onChange={e => setEquip(e.target.value)}>
-        <option value="">Equipamento</option>
-        {equipment.map(eq => <option key={eq}>{eq}</option>)}
-      </select>
+      <CustomSelect value={muscle} onChange={setMuscle} options={muscleGroups} placeholder="Grupo muscular" />
+      <CustomSelect value={equip} onChange={setEquip} options={equipment} placeholder="Equipamento" />
+      <div className="add-ex-defaults-row">
+        <div className="add-ex-field">
+          <label className="add-ex-field-label">Séries</label>
+          <input type="number" className="training-input add-ex-num-input" min={1} max={10}
+            value={defaultSets} onChange={e => setDefaultSets(+e.target.value)} />
+        </div>
+        <div className="add-ex-field">
+          <label className="add-ex-field-label">Reps</label>
+          <input type="text" className="training-input" placeholder="ex: 12 ou 8-10"
+            value={defaultReps} onChange={e => setDefaultReps(e.target.value)} />
+        </div>
+        <div className="add-ex-field">
+          <label className="add-ex-field-label">kg</label>
+          <input type="number" className="training-input add-ex-num-input" min={0} step={0.5}
+            value={defaultWeight} onChange={e => setDefaultWeight(+e.target.value)} />
+        </div>
+      </div>
       <div className="add-ex-actions">
         <button className="training-add-set-btn" onClick={() => {
           if (!name.trim()) return
-          onAdd(name.trim(), muscle, equip)
-          setName(''); setMuscle(''); setEquip(''); setOpen(false)
+          onAdd(name.trim(), muscle, equip, defaultSets, defaultReps.trim() || '12', defaultWeight)
+          setName(''); setMuscle(''); setEquip('')
+          setDefaultSets(3); setDefaultReps('12'); setDefaultWeight(0)
+          setOpen(false)
         }}>
           Salvar
         </button>
@@ -214,7 +271,71 @@ function AddTrainingDayForm({ onAdd, onCancel, DAYS }) {
 }
 
 // ── ExerciseRowInRoutine ──────────────────────────────────────
-function ExerciseRowInRoutine({ exercise, onDelete }) {
+function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equipment }) {
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editMuscle, setEditMuscle] = useState('')
+  const [editEquip, setEditEquip] = useState('')
+  const [editSets, setEditSets] = useState(3)
+  const [editReps, setEditReps] = useState('12')
+  const [editWeight, setEditWeight] = useState(0)
+
+  const startEdit = () => {
+    setEditName(exercise.name)
+    setEditMuscle(exercise.muscleGroup || '')
+    setEditEquip(exercise.equipment || '')
+    setEditSets(exercise.defaultSets || 3)
+    setEditReps(String(exercise.defaultReps ?? '12'))
+    setEditWeight(exercise.defaultWeight || 0)
+    setEditing(true)
+  }
+
+  const saveEdit = () => {
+    if (!editName.trim()) return
+    onUpdate({
+      name: editName.trim(),
+      muscleGroup: editMuscle,
+      equipment: editEquip,
+      defaultSets: editSets,
+      defaultReps: editReps.trim() || '12',
+      defaultWeight: editWeight,
+    })
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="routine-exercise-edit-form">
+        <input className="training-input" value={editName} onChange={e => setEditName(e.target.value)} autoFocus />
+        <div className="ex-edit-selects">
+          <CustomSelect value={editMuscle} onChange={setEditMuscle} options={muscleGroups} placeholder="Músculo" />
+          <CustomSelect value={editEquip} onChange={setEditEquip} options={equipment} placeholder="Equipamento" />
+        </div>
+        <div className="add-ex-defaults-row">
+          <div className="add-ex-field">
+            <label className="add-ex-field-label">Séries</label>
+            <input type="number" className="training-input add-ex-num-input" min={1} max={10}
+              value={editSets} onChange={e => setEditSets(+e.target.value)} />
+          </div>
+          <div className="add-ex-field">
+            <label className="add-ex-field-label">Reps</label>
+            <input type="text" className="training-input" placeholder="ex: 12 ou 8-10"
+              value={editReps} onChange={e => setEditReps(e.target.value)} />
+          </div>
+          <div className="add-ex-field">
+            <label className="add-ex-field-label">kg</label>
+            <input type="number" className="training-input add-ex-num-input" min={0} step={0.5}
+              value={editWeight} onChange={e => setEditWeight(+e.target.value)} />
+          </div>
+        </div>
+        <div className="add-ex-actions">
+          <button className="training-add-set-btn" onClick={saveEdit}>Salvar</button>
+          <button className="set-del-btn" onClick={() => setEditing(false)}><X size={14} /></button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="routine-exercise-row">
       <div className="routine-ex-info">
@@ -226,6 +347,7 @@ function ExerciseRowInRoutine({ exercise, onDelete }) {
         <span>{exercise.defaultSets}×{exercise.defaultReps}</span>
         {exercise.defaultWeight > 0 && <span> @ {exercise.defaultWeight}kg</span>}
       </div>
+      <button className="routine-edit-btn" onClick={startEdit}><Edit2 size={12} /></button>
       <button className="set-del-btn" onClick={onDelete}>
         <Trash2 size={12} />
       </button>
@@ -234,7 +356,7 @@ function ExerciseRowInRoutine({ exercise, onDelete }) {
 }
 
 // ── TrainingDayCard ───────────────────────────────────────────
-function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
+function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
   const [editingLabel, setEditingLabel] = useState(false)
   const [editLabel, setEditLabel] = useState('')
 
@@ -287,10 +409,13 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
             key={ex.id}
             exercise={ex}
             onDelete={() => onDeleteExercise(ex.id)}
+            onUpdate={patch => onUpdateExercise(ex.id, patch)}
+            muscleGroups={MUSCLE_GROUPS}
+            equipment={EQUIPMENT}
           />
         ))}
         <AddExerciseForm
-          onAdd={(name, muscle, equip) => onAddExercise(name, muscle, equip)}
+          onAdd={(name, muscle, equip, sets, reps, weight) => onAddExercise(name, muscle, equip, sets, reps, weight)}
           muscleGroups={MUSCLE_GROUPS}
           equipment={EQUIPMENT}
         />
@@ -304,7 +429,7 @@ function RoutineCard({
   routine, expanded, onToggle, onSetActive, isActive,
   onUpdate, onDelete,
   onAddDay, onUpdateDay, onDeleteDay,
-  onAddExercise, onDeleteExercise,
+  onAddExercise, onDeleteExercise, onUpdateExercise,
   MUSCLE_GROUPS, EQUIPMENT, DAYS,
 }) {
   const [editingName, setEditingName] = useState(false)
@@ -364,8 +489,9 @@ function RoutineCard({
               day={day}
               onUpdate={patch => onUpdateDay(day.id, patch)}
               onDelete={() => { if (confirm(`Excluir dia "${day.label}"?`)) onDeleteDay(day.id) }}
-              onAddExercise={(name, muscle, equip) => onAddExercise(day.id, name, muscle, equip)}
+              onAddExercise={(name, muscle, equip, sets, reps, weight) => onAddExercise(day.id, name, muscle, equip, sets, reps, weight)}
               onDeleteExercise={(exId) => onDeleteExercise(day.id, exId)}
+              onUpdateExercise={(exId, patch) => onUpdateExercise(day.id, exId, patch)}
               MUSCLE_GROUPS={MUSCLE_GROUPS}
               EQUIPMENT={EQUIPMENT}
               DAYS={DAYS}
@@ -394,7 +520,7 @@ function RotinasScreen({ training }) {
     routines, activeRoutine, setActiveRoutineId,
     addRoutine, updateRoutine, deleteRoutine,
     addTrainingDay, updateTrainingDay, deleteTrainingDay,
-    addExercise, deleteExercise,
+    addExercise, updateExercise, deleteExercise,
     MUSCLE_GROUPS, EQUIPMENT, DAYS,
   } = training
 
@@ -458,8 +584,9 @@ function RotinasScreen({ training }) {
           onAddDay={(label, weekDays) => addTrainingDay(routine.id, label, weekDays)}
           onUpdateDay={(dayId, patch) => updateTrainingDay(routine.id, dayId, patch)}
           onDeleteDay={(dayId) => deleteTrainingDay(routine.id, dayId)}
-          onAddExercise={(dayId, name, muscle, equip) => addExercise(routine.id, dayId, name, muscle, equip)}
+          onAddExercise={(dayId, name, muscle, equip, sets, reps, weight) => addExercise(routine.id, dayId, name, muscle, equip, sets, reps, weight)}
           onDeleteExercise={(dayId, exId) => deleteExercise(routine.id, dayId, exId)}
+          onUpdateExercise={(dayId, exId, patch) => updateExercise(routine.id, dayId, exId, patch)}
           MUSCLE_GROUPS={MUSCLE_GROUPS}
           EQUIPMENT={EQUIPMENT}
           DAYS={DAYS}
@@ -607,11 +734,12 @@ function RegistrarScreen({ training }) {
         ))}
         {showCardioForm && (
           <div className="cardio-add-form">
-            <select value={cardioType} onChange={e => setCardioType(e.target.value)} className="training-select">
-              {['Corrida', 'Caminhada', 'Bicicleta', 'Elíptico', 'Remo', 'Corda', 'Nadar'].map(t => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
+            <CustomSelect
+              value={cardioType}
+              onChange={setCardioType}
+              options={['Corrida', 'Caminhada', 'Bicicleta', 'Elíptico', 'Remo', 'Corda', 'Nadar']}
+              placeholder="Tipo"
+            />
             <div className="cardio-form-row">
               <Stepper value={cardioDur} onChange={setCardioDur} step={5} min={5} />
               <span>min</span>
@@ -869,10 +997,12 @@ export function TrainingTab() {
       </div>
 
       <div className="training-content">
-        {activeNav === 'rotina'    && <RotinasScreen    training={training} />}
-        {activeNav === 'registrar' && <RegistrarScreen  training={training} />}
-        {activeNav === 'historico' && <HistoricoScreen  training={training} />}
-        {activeNav === 'avaliacao' && <AIFeedbackPanel  training={training} />}
+        <div className="training-content-inner">
+          {activeNav === 'rotina'    && <RotinasScreen    training={training} />}
+          {activeNav === 'registrar' && <RegistrarScreen  training={training} />}
+          {activeNav === 'historico' && <HistoricoScreen  training={training} />}
+          {activeNav === 'avaliacao' && <AIFeedbackPanel  training={training} />}
+        </div>
       </div>
     </div>
   )

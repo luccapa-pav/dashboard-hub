@@ -54,6 +54,17 @@ function loadData() {
       }
       return r
     })
+    // Migração: defaultReps number → string
+    raw.routines = raw.routines.map(r => ({
+      ...r,
+      trainingDays: (r.trainingDays || []).map(d => ({
+        ...d,
+        exercises: (d.exercises || []).map(e => ({
+          ...e,
+          defaultReps: e.defaultReps !== undefined ? String(e.defaultReps) : '12',
+        })),
+      })),
+    }))
     if (migrated) {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(raw)) } catch { /* quota exceeded */ }
     }
@@ -149,7 +160,11 @@ export function useTraining() {
   }, [save])
 
   // ── Exercises ─────────────────────────────────────────────────
-  const addExercise = useCallback((routineId, trainingDayId, name, muscleGroup = '', equipment = '') => {
+  const addExercise = useCallback((
+    routineId, trainingDayId, name,
+    muscleGroup = '', equipment = '',
+    defaultSets = 3, defaultReps = '12', defaultWeight = 0,
+  ) => {
     save(cur => ({
       ...cur,
       routines: cur.routines.map(r => {
@@ -164,9 +179,9 @@ export function useTraining() {
               muscleGroup,
               equipment,
               order: d.exercises.length,
-              defaultSets: 3,
-              defaultReps: 12,
-              defaultWeight: 0,
+              defaultSets,
+              defaultReps: String(defaultReps),
+              defaultWeight,
             }
             return { ...d, exercises: [...d.exercises, ex] }
           }),

@@ -3782,3 +3782,49 @@ kbd {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* ── Training: max-width centering ───────────────────────────── */
+.training-content-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── CustomSelect ────────────────────────────────────────────── */
+.cs-wrap { position: relative; width: 100%; }
+.cs-placeholder { color: var(--text-mid); }
+
+/* ── Exercise defaults row (AddExerciseForm + edit mode) ─────── */
+.add-ex-defaults-row { display: flex; gap: 8px; align-items: flex-end; }
+.add-ex-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.add-ex-field-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-mid);
+  font-weight: 600;
+}
+.add-ex-num-input { text-align: center; }
+
+/* ── Inline exercise edit form ───────────────────────────────── */
+.routine-exercise-edit-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.ex-edit-selects { display: flex; gap: 8px; }
+.ex-edit-selects .cs-wrap { flex: 1; }
+
+/* ── Light theme: sf-dropdown fix ───────────────────────────── */
+[data-theme="light"] .sf-dropdown {
+  background: var(--bg-card);
+  border-color: var(--border);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 6px 20px rgba(0,0,0,0.08);
+}
