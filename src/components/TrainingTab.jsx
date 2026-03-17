@@ -79,8 +79,8 @@ function SetRow({ set, onUpdate, onDelete }) {
 // ── ExerciseCard (during session) ─────────────────────────────
 function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history }) {
   const [expanded, setExpanded] = useState(true)
-  const lastWeight = history[0]?.sets?.slice(-1)[0]?.weightKg ?? exercise.defaultWeight
-  const lastReps   = history[0]?.sets?.slice(-1)[0]?.reps   ?? exercise.defaultReps
+  const lastWeight = history[0]?.sets?.slice(-1)[0]?.weightKg ?? 0
+  const lastReps   = history[0]?.sets?.slice(-1)[0]?.reps   ?? parseDefaultReps(exercise.sets?.[0]?.reps ?? '12')
 
   return (
     <div className="training-exercise-card">
@@ -183,8 +183,7 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
   const [name, setName] = useState('')
   const [muscle, setMuscle] = useState('')
   const [equip, setEquip] = useState('')
-  const [defaultSets, setDefaultSets] = useState(3)
-  const [defaultReps, setDefaultReps] = useState('12')
+  const [sets, setSets] = useState([{ reps: '12' }, { reps: '12' }, { reps: '12' }])
   const [open, setOpen] = useState(false)
 
   if (!open) {
@@ -194,6 +193,9 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
       </button>
     )
   }
+
+  const updateReps = (idx, reps) => setSets(s => s.map((set, i) => i === idx ? { reps } : set))
+  const removeSet = (idx) => setSets(s => s.filter((_, i) => i !== idx))
 
   return (
     <div className="add-exercise-form">
@@ -206,24 +208,34 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
       />
       <CustomSelect value={muscle} onChange={setMuscle} options={muscleGroups} placeholder="Grupo muscular" />
       <CustomSelect value={equip} onChange={setEquip} options={equipment} placeholder="Equipamento" />
-      <div className="add-ex-defaults-row">
-        <div className="add-ex-field">
-          <label className="add-ex-field-label">Séries</label>
-          <input type="number" className="training-input add-ex-num-input" min={1} max={10}
-            value={defaultSets} onChange={e => setDefaultSets(+e.target.value)} />
-        </div>
-        <div className="add-ex-field">
-          <label className="add-ex-field-label">Reps</label>
-          <input type="text" className="training-input" placeholder="ex: 12 ou 8-10"
-            value={defaultReps} onChange={e => setDefaultReps(e.target.value)} />
-        </div>
+      <div className="ex-sets-editor">
+        <span className="add-ex-field-label">Séries e repetições</span>
+        {sets.map((set, idx) => (
+          <div key={idx} className="ex-set-row">
+            <span className="ex-set-num">S{idx + 1}</span>
+            <input
+              type="text"
+              className="training-input ex-set-reps-input"
+              placeholder="12"
+              value={set.reps}
+              onChange={e => updateReps(idx, e.target.value)}
+            />
+            <span className="ex-set-unit">reps</span>
+            {sets.length > 1 && (
+              <button className="set-del-btn" onClick={() => removeSet(idx)}><X size={10} /></button>
+            )}
+          </div>
+        ))}
+        <button className="ex-add-set-row-btn" onClick={() => setSets(s => [...s, { reps: '12' }])}>
+          <Plus size={12} /> Série
+        </button>
       </div>
       <div className="add-ex-actions">
         <button className="training-add-set-btn" onClick={() => {
           if (!name.trim()) return
-          onAdd(name.trim(), muscle, equip, defaultSets, defaultReps.trim() || '12', 0)
+          onAdd(name.trim(), muscle, equip, sets)
           setName(''); setMuscle(''); setEquip('')
-          setDefaultSets(3); setDefaultReps('12')
+          setSets([{ reps: '12' }, { reps: '12' }, { reps: '12' }])
           setOpen(false)
         }}>
           Salvar
@@ -273,15 +285,17 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
   const [editName, setEditName] = useState('')
   const [editMuscle, setEditMuscle] = useState('')
   const [editEquip, setEditEquip] = useState('')
-  const [editSets, setEditSets] = useState(3)
-  const [editReps, setEditReps] = useState('12')
+  const [editSets, setEditSets] = useState([{ reps: '12' }])
 
   const startEdit = () => {
     setEditName(exercise.name)
     setEditMuscle(exercise.muscleGroup || '')
     setEditEquip(exercise.equipment || '')
-    setEditSets(exercise.defaultSets || 3)
-    setEditReps(String(exercise.defaultReps ?? '12'))
+    setEditSets(
+      Array.isArray(exercise.sets) && exercise.sets.length > 0
+        ? exercise.sets.map(s => ({ reps: String(s.reps) }))
+        : [{ reps: '12' }, { reps: '12' }, { reps: '12' }]
+    )
     setEditing(true)
   }
 
@@ -291,11 +305,13 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
       name: editName.trim(),
       muscleGroup: editMuscle,
       equipment: editEquip,
-      defaultSets: editSets,
-      defaultReps: editReps.trim() || '12',
+      sets: editSets,
     })
     setEditing(false)
   }
+
+  const updateReps = (idx, reps) => setEditSets(s => s.map((set, i) => i === idx ? { reps } : set))
+  const removeSet = (idx) => setEditSets(s => s.filter((_, i) => i !== idx))
 
   if (editing) {
     return (
@@ -305,17 +321,27 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
           <CustomSelect value={editMuscle} onChange={setEditMuscle} options={muscleGroups} placeholder="Músculo" />
           <CustomSelect value={editEquip} onChange={setEditEquip} options={equipment} placeholder="Equipamento" />
         </div>
-        <div className="add-ex-defaults-row">
-          <div className="add-ex-field">
-            <label className="add-ex-field-label">Séries</label>
-            <input type="number" className="training-input add-ex-num-input" min={1} max={10}
-              value={editSets} onChange={e => setEditSets(+e.target.value)} />
-          </div>
-          <div className="add-ex-field">
-            <label className="add-ex-field-label">Reps</label>
-            <input type="text" className="training-input" placeholder="ex: 12 ou 8-10"
-              value={editReps} onChange={e => setEditReps(e.target.value)} />
-          </div>
+        <div className="ex-sets-editor">
+          <span className="add-ex-field-label">Séries e repetições</span>
+          {editSets.map((set, idx) => (
+            <div key={idx} className="ex-set-row">
+              <span className="ex-set-num">S{idx + 1}</span>
+              <input
+                type="text"
+                className="training-input ex-set-reps-input"
+                placeholder="12"
+                value={set.reps}
+                onChange={e => updateReps(idx, e.target.value)}
+              />
+              <span className="ex-set-unit">reps</span>
+              {editSets.length > 1 && (
+                <button className="set-del-btn" onClick={() => removeSet(idx)}><X size={10} /></button>
+              )}
+            </div>
+          ))}
+          <button className="ex-add-set-row-btn" onClick={() => setEditSets(s => [...s, { reps: '12' }])}>
+            <Plus size={12} /> Série
+          </button>
         </div>
         <div className="add-ex-actions">
           <button className="training-add-set-btn" onClick={saveEdit}>Salvar</button>
@@ -325,20 +351,24 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
     )
   }
 
+  const setsData = Array.isArray(exercise.sets) ? exercise.sets : []
+
   return (
     <div className="routine-exercise-row">
       <div className="routine-ex-info">
         <span className="routine-ex-name">{exercise.name}</span>
-        {exercise.muscleGroup && <span className="muscle-badge">{exercise.muscleGroup}</span>}
-        {exercise.equipment && <span className="equip-badge">{exercise.equipment}</span>}
+        <div className="routine-ex-tags">
+          {exercise.muscleGroup && <span className="muscle-badge">{exercise.muscleGroup}</span>}
+          {exercise.equipment && <span className="equip-badge">{exercise.equipment}</span>}
+        </div>
       </div>
-      <div className="routine-ex-defaults">
-        <span>{exercise.defaultSets}×{exercise.defaultReps}</span>
+      <div className="routine-ex-sets-display">
+        {setsData.map((s, i) => (
+          <span key={i} className="routine-ex-set-chip">S{i + 1}:{s.reps}</span>
+        ))}
       </div>
       <button className="routine-edit-btn" onClick={startEdit}><Edit2 size={12} /></button>
-      <button className="set-del-btn" onClick={onDelete}>
-        <Trash2 size={12} />
-      </button>
+      <button className="set-del-btn" onClick={onDelete}><Trash2 size={12} /></button>
     </div>
   )
 }
@@ -409,7 +439,7 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           />
         ))}
         <AddExerciseForm
-          onAdd={(name, muscle, equip, sets, reps, weight) => onAddExercise(name, muscle, equip, sets, reps, weight)}
+          onAdd={(name, muscle, equip, sets) => onAddExercise(name, muscle, equip, sets)}
           muscleGroups={MUSCLE_GROUPS}
           equipment={EQUIPMENT}
         />
@@ -484,7 +514,7 @@ function RoutineCard({
                 day={day}
                 onUpdate={patch => onUpdateDay(day.id, patch)}
                 onDelete={() => { if (confirm(`Excluir dia "${day.label}"?`)) onDeleteDay(day.id) }}
-                onAddExercise={(name, muscle, equip, sets, reps, weight) => onAddExercise(day.id, name, muscle, equip, sets, reps, weight)}
+                onAddExercise={(name, muscle, equip, sets) => onAddExercise(day.id, name, muscle, equip, sets)}
                 onDeleteExercise={(exId) => onDeleteExercise(day.id, exId)}
                 onUpdateExercise={(exId, patch) => onUpdateExercise(day.id, exId, patch)}
                 MUSCLE_GROUPS={MUSCLE_GROUPS}
@@ -492,19 +522,22 @@ function RoutineCard({
                 DAYS={DAYS}
               />
             ))}
+            {showAddDay ? (
+              <div className="training-day-card add-day-form-card">
+                <AddTrainingDayForm
+                  onAdd={(label, weekDay) => { onAddDay(label, weekDay); setShowAddDay(false) }}
+                  onCancel={() => setShowAddDay(false)}
+                  DAYS={DAYS}
+                  usedDays={trainingDays.map(d => d.weekDay).filter(d => d !== undefined)}
+                />
+              </div>
+            ) : (
+              <button className="add-day-ghost-card" onClick={() => setShowAddDay(true)}>
+                <Plus size={22} />
+                <span>Adicionar dia de treino</span>
+              </button>
+            )}
           </div>
-          {showAddDay ? (
-            <AddTrainingDayForm
-              onAdd={(label, weekDay) => { onAddDay(label, weekDay); setShowAddDay(false) }}
-              onCancel={() => setShowAddDay(false)}
-              DAYS={DAYS}
-              usedDays={trainingDays.map(d => d.weekDay).filter(d => d !== undefined)}
-            />
-          ) : (
-            <button className="training-add-set-btn add-day-btn" onClick={() => setShowAddDay(true)}>
-              <Plus size={14} /> Adicionar dia de treino
-            </button>
-          )}
         </div>
       )}
     </div>
@@ -581,7 +614,7 @@ function RotinasScreen({ training }) {
           onAddDay={(label, weekDay) => addTrainingDay(routine.id, label, weekDay)}
           onUpdateDay={(dayId, patch) => updateTrainingDay(routine.id, dayId, patch)}
           onDeleteDay={(dayId) => deleteTrainingDay(routine.id, dayId)}
-          onAddExercise={(dayId, name, muscle, equip, sets, reps, weight) => addExercise(routine.id, dayId, name, muscle, equip, sets, reps, weight)}
+          onAddExercise={(dayId, name, muscle, equip, sets) => addExercise(routine.id, dayId, name, muscle, equip, sets)}
           onDeleteExercise={(dayId, exId) => deleteExercise(routine.id, dayId, exId)}
           onUpdateExercise={(dayId, exId, patch) => updateExercise(routine.id, dayId, exId, patch)}
           MUSCLE_GROUPS={MUSCLE_GROUPS}
@@ -979,18 +1012,20 @@ export function TrainingTab() {
   return (
     <div className="training-tab">
       <div className="training-nav">
-        {NAV_TABS.map(t => (
-          <button
-            key={t.id}
-            className={`training-nav-btn${activeNav === t.id ? ' training-nav-active' : ''}`}
-            onClick={() => setActiveNav(t.id)}
-          >
-            {t.label}
-            {t.id === 'registrar' && training.todaySession && (
-              <span className="training-nav-dot" />
-            )}
-          </button>
-        ))}
+        <div className="training-nav-inner">
+          {NAV_TABS.map(t => (
+            <button
+              key={t.id}
+              className={`training-nav-btn${activeNav === t.id ? ' training-nav-active' : ''}`}
+              onClick={() => setActiveNav(t.id)}
+            >
+              {t.label}
+              {t.id === 'registrar' && training.todaySession && (
+                <span className="training-nav-dot" />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="training-content">

@@ -13,7 +13,7 @@ const MUSCLE_GROUPS = [
   'Peito', 'Costas', 'Latíssimo', 'Ombros', 'Trapézio', 'Rombóide',
   'Bíceps', 'Tríceps', 'Antebraço',
   'Abdômen', 'Oblíquos', 'Lombar',
-  'Quadríceps', 'Isquiotibiais', 'Glúteos', 'Panturrilha', 'Adutores',
+  'Quadríceps', 'Isquiotibiais', 'Glúteos', 'Panturrilha', 'Adutores', 'Abdutores',
   'Cardio',
 ]
 
@@ -56,8 +56,7 @@ function loadData() {
       }
       return r
     })
-    // Migração: defaultReps number → string
-    // Migração: weekDays[] → weekDay (único dia por bloco de treino)
+    // Migração: weekDays[] → weekDay; defaultSets/defaultReps → sets[]
     raw.routines = raw.routines.map(r => ({
       ...r,
       trainingDays: (r.trainingDays || []).map((d, i) => ({
@@ -65,10 +64,12 @@ function loadData() {
         weekDay: d.weekDay !== undefined
           ? d.weekDay
           : (Array.isArray(d.weekDays) && d.weekDays.length > 0 ? d.weekDays[0] : ((i % 6) + 1)),
-        exercises: (d.exercises || []).map(e => ({
-          ...e,
-          defaultReps: e.defaultReps !== undefined ? String(e.defaultReps) : '12',
-        })),
+        exercises: (d.exercises || []).map(e => {
+          if (e.sets) return e
+          const n = e.defaultSets || 3
+          const r = String(e.defaultReps !== undefined ? e.defaultReps : '12')
+          return { ...e, sets: Array.from({ length: n }, () => ({ reps: r })) }
+        }),
       })),
     }))
     if (migrated) {
@@ -169,7 +170,7 @@ export function useTraining() {
   const addExercise = useCallback((
     routineId, trainingDayId, name,
     muscleGroup = '', equipment = '',
-    defaultSets = 3, defaultReps = '12', defaultWeight = 0,
+    sets = [{ reps: '12' }, { reps: '12' }, { reps: '12' }],
   ) => {
     save(cur => ({
       ...cur,
@@ -185,9 +186,7 @@ export function useTraining() {
               muscleGroup,
               equipment,
               order: d.exercises.length,
-              defaultSets,
-              defaultReps: String(defaultReps),
-              defaultWeight,
+              sets,
             }
             return { ...d, exercises: [...d.exercises, ex] }
           }),
