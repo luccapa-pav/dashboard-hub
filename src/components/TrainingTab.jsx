@@ -79,6 +79,61 @@ function useTimer(running) {
   return elapsed
 }
 
+// ── Rest Timer Hook ───────────────────────────────────────────
+function useRestTimer() {
+  const [restSecs, setRestSecs] = useState(0)
+  const [restRunning, setRestRunning] = useState(false)
+  const ref = useRef(null)
+
+  const start = useCallback((duration = 90) => {
+    setRestSecs(duration)
+    setRestRunning(true)
+  }, [])
+
+  const stop = useCallback(() => {
+    setRestRunning(false)
+    setRestSecs(0)
+    clearInterval(ref.current)
+  }, [])
+
+  useEffect(() => {
+    if (restRunning && restSecs > 0) {
+      ref.current = setInterval(() => {
+        setRestSecs(s => {
+          if (s <= 1) { clearInterval(ref.current); setRestRunning(false); return 0 }
+          return s - 1
+        })
+      }, 1000)
+    }
+    return () => clearInterval(ref.current)
+  }, [restRunning])
+
+  return { restSecs, restRunning, start, stop }
+}
+
+// ── Rest Timer Bar ────────────────────────────────────────────
+const REST_PRESETS = [60, 90, 120]
+
+function RestTimerBar({ restSecs, restRunning, onStop, onPreset }) {
+  if (!restRunning && restSecs === 0) return null
+  const pct = Math.round((restSecs / 120) * 100)
+  return (
+    <div className="rest-timer-bar">
+      <div className="rest-timer-progress" style={{ width: `${Math.min(pct, 100)}%` }} />
+      <div className="rest-timer-content">
+        <span className="rest-timer-label">Descanso</span>
+        <span className="rest-timer-count">{restSecs}s</span>
+        <div className="rest-timer-presets">
+          {REST_PRESETS.map(p => (
+            <button key={p} className="rest-preset-btn" onClick={() => onPreset(p)}>{p}s</button>
+          ))}
+        </div>
+        <button className="rest-skip-btn" onClick={onStop}>Pular</button>
+      </div>
+    </div>
+  )
+}
+
 // ── Stepper ───────────────────────────────────────────────────
 function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
   const [editing, setEditing] = useState(false)
@@ -113,7 +168,7 @@ function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
 
 // ── SetRow ────────────────────────────────────────────────────
 // ── SetRow ────────────────────────────────────────────────────
-function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet }) {
+function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, isPR }) {
   return (
     <div className={`training-set-row${set.completed ? ' set-done' : ''}`}>
       <span className="set-num">S{set.setNumber}</span>
@@ -129,7 +184,10 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet }) {
         </div>
       </div>
       <div className="set-meta-col">
-        {plannedReps && (
+        {isPR && set.weightKg > 0 && (
+          <span className="set-pr-badge" title="Personal Record!">🏆 PR</span>
+        )}
+        {!isPR && plannedReps && (
           <span className="set-meta-goal" title="Meta planejada">↗{plannedReps}</span>
         )}
         {prevSet && (
@@ -138,7 +196,11 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet }) {
       </div>
       <button
         className={`set-check-btn${set.completed ? ' checked' : ''}`}
-        onClick={() => onUpdate({ completed: !set.completed })}
+        onClick={() => {
+          const newCompleted = !set.completed
+          onUpdate({ completed: newCompleted })
+          if (newCompleted && onCompleted) onCompleted()
+        }}
       >
         {set.completed ? <Check size={15} /> : <span>✓</span>}
       </button>
@@ -148,16 +210,33 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet }) {
 }
 
 // ── ExerciseCard (during session) ─────────────────────────────
-function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, isPlanned }) {
+function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, restTimer }) {
   const [expanded, setExpanded] = useState(true)
   const lastSet   = history[0]?.sets?.slice(-1)[0]
   const lastWeight = lastSet?.weightKg ?? 0
   const lastReps   = lastSet?.reps ?? parseDefaultReps(exercise.sets?.[0]?.reps ?? '12')
   const totalSets  = sets.length
   const doneSets   = sets.filter(s => s.completed).length
+  const allDone = doneSets === totalSets && totalSets > 0
+  // Auto-collapse when all sets are done
+  const prevDoneRef = useRef(false)
+  useEffect(() => {
+    if (allDone && !prevDoneRef.current) {
+      const t = setTimeout(() => setExpanded(false), 600)
+      prevDoneRef.current = true
+      return () => clearTimeout(t)
+    }
+    if (!allDone) prevDoneRef.current = false
+  }, [allDone])
+
+  // Best historical weight for PR detection
+  const bestHistWeight = history.reduce((best, session) => {
+    const maxW = (session.sets || []).reduce((m, s) => Math.max(m, s.weightKg || 0), 0)
+    return Math.max(best, maxW)
+  }, 0)
 
   return (
-    <div className="training-exercise-card">
+    <div className={`training-exercise-card${allDone ? ' ex-card-done' : ''}`}>
       <div className="ex-card-header" onClick={() => setExpanded(e => !e)}>
         <div className="ex-card-info">
           <span className="ex-card-name">{exercise.name}</span>
@@ -191,6 +270,8 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
               prevSet={history[0]?.sets?.[idx]}
               onUpdate={patch => onUpdateSet(exercise.id, set.id, patch)}
               onDelete={() => onDeleteSet(exercise.id, set.id)}
+              onCompleted={() => restTimer?.start(90)}
+              isPR={set.completed && set.weightKg > 0 && set.weightKg > bestHistWeight}
             />
           ))}
         </div>
@@ -839,6 +920,9 @@ function RegistrarScreen({ training }) {
   const [manualDay, setManualDay] = useState(null)
   const session = todaySession
   const elapsed = useTimer(!!session && !session?.completed)
+  const restTimer = useRestTimer()
+  const [showSummary, setShowSummary] = useState(false)
+  const [summarySession, setSummarySession] = useState(null)
   const [showCardioForm, setShowCardioForm] = useState(false)
   const [cardioType, setCardioType] = useState('Corrida')
   const [cardioHrs, setCardioHrs] = useState(0)
@@ -929,6 +1013,13 @@ function RegistrarScreen({ training }) {
         </button>
       </div>
 
+      <RestTimerBar
+        restSecs={restTimer.restSecs}
+        restRunning={restTimer.restRunning}
+        onStop={restTimer.stop}
+        onPreset={restTimer.start}
+      />
+
       {/* Exercises */}
       {sessionExercises.map(ex => (
         <ExerciseCard
@@ -939,6 +1030,7 @@ function RegistrarScreen({ training }) {
           onUpdateSet={(exId, setId, patch) => updateSet(session.id, exId, setId, patch)}
           onDeleteSet={(exId, setId) => deleteSet(session.id, exId, setId)}
           history={exerciseHistory(ex.id)}
+          restTimer={restTimer}
         />
       ))}
 
@@ -1013,10 +1105,66 @@ function RegistrarScreen({ training }) {
       />
 
       {/* Finish */}
-      <button className="session-finish-btn" onClick={() => completeSession(session.id)}>
+      <button className="session-finish-btn" onClick={() => {
+        completeSession(session.id)
+        setSummarySession({ ...session, finishedAt: new Date().toISOString() })
+        setShowSummary(true)
+      }}>
         <Check size={18} /> Finalizar treino
       </button>
       </div>{/* end registrar-inner */}
+      {showSummary && summarySession && (
+        <WorkoutSummary
+          session={summarySession}
+          routine={activeRoutine}
+          trainingDay={activeDay}
+          onClose={() => { setShowSummary(false); setSummarySession(null) }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── WorkoutSummary ────────────────────────────────────────────
+function WorkoutSummary({ session, routine, trainingDay, onClose }) {
+  const start = new Date(session.startedAt)
+  const end   = session.finishedAt ? new Date(session.finishedAt) : new Date()
+  const durationSec = Math.round((end - start) / 1000)
+  const allSets = Object.values(session.sets || {}).flat()
+  const totalSets = allSets.length
+  const volume = allSets.reduce((a, s) => a + (s.reps || 0) * (s.weightKg || 0), 0)
+  const cardioMin = (session.cardio || []).reduce((a, c) => a + (c.durationMin || 0), 0)
+
+  return (
+    <div className="workout-summary-overlay">
+      <div className="workout-summary-card">
+        <div className="summary-emoji">🏋️</div>
+        <h2 className="summary-title">Treino Concluído!</h2>
+        {trainingDay && <p className="summary-day">{trainingDay.label}</p>}
+        <div className="summary-stats">
+          <div className="summary-stat">
+            <span className="summary-stat-val">{formatDuration(durationSec)}</span>
+            <span className="summary-stat-label">Duração</span>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat-val">{totalSets}</span>
+            <span className="summary-stat-label">Séries</span>
+          </div>
+          <div className="summary-stat">
+            <span className="summary-stat-val">{volume > 0 ? `${volume.toFixed(0)}kg` : '—'}</span>
+            <span className="summary-stat-label">Volume</span>
+          </div>
+          {cardioMin > 0 && (
+            <div className="summary-stat">
+              <span className="summary-stat-val">{cardioMin}min</span>
+              <span className="summary-stat-label">Cardio</span>
+            </div>
+          )}
+        </div>
+        <button className="summary-close-btn" onClick={onClose}>
+          <Check size={18} /> Fechar
+        </button>
+      </div>
     </div>
   )
 }

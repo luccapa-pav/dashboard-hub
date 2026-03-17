@@ -4541,3 +4541,185 @@ kbd {
   border-radius: 5px;
   padding: 1px 6px;
 }
+
+/* ── Rest Timer Bar ──────────────────────────────────────────── */
+.rest-timer-bar {
+  position: relative;
+  background: var(--bg-card-h);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  animation: fadeInUp 0.2s ease both;
+}
+.rest-timer-progress {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: rgba(196,25,48,0.15);
+  transition: width 1s linear;
+  border-radius: 12px;
+}
+.rest-timer-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  z-index: 1;
+}
+.rest-timer-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.rest-timer-count {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--white);
+  font-family: 'Montserrat', system-ui, sans-serif;
+  min-width: 40px;
+  font-variant-numeric: tabular-nums;
+}
+.rest-timer-presets {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.rest-preset-btn {
+  background: var(--accent-dim);
+  border: 1px solid rgba(196,25,48,0.3);
+  border-radius: 6px;
+  color: var(--accent-hi);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+.rest-preset-btn:hover { background: var(--accent-glow); }
+.rest-skip-btn {
+  background: none;
+  border: none;
+  color: var(--text-mid);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.rest-skip-btn:hover { color: var(--white); }
+
+/* ── Exercise card done state ────────────────────────────────── */
+.ex-card-done {
+  border-color: rgba(34,197,94,0.4) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 1px rgba(34,197,94,0.2) !important;
+}
+.ex-card-done .ex-card-header {
+  background: rgba(34,197,94,0.06) !important;
+}
+
+/* ── PR Badge ────────────────────────────────────────────────── */
+.set-pr-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 4px;
+  padding: 1px 4px;
+  letter-spacing: 0.04em;
+  animation: pulse 1.5s ease infinite;
+}
+
+/* ── Workout Summary Overlay ─────────────────────────────────── */
+.workout-summary-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.3s ease both;
+  padding: 20px;
+}
+.workout-summary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(196,25,48,0.15);
+  animation: fadeInUp 0.4s ease both;
+}
+.summary-emoji { font-size: 48px; line-height: 1; }
+.summary-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--white);
+  font-family: 'Montserrat', system-ui, sans-serif;
+  margin: 0;
+  text-align: center;
+}
+.summary-day {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+.summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin: 8px 0;
+}
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card-h);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+}
+.summary-stat-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--white);
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.summary-stat-label {
+  font-size: 10px;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.summary-close-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 28px;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+.summary-close-btn:hover { background: var(--accent-hi); }
