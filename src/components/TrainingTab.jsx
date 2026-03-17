@@ -266,8 +266,8 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
 }
 
 // ── ExerciseCard (during session) ─────────────────────────────
-function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, restTimer, note = '', onNoteChange }) {
-  const [expanded, setExpanded] = useState(true)
+function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, restTimer, note = '', onNoteChange, isFirst = false }) {
+  const [expanded, setExpanded] = useState(isFirst)
   const [showNote, setShowNote] = useState(false)
   const lastSet   = history[0]?.sets?.slice(-1)[0]
   const lastWeight = lastSet?.weightKg ?? 0
@@ -383,7 +383,7 @@ function SingleDayPicker({ value, onChange, days, usedDays = [] }) {
 }
 
 // ── CustomSelect ──────────────────────────────────────────────
-function CustomSelect({ value, onChange, options, placeholder = 'Selecionar' }) {
+function CustomSelect({ value, onChange, options, placeholder = 'Selecionar', className = '' }) {
   const [open, setOpen] = useState(false)
   const [openUp, setOpenUp] = useState(false)
   const ref = useRef(null)
@@ -406,7 +406,7 @@ function CustomSelect({ value, onChange, options, placeholder = 'Selecionar' }) 
   }
 
   return (
-    <div className="cs-wrap" ref={ref}>
+    <div className={`cs-wrap${className ? ' ' + className : ''}`} ref={ref}>
       <button type="button" className="add-select-btn" onClick={handleToggle}>
         <span className={value ? '' : 'cs-placeholder'}>{value || placeholder}</span>
         <ChevronDown size={13} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
@@ -676,7 +676,7 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
 }
 
 // ── TrainingDayCard ───────────────────────────────────────────
-const CARDIO_TYPES = ['Corrida', 'Caminhada', 'Bicicleta', 'Elíptico', 'Remo', 'Corda', 'Nadar']
+const CARDIO_TYPES = ['Esteira', 'Caminhada', 'Corrida', 'Bike', 'Surf', 'Natação']
 
 function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, onAddPlannedCardio, onDeletePlannedCardio, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
   const [editingLabel, setEditingLabel] = useState(false)
@@ -775,7 +775,7 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           ))}
           {showCardioForm && (
             <div className="cardio-add-form planned-cardio-form">
-              <CustomSelect value={cardioType} onChange={setCardioType} options={CARDIO_TYPES} placeholder="Tipo" />
+              <CustomSelect value={cardioType} onChange={setCardioType} options={CARDIO_TYPES} placeholder="Tipo" className="cardio-type-select" />
               <div className="cardio-form-row">
                 <input type="number" className="training-input ex-count-input" min={0} step={1} value={cardioHrs} onChange={e => setCardioHrs(+e.target.value || 0)} />
                 <span className="cardio-unit">h</span>
@@ -1121,7 +1121,7 @@ function RegistrarScreen({ training }) {
       />
 
       {/* Exercises */}
-      {sessionExercises.map(ex => (
+      {sessionExercises.map((ex, idx) => (
         <ExerciseCard
           key={ex.id}
           exercise={ex}
@@ -1133,6 +1133,7 @@ function RegistrarScreen({ training }) {
           restTimer={restTimer}
           note={session.exerciseNotes?.[ex.id] || ''}
           onNoteChange={text => updateSession(session.id, { exerciseNotes: { ...(session.exerciseNotes || {}), [ex.id]: text } })}
+          isFirst={idx === 0}
         />
       ))}
 

@@ -4986,3 +4986,67 @@ kbd {
   background: rgba(0,0,0,0.2);
   line-height: 1.4;
 }
+
+/* ────────────────────────────────────────────────────────────── */
+/* REFINAMENTO UI/UX – Batch 3                                    */
+/* ────────────────────────────────────────────────────────────── */
+
+/* 1. Exercise cards: sem borda pesada — separação por sombra */
+.training-exercise-card {
+  border: none !important;
+  box-shadow: 0 1px 0 var(--border) !important;
+  margin-bottom: 1px !important;
+  border-radius: 0 !important;
+}
+.training-exercise-card:first-of-type { border-radius: 12px 12px 0 0 !important; }
+.training-exercise-card:last-of-type  { border-radius: 0 0 12px 12px !important; margin-bottom: 12px !important; }
+.training-exercise-card:only-of-type  { border-radius: 12px !important; }
+
+/* 2. Centralizar botão "+ Nota" */
+.ex-note-row { align-items: center !important; }
+.ex-note-toggle {
+  text-align: center !important;
+  align-self: center;
+  width: auto !important;
+}
+
+/* 3. Cardio compacto */
+.training-cardio-section {
+  padding: 6px 10px !important;
+  gap: 4px !important;
+}
+.cardio-row-centered {
+  flex-direction: row !important;
+  align-items: center;
+  padding: 6px 8px !important;
+  gap: 8px !important;
+}
+.cardio-type { font-size: 11px !important; font-weight: 700 !important; white-space: nowrap; }
+.cardio-section-header-centered { padding: 4px 0 4px !important; }
+
+/* 4. Cardio dropdown: bonito e opções centralizadas */
+.cardio-type-select .add-select-btn {
+  justify-content: center !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-color: rgba(196,25,48,0.25) !important;
+  background: rgba(196,25,48,0.07) !important;
+  color: var(--accent-hi) !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+}
+.cardio-type-select .sf-item {
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* 5. Botão "+ Nova Rotina" centralizado */
+.new-routine-btn { justify-content: center !important; }
+.new-routine-btn-wrap { display: flex; justify-content: center; }
+
+/* 6. Ampliar containers para aproveitar melhor telas largas */
+.training-rotinas { max-width: 1100px !important; }
+.registrar-inner  { max-width: 780px !important; }
+.training-days-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important; }
