@@ -10,15 +10,15 @@ export const FEATURES = {
 }
 
 const MUSCLE_GROUPS = [
-  'Peito', 'Costas', 'Latíssimo', 'Ombros', 'Trapézio', 'Rombóide',
-  'Bíceps', 'Tríceps', 'Antebraço',
-  'Abdômen', 'Oblíquos', 'Lombar',
-  'Quadríceps', 'Isquiotibiais', 'Glúteos', 'Panturrilha', 'Adutores', 'Abdutores',
-  'Cardio',
+  'Abdômen', 'Abdutores', 'Adutores', 'Antebraço',
+  'Bíceps', 'Cardio', 'Costas', 'Glúteos',
+  'Isquiotibiais', 'Latíssimo', 'Lombar', 'Oblíquos',
+  'Ombros', 'Panturrilha', 'Peito', 'Quadríceps',
+  'Rombóide', 'Trapézio', 'Tríceps',
 ]
 
 const EQUIPMENT = [
-  'Barra', 'Halter', 'Máquina', 'Polia', 'Nenhum', 'Elástico', 'Kettlebell',
+  'Barra', 'Elástico', 'Halter', 'Máquina', 'Nenhum', 'Polia', 'Smith',
 ]
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']

@@ -700,7 +700,7 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
 }
 
 // ── TrainingDayCard ───────────────────────────────────────────
-const CARDIO_TYPES = ['Esteira', 'Caminhada', 'Corrida', 'Bike', 'Surf', 'Natação']
+const CARDIO_TYPES = ['Bike', 'Caminhada', 'Corrida', 'Esteira', 'Natação', 'Surf']
 
 function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, onAddPlannedCardio, onDeletePlannedCardio, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
   const [editingLabel, setEditingLabel] = useState(false)
@@ -801,13 +801,28 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
             <div className="cardio-add-form planned-cardio-form">
               <CustomSelect value={cardioType} onChange={setCardioType} options={CARDIO_TYPES} placeholder="Tipo" className="cardio-type-select" />
               <div className="cardio-form-row">
-                <input type="number" className="training-input ex-count-input" min={0} step={1} value={cardioHrs} onChange={e => setCardioHrs(+e.target.value || 0)} />
-                <span className="cardio-unit">h</span>
-                <input type="number" className="training-input ex-count-input" min={0} step={5} value={cardioDur} onChange={e => setCardioDur(+e.target.value || 0)} />
-                <span className="cardio-unit">min</span>
-                <input type="number" className="training-input ex-count-input" min={0} step={0.5} value={cardioSpeed} onChange={e => setCardioSpeed(+e.target.value || 0)} />
-                <span className="cardio-unit">km/h</span>
-                {cardioDist > 0 && <span className="cardio-dist-auto">{cardioDist.toFixed(1)} km</span>}
+                <div className="cardio-field">
+                  <label className="add-ex-field-label">Horas</label>
+                  <div className="cardio-input-unit">
+                    <input type="number" className="training-input ex-count-input" min={0} step={1} value={cardioHrs} onChange={e => setCardioHrs(+e.target.value || 0)} />
+                    <span className="cardio-unit-badge">h</span>
+                  </div>
+                </div>
+                <div className="cardio-field">
+                  <label className="add-ex-field-label">Minutos</label>
+                  <div className="cardio-input-unit">
+                    <input type="number" className="training-input ex-count-input" min={0} step={5} value={cardioDur} onChange={e => setCardioDur(+e.target.value || 0)} />
+                    <span className="cardio-unit-badge">min</span>
+                  </div>
+                </div>
+                <div className="cardio-field">
+                  <label className="add-ex-field-label">Velocidade</label>
+                  <div className="cardio-input-unit">
+                    <input type="number" className="training-input ex-count-input" min={0} step={0.5} value={cardioSpeed} onChange={e => setCardioSpeed(+e.target.value || 0)} />
+                    <span className="cardio-unit-badge">km/h</span>
+                  </div>
+                </div>
+                {cardioDist > 0 && <div className="cardio-field"><label className="add-ex-field-label">Total</label><span className="cardio-dist-auto">{cardioDist.toFixed(1)} km</span></div>}
               </div>
               <div className="add-ex-actions">
                 <button className="training-add-set-btn" onClick={() => {
@@ -885,7 +900,7 @@ function RoutineCard({
           {trainingDays.length === 0 && (
             <p className="routine-empty-hint">Nenhum dia de treino. Adicione abaixo.</p>
           )}
-          <div className="training-days-grid">
+          <div className="training-days-grid" data-count={trainingDays.length}>
             {trainingDays.map(day => (
               <TrainingDayCard
                 key={day.id}
