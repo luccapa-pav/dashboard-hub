@@ -211,8 +211,9 @@ function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
 // ── SetRow ────────────────────────────────────────────────────
 // ── SetRow ────────────────────────────────────────────────────
 function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, isPR, weightSuggestions = [] }) {
+  const [justChecked, setJustChecked] = useState(false)
   return (
-    <div className={`training-set-row${set.completed ? ' set-done' : ''}`}>
+    <div className={`training-set-row${set.completed ? ' set-done' : ''}${justChecked ? ' set-just-checked' : ''}`}>
       <span className="set-num">S{set.setNumber}</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
@@ -257,7 +258,11 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
         onClick={() => {
           const newCompleted = !set.completed
           onUpdate({ completed: newCompleted })
-          if (newCompleted && onCompleted) onCompleted()
+          if (newCompleted) {
+            setJustChecked(true)
+            setTimeout(() => setJustChecked(false), 400)
+            if (onCompleted) onCompleted()
+          }
         }}
       >
         {set.completed ? <Check size={15} /> : <span>✓</span>}
@@ -313,14 +318,23 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
           {exercise.muscleGroup && <span className="muscle-badge">{exercise.muscleGroup}</span>}
         </div>
         <div className="ex-card-meta">
-          <span className={`ex-sets-count${doneSets === totalSets && totalSets > 0 ? ' ex-sets-done' : ''}`}>
-            {doneSets}/{totalSets}
+          <span className={`ex-sets-count${allDone ? ' ex-sets-done' : ''}`}>
+            {allDone ? <Check size={12} /> : `${doneSets}/${totalSets}`}
           </span>
+          {!allDone && (
+            <button
+              className="ex-header-add-btn"
+              title="Série extra"
+              onClick={e => { e.stopPropagation(); onAddSet(exercise.id, lastReps, lastWeight) }}
+            >
+              <Plus size={11} />
+            </button>
+          )}
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </div>
       </div>
 
-      {expanded && (
+      <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
           <div className="ex-goal-pills">
             {getExerciseMeta(exercise.sets) && (
@@ -364,7 +378,7 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
             )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -1123,6 +1137,14 @@ function RegistrarScreen({ training }) {
             <span className="timer-hero-volume">{liveVolume.toFixed(0)} kg vol.</span>
           )}
         </div>
+        {totalSets > 0 && (
+          <div className="session-progress-track">
+            <div
+              className={`session-progress-fill${completedSets === totalSets ? ' progress-done' : ''}`}
+              style={{ width: `${Math.round((completedSets / totalSets) * 100)}%` }}
+            />
+          </div>
+        )}
       </div>
 
       <RestTimerBar

@@ -5152,3 +5152,93 @@ kbd {
   padding: 3px 8px !important;
   border-radius: 6px !important;
 }
+
+/* ────────────────────────────────────────────────────────────── */
+/* REFINAMENTO UI/UX – Batch 5                                    */
+/* ────────────────────────────────────────────────────────────── */
+
+/* 1. Accordion animado via grid-template-rows */
+@keyframes setCheckPop {
+  0%   { transform: translateX(0) scale(1); }
+  35%  { transform: translateX(5px) scale(1.01); }
+  65%  { transform: translateX(-2px); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+.ex-card-body-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.ex-card-body-wrap.ex-card-body-open {
+  grid-template-rows: 1fr;
+}
+.ex-card-body-wrap > .ex-card-body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 2. Header do card: gradiente sutil */
+.ex-card-header {
+  background: linear-gradient(160deg, var(--bg-card-h) 0%, var(--bg-card) 100%) !important;
+}
+.ex-card-header:hover {
+  background: linear-gradient(160deg, #161616 0%, var(--bg-card) 100%) !important;
+}
+[data-theme="light"] .ex-card-header {
+  background: linear-gradient(160deg, #f5f0f0 0%, var(--bg-card) 100%) !important;
+}
+
+/* 3. Barra de progresso da sessão */
+.session-progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.session-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, #ff6666 100%);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+}
+.session-progress-fill.progress-done {
+  background: #22c55e;
+}
+[data-theme="light"] .session-progress-track {
+  background: rgba(0,0,0,0.07);
+}
+
+/* 4. allDone: visual de conclusão no header */
+.ex-card-done .ex-card-header {
+  background: linear-gradient(160deg, rgba(34,197,94,0.1) 0%, var(--bg-card) 100%) !important;
+}
+.ex-card-done .ex-card-name {
+  color: var(--text-mid) !important;
+}
+
+/* 5. Botão + no header do card */
+.ex-header-add-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-mid);
+  cursor: pointer;
+  padding: 2px 5px;
+  line-height: 0;
+  transition: border-color 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+}
+.ex-header-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 6. Micro-animação de check no set */
+.training-set-row.set-just-checked {
+  animation: setCheckPop 0.28s ease both;
+}
