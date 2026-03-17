@@ -12,6 +12,7 @@ import { links } from './data/links'
 import { CommandPalette } from './components/CommandPalette'
 import { TaskManager } from './components/TaskManager'
 import { CalendarTab } from './components/CalendarTab'
+import { TrainingTab } from './components/TrainingTab'
 import './App.css'
 
 // ── Icon maps ──────────────────────────────────────────────────
@@ -981,6 +982,7 @@ function App() {
       if (e.key === '1') setTab('hub')
       if (e.key === '2') setTab('tasks')
       if (e.key === '3') setTab('agenda')
+      if (e.key === '4') setTab('training')
       if ((e.key === 'f' || e.key === 'F') && selected) toggleFavorite(selected.id)
     }
     window.addEventListener('keydown', handler)
@@ -1062,6 +1064,12 @@ function App() {
             onClick={() => setTab('agenda')}
           >
             Agenda
+          </button>
+          <button
+            className={`tab-btn${tab === 'training' ? ' tab-active' : ''}`}
+            onClick={() => setTab('training')}
+          >
+            Treino
           </button>
         </nav>
 
@@ -1320,6 +1328,7 @@ function App() {
 
         {tab === 'tasks' && <TaskManager />}
         {tab === 'agenda' && <CalendarTab />}
+        {tab === 'training' && <TrainingTab />}
       </div>
 
       {/* ── Detail Panel ── */}

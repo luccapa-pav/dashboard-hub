@@ -2887,3 +2887,769 @@ kbd {
   color: var(--accent);
   margin-right: 4px;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Training Tab
+   ══════════════════════════════════════════════════════════════ */
+
+.training-tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Nav */
+.training-nav {
+  display: flex;
+  gap: 4px;
+  padding: 10px 16px 0;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.training-nav-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-mid);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 6px 12px 8px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.training-nav-btn:hover { color: var(--text); }
+
+.training-nav-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.training-nav-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* Content area */
+.training-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Empty state */
+.training-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: var(--text-mid);
+  text-align: center;
+}
+
+/* Generic inputs */
+.training-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.training-input:focus { border-color: var(--accent); }
+
+.training-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+.training-select:focus { border-color: var(--accent); }
+
+/* Add set / generic action button */
+.training-add-set-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--text-mid);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.training-add-set-btn:hover { color: var(--accent); border-color: var(--accent); }
+.training-add-set-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Stepper ─────────────────────────────────────────────────── */
+.training-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper-btn {
+  width: 48px;
+  height: 48px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+
+.stepper-btn:hover { background: var(--border); }
+.stepper-btn:active { background: var(--accent); color: #fff; }
+
+.stepper-val {
+  min-width: 52px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── Set Row ──────────────────────────────────────────────────── */
+.training-set-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.training-set-row.set-done { opacity: 0.55; }
+
+.set-num {
+  color: var(--text-mid);
+  font-size: 12px;
+  min-width: 24px;
+}
+
+.set-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.set-label {
+  font-size: 10px;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.set-check-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: none;
+  color: var(--text-mid);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.set-check-btn.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.set-del-btn {
+  background: none;
+  border: none;
+  color: var(--text-mid);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  opacity: 0.5;
+  transition: opacity 0.12s;
+}
+
+.set-del-btn:hover { opacity: 1; color: #e55; }
+
+/* ── Exercise Card ────────────────────────────────────────────── */
+.training-exercise-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.ex-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.ex-card-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ex-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ex-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-mid);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ex-sets-count { color: var(--text-mid); font-size: 12px; }
+
+.ex-card-body {
+  padding: 0 14px 14px;
+}
+
+.ex-last-session {
+  font-size: 11px;
+  color: var(--text-mid);
+  padding: 4px 0 8px;
+  font-style: italic;
+}
+
+/* Muscle / Equipment badges */
+.muscle-badge, .equip-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.muscle-badge {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.equip-badge {
+  background: color-mix(in srgb, var(--text-mid) 10%, transparent);
+  color: var(--text-mid);
+}
+
+/* ── Session Timer Bar ────────────────────────────────────────── */
+.session-timer-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+.timer-display {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+
+.timer-sets { color: var(--text-mid); font-size: 12px; }
+
+.session-abort-btn {
+  background: none;
+  border: none;
+  color: var(--text-mid);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity 0.12s;
+}
+
+.session-abort-btn:hover { opacity: 1; color: #e55; }
+
+/* ── Registrar Screen ────────────────────────────────────────── */
+.training-registrar { display: flex; flex-direction: column; gap: 0; }
+
+.training-start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 60px 20px;
+}
+
+.training-start-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-mid);
+}
+
+.training-start-info h3 { font-size: 20px; color: var(--text); margin: 0; }
+
+.session-start-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.session-start-btn:hover { opacity: 0.85; }
+
+.session-finish-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #22c55e;
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 16px;
+  cursor: pointer;
+  margin-top: 16px;
+  width: 100%;
+  transition: opacity 0.15s;
+}
+
+.session-finish-btn:hover { opacity: 0.85; }
+
+/* Cardio section */
+.training-cardio-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.cardio-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.cardio-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.cardio-type { font-size: 13px; color: var(--text); min-width: 70px; }
+.cardio-unit { font-size: 11px; color: var(--text-mid); }
+
+.cardio-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.cardio-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-mid);
+}
+
+/* Session notes */
+.session-notes {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 10px;
+  resize: vertical;
+  outline: none;
+}
+
+.session-notes:focus { border-color: var(--accent); }
+
+/* ── Rotinas Screen ──────────────────────────────────────────── */
+.training-rotinas { display: flex; flex-direction: column; gap: 12px; }
+
+.routine-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.routine-tab-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-mid);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.routine-tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.routine-active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.add-routine-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.routine-name-input { width: 140px; }
+
+.routine-detail {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.routine-detail-header { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+.routine-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.routine-detail-name { font-size: 17px; font-weight: 600; color: var(--text); flex: 1; margin: 0; }
+
+.routine-edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-mid);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity 0.12s;
+}
+
+.routine-edit-btn:hover { opacity: 1; }
+
+.routine-section { display: flex; flex-direction: column; gap: 8px; }
+
+.routine-section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-mid);
+  font-weight: 600;
+}
+
+.routine-empty-hint { font-size: 13px; color: var(--text-mid); margin: 4px 0; }
+
+.routine-exercise-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.routine-ex-info { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.routine-ex-name { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.routine-ex-defaults { font-size: 12px; color: var(--text-mid); white-space: nowrap; }
+
+.routine-add-ex-btn { align-self: flex-start; }
+
+/* Add exercise form */
+.add-exercise-form {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-ex-actions { display: flex; align-items: center; gap: 8px; }
+
+/* Day selector */
+.day-selector { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.day-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-mid);
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.day-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.day-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── Histórico Screen ────────────────────────────────────────── */
+.training-historico { display: flex; flex-direction: column; gap: 16px; }
+
+.week-summary-bar {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.week-day-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-mid);
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.dot-active .dot { background: var(--accent); }
+.dot-active { color: var(--accent); font-weight: 600; }
+
+.historico-stats {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.hstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 20px;
+  flex: 1;
+  max-width: 110px;
+}
+
+.hstat-val { font-size: 22px; font-weight: 700; color: var(--text); }
+.hstat-label { font-size: 10px; color: var(--text-mid); text-align: center; }
+
+.session-list { display: flex; flex-direction: column; gap: 10px; }
+
+.training-session-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.session-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.session-card-info { display: flex; flex-direction: column; gap: 2px; }
+.session-card-date { font-size: 12px; color: var(--text-mid); }
+.session-card-routine { font-size: 15px; font-weight: 600; color: var(--text); }
+
+.session-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.session-card-notes {
+  font-size: 12px;
+  color: var(--text-mid);
+  margin: 8px 0 0;
+  font-style: italic;
+}
+
+/* ── AI Feedback Panel ───────────────────────────────────────── */
+.training-ai-panel { display: flex; flex-direction: column; gap: 14px; }
+
+.ai-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-panel-title { font-size: 15px; font-weight: 600; color: var(--text); }
+
+.ai-request-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.ai-request-btn:hover { opacity: 0.85; }
+.ai-request-btn:disabled { opacity: 0.4; cursor: default; }
+
+.ai-disabled-hint { font-size: 12px; color: var(--text-mid); }
+
+.ai-no-data, .ai-error {
+  font-size: 13px;
+  color: var(--text-mid);
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ai-error { color: #e55; border-color: #e55; }
+
+.ai-feedback-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.ai-feedback-old { opacity: 0.65; }
+
+.ai-feedback-meta {
+  font-size: 11px;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+}
+
+.ai-feedback-text {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.ai-feedback-collapsed {
+  font-size: 13px;
+  color: var(--text-mid);
+  overflow: hidden;
+}
+
+.ai-feedback-history { display: flex; flex-direction: column; gap: 10px; }
+
+.ai-history-label {
+  font-size: 12px;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
