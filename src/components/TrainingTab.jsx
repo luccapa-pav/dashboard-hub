@@ -692,6 +692,7 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
 const CARDIO_TYPES = ['Bike', 'Caminhada', 'Corrida', 'Esteira', 'Natação', 'Surf']
 
 function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, onAddPlannedCardio, onUpdatePlannedCardio, onDeletePlannedCardio, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
+  const [collapsed, setCollapsed] = useState(false)
   const [editingLabel, setEditingLabel] = useState(false)
   const [editLabel, setEditLabel] = useState('')
   const [editWeekDay, setEditWeekDay] = useState(day.weekDay ?? 1)
@@ -794,6 +795,9 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
               <button className="routine-edit-btn" onClick={startEdit}>
                 <Edit2 size={12} />
               </button>
+              <button className="routine-edit-btn" onClick={() => setCollapsed(v => !v)}>
+                {collapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
               <button className="set-del-btn" onClick={onDelete}>
                 <Trash2 size={12} />
               </button>
@@ -801,7 +805,7 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           </div>
         )}
       </div>
-      <div className="training-day-exercises">
+      <div className={`training-day-exercises${collapsed ? ' day-exercises-hidden' : ''}`}>
         {(day.exercises || []).sort((a, b) => a.order - b.order).map(ex => (
           <ExerciseRowInRoutine
             key={ex.id}
@@ -829,17 +833,22 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
               <Plus size={12} />
             </button>
           </div>
-          {(day.plannedCardio || []).map(c => (
-            <div key={c.id} className="planned-cardio-row">
-              <span className="planned-cardio-type">{c.type}</span>
-              {(c.durationHrs > 0) && <span className="planned-cardio-detail">{c.durationHrs}h</span>}
-              {(c.durationMin > 0) && <span className="planned-cardio-detail">{c.durationMin}min</span>}
-              {(c.speedKmh > 0) && <span className="planned-cardio-detail">{c.speedKmh}km/h</span>}
-              {(c.distanceKm > 0) && <span className="planned-cardio-detail">= {Number(c.distanceKm).toFixed(1)}km</span>}
-              <button className="routine-edit-btn" title="Editar" onClick={() => openEditCardio(c)}><Edit2 size={10} /></button>
-              <button className="set-del-btn" onClick={() => onDeletePlannedCardio(c.id)}><X size={10} /></button>
-            </div>
-          ))}
+          {(day.plannedCardio || []).map(c => {
+            const details = [
+              c.durationHrs > 0 ? `${c.durationHrs}h` : null,
+              c.durationMin > 0 ? `${c.durationMin} min` : null,
+              c.speedKmh > 0 ? `${c.speedKmh} km/h` : null,
+              c.distanceKm > 0 ? `${Number(c.distanceKm).toFixed(1)} km` : null,
+            ].filter(Boolean).join(' • ')
+            return (
+              <div key={c.id} className="planned-cardio-row">
+                <span className="planned-cardio-type">{c.type}</span>
+                {details && <span className="planned-cardio-details">{details}</span>}
+                <button className="routine-edit-btn" title="Editar" onClick={() => openEditCardio(c)}><Edit2 size={10} /></button>
+                <button className="set-del-btn" onClick={() => onDeletePlannedCardio(c.id)}><X size={10} /></button>
+              </div>
+            )
+          })}
           {showCardioForm && (
             <div className="cardio-add-form planned-cardio-form">
               <CustomSelect value={cardioType} onChange={setCardioType} options={CARDIO_TYPES} placeholder="Tipo" className="cardio-type-select" />
@@ -942,7 +951,7 @@ function RoutineCard({
         )}
       </div>
 
-      {expanded && (
+      <div className={`routine-card-body-wrap${expanded ? ' routine-body-open' : ''}`}>
         <div className="routine-card-body">
           {trainingDays.length === 0 && (
             <p className="routine-empty-hint">Nenhum dia de treino. Adicione abaixo.</p>
@@ -982,7 +991,7 @@ function RoutineCard({
             )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

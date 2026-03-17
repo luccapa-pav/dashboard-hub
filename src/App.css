@@ -3534,6 +3534,14 @@ kbd {
 
 .routine-card-actions { display: flex; align-items: center; gap: 4px; }
 
+.routine-card-body-wrap {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.routine-card-body-wrap.routine-body-open {
+  max-height: 6000px;
+}
 .routine-card-body {
   border-top: 1px solid var(--border);
   padding: 12px;
@@ -5440,4 +5448,52 @@ kbd {
   flex-direction: column;
   gap: 0;
   margin-top: 4px;
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/* REFINAMENTO UI – Batch 8                                       */
+/* ────────────────────────────────────────────────────────────── */
+
+/* 1. Colapso de dia de treino */
+.training-day-exercises.day-exercises-hidden {
+  overflow: hidden !important;
+  max-height: 0 !important;
+  flex: 0 !important;
+  margin: 0 !important;
+  gap: 0 !important;
+}
+
+/* 2. Cardio details com bullet — remover espaçamento de múltiplos spans */
+.planned-cardio-details {
+  font-size: 11px;
+  color: var(--text-mid);
+  flex: 1;
+}
+
+/* 3. Clean set rows — sem caixa cinza */
+.training-set-row {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 0 !important;
+  padding: 6px 2px !important;
+  gap: 6px !important;
+}
+[data-theme="light"] .training-set-row {
+  border-bottom-color: rgba(0,0,0,0.07) !important;
+}
+.training-set-row:last-of-type {
+  border-bottom: none !important;
+}
+.training-set-row.set-done {
+  background: transparent !important;
+  border-color: transparent !important;
+  opacity: 0.5;
+}
+
+/* 4. Thinner check button border */
+.set-check-btn {
+  border-width: 1.5px !important;
+  width: 30px !important;
+  height: 30px !important;
 }
