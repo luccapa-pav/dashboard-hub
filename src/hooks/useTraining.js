@@ -281,7 +281,7 @@ export function useTraining() {
   }, [save])
 
   // ── Sessions ──────────────────────────────────────────────────
-  const startSession = useCallback((routineId, trainingDayId = null, exercises = []) => {
+  const startSession = useCallback((routineId, trainingDayId = null, exercises = [], plannedCardio = []) => {
     const initialSets = {}
     exercises.forEach(ex => {
       if (Array.isArray(ex.sets) && ex.sets.length > 0) {
@@ -306,7 +306,14 @@ export function useTraining() {
       finishedAt: null,
       completed: false,
       sets: initialSets,
-      cardio: [],
+      cardio: plannedCardio.map(c => ({
+        id: makeId(),
+        type: c.type || 'Corrida',
+        durationHrs: c.durationHrs ?? 0,
+        durationMin: c.durationMin ?? 30,
+        speedKmh: c.speedKmh ?? 0,
+        distanceKm: c.distanceKm ?? 0,
+      })),
       notes: '',
     }
     save(cur => ({ ...cur, sessions: [...cur.sessions, session] }))
