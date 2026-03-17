@@ -5628,3 +5628,54 @@ kbd {
   transform: translateX(-50%) !important;
   width: max-content !important;
 }
+
+/* === PrevStepper — clone verde somente-leitura do Stepper === */
+.set-prev-block {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  opacity: 0.85;
+}
+
+.prev-stepper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--accent-green, #4caf50);
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, #4caf50 10%, transparent);
+  height: 34px;
+}
+
+.prev-stepper-btn {
+  width: 28px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: color-mix(in srgb, #4caf50 50%, transparent);
+  cursor: default;
+  user-select: none;
+}
+
+.prev-stepper-val {
+  min-width: 36px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #4caf50;
+  line-height: 34px;
+  padding: 0 2px;
+}
+
+.prev-stepper-label {
+  color: #4caf50 !important;
+  opacity: 0.8;
+}
+
+.prev-sep {
+  color: var(--text-mid);
+  line-height: 34px;
+  margin-bottom: 0;
+}

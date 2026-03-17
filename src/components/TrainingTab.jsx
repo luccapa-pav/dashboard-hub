@@ -208,6 +208,19 @@ function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
   )
 }
 
+function PrevStepper({ value, decimals = 0, label }) {
+  return (
+    <div className="set-field-wrap">
+      <div className="prev-stepper">
+        <span className="prev-stepper-btn">−</span>
+        <span className="prev-stepper-val">{Number(value).toFixed(decimals)}</span>
+        <span className="prev-stepper-btn">+</span>
+      </div>
+      <span className="set-unit-label prev-stepper-label">{label}</span>
+    </div>
+  )
+}
+
 // ── SetRow ────────────────────────────────────────────────────
 // ── SetRow ────────────────────────────────────────────────────
 function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, isPR, weightSuggestions = [] }) {
@@ -216,9 +229,10 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
     <div className={`training-set-row${set.completed ? ' set-done' : ''}${justChecked ? ' set-just-checked' : ''}`}>
       <span className="set-num">{set.setNumber}ª SÉRIE</span>
       {prevSet && !set.completed && (
-        <div className="set-prev-badges">
-          <span className="set-prev-badge">↺ {prevSet.reps} reps</span>
-          <span className="set-prev-badge">↺ {Number(prevSet.weightKg).toFixed(1)} kg</span>
+        <div className="set-prev-block">
+          <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
+          <span className="set-sep prev-sep">×</span>
+          <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
         </div>
       )}
       <div className="set-row-main-col">
