@@ -205,6 +205,22 @@ export function useTraining() {
     }))
   }, [save])
 
+  const updatePlannedCardio = useCallback((routineId, dayId, cardioId, patch) => {
+    save(cur => ({
+      ...cur,
+      routines: cur.routines.map(r => {
+        if (r.id !== routineId) return r
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => {
+            if (d.id !== dayId) return d
+            return { ...d, plannedCardio: (d.plannedCardio || []).map(c => c.id !== cardioId ? c : { ...c, ...patch }) }
+          }),
+        }
+      }),
+    }))
+  }, [save])
+
   // ── Exercises ─────────────────────────────────────────────────
   const addExercise = useCallback((
     routineId, trainingDayId, name,
@@ -503,7 +519,7 @@ export function useTraining() {
     addRoutine, updateRoutine, deleteRoutine,
     // Training Days
     addTrainingDay, updateTrainingDay, deleteTrainingDay,
-    addPlannedCardio, deletePlannedCardio,
+    addPlannedCardio, updatePlannedCardio, deletePlannedCardio,
     // Exercises
     addExercise, updateExercise, deleteExercise, reorderExercises,
     // Sessions

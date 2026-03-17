@@ -691,16 +691,67 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
 // ── TrainingDayCard ───────────────────────────────────────────
 const CARDIO_TYPES = ['Bike', 'Caminhada', 'Corrida', 'Esteira', 'Natação', 'Surf']
 
-function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, onAddPlannedCardio, onDeletePlannedCardio, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
+function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, onAddPlannedCardio, onUpdatePlannedCardio, onDeletePlannedCardio, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
   const [editingLabel, setEditingLabel] = useState(false)
   const [editLabel, setEditLabel] = useState('')
   const [editWeekDay, setEditWeekDay] = useState(day.weekDay ?? 1)
   const [showCardioForm, setShowCardioForm] = useState(false)
+  const [editingCardioId, setEditingCardioId] = useState(null)
   const [cardioType, setCardioType] = useState('Corrida')
   const [cardioHrs, setCardioHrs] = useState(0)
   const [cardioDur, setCardioDur] = useState(30)
   const [cardioSpeed, setCardioSpeed] = useState(0)
-  const cardioDist = +((cardioHrs + cardioDur / 60) * cardioSpeed).toFixed(2)
+  const [cardioDist, setCardioDist] = useState(0)
+
+  const resetCardioForm = () => {
+    setCardioType('Corrida'); setCardioHrs(0); setCardioDur(30)
+    setCardioSpeed(0); setCardioDist(0); setEditingCardioId(null)
+  }
+
+  const openEditCardio = (c) => {
+    setCardioType(c.type); setCardioHrs(c.durationHrs ?? 0); setCardioDur(c.durationMin ?? 30)
+    setCardioSpeed(c.speedKmh ?? 0); setCardioDist(c.distanceKm ?? 0)
+    setEditingCardioId(c.id); setShowCardioForm(true)
+  }
+
+  // Triangular calculation: T (hrs) ↔ V (km/h) ↔ D (km)
+  const handleHrsChange = (v) => {
+    setCardioHrs(v)
+    const t = v + cardioDur / 60
+    if (t > 0 && cardioSpeed > 0) setCardioDist(+(t * cardioSpeed).toFixed(2))
+    else if (t > 0 && cardioDist > 0 && cardioSpeed === 0) setCardioSpeed(+(cardioDist / t).toFixed(1))
+  }
+  const handleMinChange = (v) => {
+    setCardioDur(v)
+    const t = cardioHrs + v / 60
+    if (t > 0 && cardioSpeed > 0) setCardioDist(+(t * cardioSpeed).toFixed(2))
+    else if (t > 0 && cardioDist > 0 && cardioSpeed === 0) setCardioSpeed(+(cardioDist / t).toFixed(1))
+  }
+  const handleSpeedChange = (v) => {
+    setCardioSpeed(v)
+    const t = cardioHrs + cardioDur / 60
+    if (t > 0 && v > 0) setCardioDist(+(t * v).toFixed(2))
+    else if (v > 0 && cardioDist > 0) {
+      const newT = cardioDist / v
+      setCardioHrs(Math.floor(newT)); setCardioDur(Math.round((newT % 1) * 60))
+    }
+  }
+  const handleDistChange = (v) => {
+    setCardioDist(v)
+    const t = cardioHrs + cardioDur / 60
+    if (v > 0 && t > 0) setCardioSpeed(+(v / t).toFixed(1))
+    else if (v > 0 && cardioSpeed > 0) {
+      const newT = v / cardioSpeed
+      setCardioHrs(Math.floor(newT)); setCardioDur(Math.round((newT % 1) * 60))
+    }
+  }
+
+  const saveCardio = () => {
+    const payload = { type: cardioType, durationHrs: cardioHrs, durationMin: cardioDur, speedKmh: cardioSpeed, distanceKm: cardioDist }
+    if (editingCardioId) onUpdatePlannedCardio(editingCardioId, payload)
+    else onAddPlannedCardio(payload)
+    setShowCardioForm(false); resetCardioForm()
+  }
 
   const startEdit = () => {
     setEditLabel(day.label)
@@ -785,6 +836,7 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
               {(c.durationMin > 0) && <span className="planned-cardio-detail">{c.durationMin}min</span>}
               {(c.speedKmh > 0) && <span className="planned-cardio-detail">{c.speedKmh}km/h</span>}
               {(c.distanceKm > 0) && <span className="planned-cardio-detail">= {Number(c.distanceKm).toFixed(1)}km</span>}
+              <button className="routine-edit-btn" title="Editar" onClick={() => openEditCardio(c)}><Edit2 size={10} /></button>
               <button className="set-del-btn" onClick={() => onDeletePlannedCardio(c.id)}><X size={10} /></button>
             </div>
           ))}
@@ -795,33 +847,37 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
                 <div className="cardio-field">
                   <label className="add-ex-field-label">Horas</label>
                   <div className="cardio-input-unit">
-                    <input type="number" className="training-input ex-count-input" min={0} step={1} value={cardioHrs} onChange={e => setCardioHrs(+e.target.value || 0)} />
+                    <input type="number" className="training-input ex-count-input" min={0} step={1} value={cardioHrs || ''} onChange={e => handleHrsChange(+e.target.value || 0)} />
                     <span className="cardio-unit-badge">h</span>
                   </div>
                 </div>
                 <div className="cardio-field">
-                  <label className="add-ex-field-label">Minutos</label>
+                  <label className="add-ex-field-label">Min</label>
                   <div className="cardio-input-unit">
-                    <input type="number" className="training-input ex-count-input" min={0} step={5} value={cardioDur} onChange={e => setCardioDur(+e.target.value || 0)} />
+                    <input type="number" className="training-input ex-count-input" min={0} step={5} value={cardioDur || ''} onChange={e => handleMinChange(+e.target.value || 0)} />
                     <span className="cardio-unit-badge">min</span>
                   </div>
                 </div>
                 <div className="cardio-field">
-                  <label className="add-ex-field-label">Velocidade</label>
+                  <label className="add-ex-field-label">km/h</label>
                   <div className="cardio-input-unit">
-                    <input type="number" className="training-input ex-count-input" min={0} step={0.5} value={cardioSpeed} onChange={e => setCardioSpeed(+e.target.value || 0)} />
+                    <input type="number" className="training-input ex-count-input" min={0} step={0.5} value={cardioSpeed || ''} onChange={e => handleSpeedChange(+e.target.value || 0)} />
                     <span className="cardio-unit-badge">km/h</span>
                   </div>
                 </div>
-                {cardioDist > 0 && <div className="cardio-field"><label className="add-ex-field-label">Total</label><span className="cardio-dist-auto">{cardioDist.toFixed(1)} km</span></div>}
+                <div className="cardio-field">
+                  <label className="add-ex-field-label">km</label>
+                  <div className="cardio-input-unit">
+                    <input type="number" className="training-input ex-count-input" min={0} step={0.1} value={cardioDist || ''} onChange={e => handleDistChange(+e.target.value || 0)} />
+                    <span className="cardio-unit-badge">km</span>
+                  </div>
+                </div>
               </div>
               <div className="add-ex-actions">
-                <button className="training-add-set-btn" onClick={() => {
-                  onAddPlannedCardio({ type: cardioType, durationHrs: cardioHrs, durationMin: cardioDur, speedKmh: cardioSpeed, distanceKm: cardioDist })
-                  setShowCardioForm(false)
-                  setCardioHrs(0); setCardioDur(30); setCardioSpeed(0)
-                }}>Salvar</button>
-                <button className="set-del-btn" onClick={() => setShowCardioForm(false)}><X size={14} /></button>
+                <button className="training-add-set-btn" onClick={saveCardio}>
+                  {editingCardioId ? 'Atualizar' : 'Salvar'}
+                </button>
+                <button className="set-del-btn" onClick={() => { setShowCardioForm(false); resetCardioForm() }}><X size={14} /></button>
               </div>
             </div>
           )}
@@ -837,7 +893,7 @@ function RoutineCard({
   onUpdate, onDelete,
   onAddDay, onUpdateDay, onDeleteDay,
   onAddExercise, onDeleteExercise, onUpdateExercise,
-  onAddPlannedCardio, onDeletePlannedCardio,
+  onAddPlannedCardio, onUpdatePlannedCardio, onDeletePlannedCardio,
   MUSCLE_GROUPS, EQUIPMENT, DAYS,
 }) {
   const [editingName, setEditingName] = useState(false)
@@ -902,6 +958,7 @@ function RoutineCard({
                 onDeleteExercise={(exId) => onDeleteExercise(day.id, exId)}
                 onUpdateExercise={(exId, patch) => onUpdateExercise(day.id, exId, patch)}
                 onAddPlannedCardio={(item) => onAddPlannedCardio(day.id, item)}
+                onUpdatePlannedCardio={(cardioId, patch) => onUpdatePlannedCardio(day.id, cardioId, patch)}
                 onDeletePlannedCardio={(cardioId) => onDeletePlannedCardio(day.id, cardioId)}
                 MUSCLE_GROUPS={MUSCLE_GROUPS}
                 EQUIPMENT={EQUIPMENT}
@@ -937,7 +994,7 @@ function RotinasScreen({ training }) {
     addRoutine, updateRoutine, deleteRoutine,
     addTrainingDay, updateTrainingDay, deleteTrainingDay,
     addExercise, updateExercise, deleteExercise,
-    addPlannedCardio, deletePlannedCardio,
+    addPlannedCardio, updatePlannedCardio, deletePlannedCardio,
     MUSCLE_GROUPS, EQUIPMENT, DAYS,
   } = training
 
@@ -1007,6 +1064,7 @@ function RotinasScreen({ training }) {
           onDeleteExercise={(dayId, exId) => deleteExercise(routine.id, dayId, exId)}
           onUpdateExercise={(dayId, exId, patch) => updateExercise(routine.id, dayId, exId, patch)}
           onAddPlannedCardio={(dayId, item) => addPlannedCardio(routine.id, dayId, item)}
+          onUpdatePlannedCardio={(dayId, cardioId, patch) => updatePlannedCardio(routine.id, dayId, cardioId, patch)}
           onDeletePlannedCardio={(dayId, cardioId) => deletePlannedCardio(routine.id, dayId, cardioId)}
           MUSCLE_GROUPS={MUSCLE_GROUPS}
           EQUIPMENT={EQUIPMENT}
