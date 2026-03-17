@@ -73,6 +73,11 @@ function loadData() {
         }),
       })),
     }))
+    // Migração: exerciseNotes em sessions
+    raw.sessions = (raw.sessions || []).map(s => ({
+      ...s,
+      exerciseNotes: s.exerciseNotes || {},
+    }))
     if (migrated) {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(raw)) } catch { /* quota exceeded */ }
     }
@@ -281,17 +286,18 @@ export function useTraining() {
   }, [save])
 
   // ── Sessions ──────────────────────────────────────────────────
-  const startSession = useCallback((routineId, trainingDayId = null, exercises = [], plannedCardio = []) => {
+  const startSession = useCallback((routineId, trainingDayId = null, exercises = [], plannedCardio = [], initialWeights = {}) => {
     const initialSets = {}
     exercises.forEach(ex => {
       if (Array.isArray(ex.sets) && ex.sets.length > 0) {
+        const exWeights = initialWeights[ex.id] || []
         initialSets[ex.id] = ex.sets.map((s, i) => {
           const repsNum = parseInt(String(s.reps), 10)
           return {
             id: makeId(),
             setNumber: i + 1,
             reps: isNaN(repsNum) ? 12 : repsNum,
-            weightKg: 0,
+            weightKg: exWeights[i] ?? 0,
             completed: false,
           }
         })
@@ -306,6 +312,7 @@ export function useTraining() {
       finishedAt: null,
       completed: false,
       sets: initialSets,
+      exerciseNotes: {},
       cardio: plannedCardio.map(c => ({
         id: makeId(),
         type: c.type || 'Corrida',

@@ -84,6 +84,28 @@ function calcVolume(sets) {
   return Object.values(sets || {}).flat().reduce((acc, s) => acc + (s.reps * s.weightKg), 0)
 }
 
+const MUSCLE_COLORS = {
+  'Peito': '#3b82f6',
+  'Costas': '#06b6d4',
+  'Latíssimo': '#06b6d4',
+  'Ombros': '#a855f7',
+  'Trapézio': '#8b5cf6',
+  'Rombóide': '#0ea5e9',
+  'Bíceps': '#f59e0b',
+  'Tríceps': '#f97316',
+  'Antebraço': '#fb923c',
+  'Abdômen': '#10b981',
+  'Oblíquos': '#34d399',
+  'Lombar': '#6ee7b7',
+  'Quadríceps': '#22c55e',
+  'Isquiotibiais': '#16a34a',
+  'Glúteos': '#15803d',
+  'Panturrilha': '#4ade80',
+  'Adutores': '#86efac',
+  'Abdutores': '#bbf7d0',
+  'Cardio': '#ef4444',
+}
+
 // ── Timer Hook ────────────────────────────────────────────────
 function useTimer(running) {
   const [elapsed, setElapsed] = useState(0)
@@ -244,8 +266,9 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
 }
 
 // ── ExerciseCard (during session) ─────────────────────────────
-function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, restTimer }) {
+function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, restTimer, note = '', onNoteChange }) {
   const [expanded, setExpanded] = useState(true)
+  const [showNote, setShowNote] = useState(false)
   const lastSet   = history[0]?.sets?.slice(-1)[0]
   const lastWeight = lastSet?.weightKg ?? 0
   const lastReps   = lastSet?.reps ?? parseDefaultReps(exercise.sets?.[0]?.reps ?? '12')
@@ -274,8 +297,13 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
       .filter(w => w > 0)
   )].slice(0, 3)
 
+  const muscleColor = exercise.muscleGroup ? (MUSCLE_COLORS[exercise.muscleGroup] || 'var(--accent)') : null
+
   return (
-    <div className={`training-exercise-card${allDone ? ' ex-card-done' : ''}`}>
+    <div
+      className={`training-exercise-card${allDone ? ' ex-card-done' : ''}`}
+      style={muscleColor ? { borderLeft: `3px solid ${muscleColor}` } : undefined}
+    >
       <div className="ex-card-header" onClick={() => setExpanded(e => !e)}>
         <div className="ex-card-left-col" />
         <div className="ex-card-info">
@@ -313,6 +341,20 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
               weightSuggestions={weightSuggestions}
             />
           ))}
+          <div className="ex-note-row">
+            <button className="ex-note-toggle" onClick={() => setShowNote(v => !v)}>
+              {showNote ? '— Ocultar nota' : `+ Nota${note ? ' ✏️' : ''}`}
+            </button>
+            {showNote && (
+              <textarea
+                className="ex-note-textarea"
+                placeholder="Observação para este exercício..."
+                value={note}
+                onChange={e => onNoteChange && onNoteChange(e.target.value)}
+                rows={2}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -1012,6 +1054,15 @@ function RegistrarScreen({ training }) {
       )
     }
 
+    // Pesos do último treino deste dia
+    const lastDaySession = sessions
+      .filter(s => s.completed && s.trainingDayId === activeDay.id)
+      .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))[0]
+    const lastWeights = lastDaySession
+      ? Object.fromEntries(Object.entries(lastDaySession.sets).map(([exId, sets]) => [exId, sets.map(s => s.weightKg)]))
+      : {}
+    const hasLastWeights = lastDaySession && Object.values(lastWeights).some(ws => ws.some(w => w > 0))
+
     return (
       <div className="training-start-screen">
         {startScreenStreak > 1 && (
@@ -1026,6 +1077,11 @@ function RegistrarScreen({ training }) {
         <button className="session-start-btn" onClick={() => startSession(activeRoutine.id, activeDay.id, activeDay.exercises || [], activeDay.plannedCardio || [])}>
           <Play size={18} /> Iniciar {activeDay.label}
         </button>
+        {hasLastWeights && (
+          <button className="session-repeat-btn" onClick={() => startSession(activeRoutine.id, activeDay.id, activeDay.exercises || [], activeDay.plannedCardio || [], lastWeights)}>
+            🔄 Repetir pesos anteriores
+          </button>
+        )}
       </div>
     )
   }
@@ -1075,6 +1131,8 @@ function RegistrarScreen({ training }) {
           onDeleteSet={(exId, setId) => deleteSet(session.id, exId, setId)}
           history={exerciseHistory(ex.id)}
           restTimer={restTimer}
+          note={session.exerciseNotes?.[ex.id] || ''}
+          onNoteChange={text => updateSession(session.id, { exerciseNotes: { ...(session.exerciseNotes || {}), [ex.id]: text } })}
         />
       ))}
 
@@ -1136,6 +1194,7 @@ function RegistrarScreen({ training }) {
           session={summarySession}
           routine={activeRoutine}
           trainingDay={activeDay}
+          sessions={sessions}
           onClose={() => { setShowSummary(false); setSummarySession(null) }}
         />
       )}
@@ -1144,7 +1203,7 @@ function RegistrarScreen({ training }) {
 }
 
 // ── WorkoutSummary ────────────────────────────────────────────
-function WorkoutSummary({ session, routine, trainingDay, onClose }) {
+function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [] }) {
   const start = new Date(session.startedAt)
   const end   = session.finishedAt ? new Date(session.finishedAt) : new Date()
   const durationSec = Math.round((end - start) / 1000)
@@ -1152,6 +1211,19 @@ function WorkoutSummary({ session, routine, trainingDay, onClose }) {
   const totalSets = allSets.length
   const volume = allSets.reduce((a, s) => a + (s.reps || 0) * (s.weightKg || 0), 0)
   const cardioMin = (session.cardio || []).reduce((a, c) => a + (c.durationMin || 0), 0)
+
+  // Progressão: comparar com sessão anterior do mesmo dia
+  const prevSession = sessions
+    .filter(s => s.completed && s.id !== session.id && s.trainingDayId === session.trainingDayId)
+    .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))[0]
+  const prevVolume = prevSession ? calcVolume(prevSession.sets) : 0
+  const volumeDiff = volume - prevVolume
+  let overloadHint = null
+  if (prevSession && volume > 0) {
+    if (volumeDiff > 50) overloadHint = { icon: '📈', msg: `+${volumeDiff.toFixed(0)}kg vs último treino — evolução real!`, color: '#22c55e' }
+    else if (volumeDiff >= -50) overloadHint = { icon: '⚡', msg: 'Volume similar ao último treino. Que tal +2.5kg próxima vez?', color: '#f59e0b' }
+    else overloadHint = { icon: '💤', msg: 'Volume menor hoje — recupere bem para o próximo!', color: '#60a5fa' }
+  }
 
   return (
     <div className="workout-summary-overlay">
@@ -1179,6 +1251,12 @@ function WorkoutSummary({ session, routine, trainingDay, onClose }) {
             </div>
           )}
         </div>
+        {overloadHint && (
+          <div className="summary-overload-hint" style={{ borderColor: overloadHint.color + '44', color: overloadHint.color }}>
+            <span>{overloadHint.icon}</span>
+            <span>{overloadHint.msg}</span>
+          </div>
+        )}
         <button className="summary-close-btn" onClick={onClose}>
           <Check size={18} /> Fechar
         </button>

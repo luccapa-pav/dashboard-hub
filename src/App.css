@@ -4906,3 +4906,83 @@ kbd {
   gap: 5px;
   flex-wrap: wrap;
 }
+
+/* ── Muscle group left border (inline style) ─────────────────── */
+.training-exercise-card { border-left: 3px solid transparent; }
+
+/* ── Exercise notes ──────────────────────────────────────────── */
+.ex-note-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.ex-note-toggle {
+  background: none;
+  border: none;
+  color: var(--text-mid);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0;
+  text-align: left;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+}
+.ex-note-toggle:hover { color: var(--accent); }
+.ex-note-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--white);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 8px 10px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+.ex-note-textarea:focus { border-color: var(--accent); }
+.ex-note-textarea::placeholder { color: var(--text); }
+
+/* ── Repeat weights button ───────────────────────────────────── */
+.session-repeat-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-mid);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.session-repeat-btn:hover {
+  border-color: var(--accent);
+  color: var(--white);
+  background: var(--accent-dim);
+}
+
+/* ── Progressive overload hint in WorkoutSummary ─────────────── */
+.summary-overload-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(0,0,0,0.2);
+  line-height: 1.4;
+}
