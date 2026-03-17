@@ -963,7 +963,7 @@ function RotinasScreen({ training }) {
   }
 
   return (
-    <div className="training-rotinas">
+    <div className="training-rotinas" style={{ position: 'relative', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '1100px' }}>
       {/* Add Routine Button */}
       {showNewRoutine ? (
         <div className="add-routine-form add-routine-form-centered">
@@ -1555,7 +1555,7 @@ export function TrainingTab() {
         </div>
       </div>
 
-      <div className="training-content">
+      <div className="training-content" style={{ width: '100%', overflowX: 'hidden' }}>
         {activeNav === 'rotina'    && <RotinasScreen    training={training} />}
         {activeNav === 'registrar' && <RegistrarScreen  training={training} />}
         {activeNav === 'historico' && <HistoricoScreen  training={training} />}
