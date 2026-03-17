@@ -3196,6 +3196,9 @@ kbd {
   padding: 3px 8px;
   border-radius: 6px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .muscle-badge {
@@ -4020,9 +4023,9 @@ kbd {
 }
 
 .routine-ex-tags {
-  display: flex;
+  display: grid;
+  grid-template-columns: 90px 90px;
   gap: 4px;
-  flex-wrap: wrap;
 }
 
 .routine-ex-sets-display {
