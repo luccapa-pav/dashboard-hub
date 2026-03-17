@@ -33,7 +33,31 @@ const defaultData = () => ({
 
 function loadData() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || defaultData()
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || defaultData()
+    // Migrate old format: exercises[] + days[] → trainingDays[]
+    let migrated = false
+    raw.routines = (raw.routines || []).map(r => {
+      if (r.exercises !== undefined) {
+        const migrated_r = {
+          ...r,
+          trainingDays: [{
+            id: makeId(),
+            label: 'Treino A',
+            weekDays: r.days || [],
+            exercises: r.exercises,
+          }],
+        }
+        delete migrated_r.exercises
+        delete migrated_r.days
+        migrated = true
+        return migrated_r
+      }
+      return r
+    })
+    if (migrated) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(raw)) } catch { /* quota exceeded */ }
+    }
+    return raw
   } catch {
     return defaultData()
   }
@@ -51,13 +75,12 @@ export function useTraining() {
   }, [])
 
   // ── Routines ──────────────────────────────────────────────────
-  const addRoutine = useCallback((name, days = []) => {
+  const addRoutine = useCallback((name) => {
     const routine = {
       id: makeId(),
       userId: ANON_USER_ID,
       name,
-      days, // array of day indices [0-6]
-      exercises: [],
+      trainingDays: [],
       createdAt: new Date().toISOString(),
     }
     save(cur => ({
@@ -89,66 +112,127 @@ export function useTraining() {
     save(cur => ({ ...cur, activeRoutineId: id }))
   }, [save])
 
-  // ── Exercises ─────────────────────────────────────────────────
-  const addExercise = useCallback((routineId, name, muscleGroup = '', equipment = '') => {
+  // ── Training Days ──────────────────────────────────────────────
+  const addTrainingDay = useCallback((routineId, label, weekDays = []) => {
+    const day = { id: makeId(), label, weekDays, exercises: [] }
     save(cur => ({
       ...cur,
       routines: cur.routines.map(r => {
         if (r.id !== routineId) return r
-        const ex = {
-          id: makeId(),
-          name,
-          muscleGroup,
-          equipment,
-          order: r.exercises.length,
-          defaultSets: 3,
-          defaultReps: 12,
-          defaultWeight: 0,
+        return { ...r, trainingDays: [...(r.trainingDays || []), day] }
+      }),
+    }))
+    return day.id
+  }, [save])
+
+  const updateTrainingDay = useCallback((routineId, dayId, patch) => {
+    save(cur => ({
+      ...cur,
+      routines: cur.routines.map(r => {
+        if (r.id !== routineId) return r
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => d.id === dayId ? { ...d, ...patch } : d),
         }
-        return { ...r, exercises: [...r.exercises, ex] }
       }),
     }))
   }, [save])
 
-  const updateExercise = useCallback((routineId, exerciseId, patch) => {
+  const deleteTrainingDay = useCallback((routineId, dayId) => {
     save(cur => ({
       ...cur,
       routines: cur.routines.map(r => {
         if (r.id !== routineId) return r
-        return { ...r, exercises: r.exercises.map(e => e.id === exerciseId ? { ...e, ...patch } : e) }
+        return { ...r, trainingDays: (r.trainingDays || []).filter(d => d.id !== dayId) }
       }),
     }))
   }, [save])
 
-  const deleteExercise = useCallback((routineId, exerciseId) => {
+  // ── Exercises ─────────────────────────────────────────────────
+  const addExercise = useCallback((routineId, trainingDayId, name, muscleGroup = '', equipment = '') => {
     save(cur => ({
       ...cur,
       routines: cur.routines.map(r => {
         if (r.id !== routineId) return r
-        return { ...r, exercises: r.exercises.filter(e => e.id !== exerciseId) }
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => {
+            if (d.id !== trainingDayId) return d
+            const ex = {
+              id: makeId(),
+              name,
+              muscleGroup,
+              equipment,
+              order: d.exercises.length,
+              defaultSets: 3,
+              defaultReps: 12,
+              defaultWeight: 0,
+            }
+            return { ...d, exercises: [...d.exercises, ex] }
+          }),
+        }
       }),
     }))
   }, [save])
 
-  const reorderExercises = useCallback((routineId, fromIdx, toIdx) => {
+  const updateExercise = useCallback((routineId, trainingDayId, exerciseId, patch) => {
     save(cur => ({
       ...cur,
       routines: cur.routines.map(r => {
         if (r.id !== routineId) return r
-        const exs = [...r.exercises]
-        const [moved] = exs.splice(fromIdx, 1)
-        exs.splice(toIdx, 0, moved)
-        return { ...r, exercises: exs.map((e, i) => ({ ...e, order: i })) }
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => {
+            if (d.id !== trainingDayId) return d
+            return { ...d, exercises: d.exercises.map(e => e.id === exerciseId ? { ...e, ...patch } : e) }
+          }),
+        }
+      }),
+    }))
+  }, [save])
+
+  const deleteExercise = useCallback((routineId, trainingDayId, exerciseId) => {
+    save(cur => ({
+      ...cur,
+      routines: cur.routines.map(r => {
+        if (r.id !== routineId) return r
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => {
+            if (d.id !== trainingDayId) return d
+            return { ...d, exercises: d.exercises.filter(e => e.id !== exerciseId) }
+          }),
+        }
+      }),
+    }))
+  }, [save])
+
+  const reorderExercises = useCallback((routineId, trainingDayId, fromIdx, toIdx) => {
+    save(cur => ({
+      ...cur,
+      routines: cur.routines.map(r => {
+        if (r.id !== routineId) return r
+        return {
+          ...r,
+          trainingDays: (r.trainingDays || []).map(d => {
+            if (d.id !== trainingDayId) return d
+            const exs = [...d.exercises]
+            const [moved] = exs.splice(fromIdx, 1)
+            exs.splice(toIdx, 0, moved)
+            return { ...d, exercises: exs.map((e, i) => ({ ...e, order: i })) }
+          }),
+        }
       }),
     }))
   }, [save])
 
   // ── Sessions ──────────────────────────────────────────────────
-  const startSession = useCallback((routineId) => {
+  const startSession = useCallback((routineId, trainingDayId = null) => {
     const session = {
       id: makeId(),
       userId: ANON_USER_ID,
       routineId,
+      trainingDayId,
       startedAt: new Date().toISOString(),
       finishedAt: null,
       completed: false,
@@ -298,6 +382,11 @@ export function useTraining() {
     return data.sessions.find(s => !s.completed && new Date(s.startedAt).toDateString() === today) || null
   }, [data.sessions])
 
+  const todayTrainingDay = useMemo(() => {
+    const dayIdx = new Date().getDay() // 0=Dom ... 6=Sáb
+    return activeRoutine?.trainingDays?.find(d => d.weekDays.includes(dayIdx)) || null
+  }, [activeRoutine])
+
   const currentWeekSessions = useMemo(() => {
     const now = new Date()
     const startOfWeek = new Date(now)
@@ -327,6 +416,8 @@ export function useTraining() {
     aiFeedbacks: data.aiFeedbacks,
     // Routines
     addRoutine, updateRoutine, deleteRoutine,
+    // Training Days
+    addTrainingDay, updateTrainingDay, deleteTrainingDay,
     // Exercises
     addExercise, updateExercise, deleteExercise, reorderExercises,
     // Sessions
@@ -339,6 +430,7 @@ export function useTraining() {
     saveAIFeedback,
     // Computed
     todaySession,
+    todayTrainingDay,
     currentWeekSessions,
     exerciseHistory,
     // Constants

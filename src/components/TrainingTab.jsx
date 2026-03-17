@@ -116,10 +116,363 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
   )
 }
 
+// ── DaySelector ───────────────────────────────────────────────
+function DaySelector({ selected, onChange, days }) {
+  return (
+    <div className="day-selector">
+      {days.map((day, idx) => (
+        <button
+          key={day}
+          className={`day-btn${selected.includes(idx) ? ' day-active' : ''}`}
+          onClick={() => {
+            onChange(selected.includes(idx)
+              ? selected.filter(d => d !== idx)
+              : [...selected, idx].sort()
+            )
+          }}
+        >
+          {day}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── AddExerciseForm ───────────────────────────────────────────
+function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
+  const [name, setName] = useState('')
+  const [muscle, setMuscle] = useState('')
+  const [equip, setEquip] = useState('')
+  const [open, setOpen] = useState(false)
+
+  if (!open) {
+    return (
+      <button className="training-add-set-btn routine-add-ex-btn" onClick={() => setOpen(true)}>
+        <Plus size={14} /> Adicionar exercício
+      </button>
+    )
+  }
+
+  return (
+    <div className="add-exercise-form">
+      <input
+        className="training-input"
+        placeholder="Nome do exercício"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        autoFocus
+      />
+      <select className="training-select" value={muscle} onChange={e => setMuscle(e.target.value)}>
+        <option value="">Grupo muscular</option>
+        {muscleGroups.map(m => <option key={m}>{m}</option>)}
+      </select>
+      <select className="training-select" value={equip} onChange={e => setEquip(e.target.value)}>
+        <option value="">Equipamento</option>
+        {equipment.map(eq => <option key={eq}>{eq}</option>)}
+      </select>
+      <div className="add-ex-actions">
+        <button className="training-add-set-btn" onClick={() => {
+          if (!name.trim()) return
+          onAdd(name.trim(), muscle, equip)
+          setName(''); setMuscle(''); setEquip(''); setOpen(false)
+        }}>
+          Salvar
+        </button>
+        <button className="set-del-btn" onClick={() => setOpen(false)}><X size={14} /></button>
+      </div>
+    </div>
+  )
+}
+
+// ── AddTrainingDayForm ────────────────────────────────────────
+function AddTrainingDayForm({ onAdd, onCancel, DAYS }) {
+  const [label, setLabel] = useState('')
+  const [weekDays, setWeekDays] = useState([])
+
+  return (
+    <div className="add-training-day-form">
+      <input
+        className="training-input"
+        placeholder="Nome do dia (ex: Peito + Tríceps)"
+        value={label}
+        onChange={e => setLabel(e.target.value)}
+        autoFocus
+      />
+      <DaySelector selected={weekDays} onChange={setWeekDays} days={DAYS} />
+      <div className="add-ex-actions">
+        <button
+          className="training-add-set-btn"
+          disabled={!label.trim()}
+          onClick={() => { if (label.trim()) onAdd(label.trim(), weekDays) }}
+        >
+          Salvar
+        </button>
+        <button className="set-del-btn" onClick={onCancel}><X size={14} /></button>
+      </div>
+    </div>
+  )
+}
+
+// ── ExerciseRowInRoutine ──────────────────────────────────────
+function ExerciseRowInRoutine({ exercise, onDelete }) {
+  return (
+    <div className="routine-exercise-row">
+      <div className="routine-ex-info">
+        <span className="routine-ex-name">{exercise.name}</span>
+        {exercise.muscleGroup && <span className="muscle-badge">{exercise.muscleGroup}</span>}
+        {exercise.equipment && <span className="equip-badge">{exercise.equipment}</span>}
+      </div>
+      <div className="routine-ex-defaults">
+        <span>{exercise.defaultSets}×{exercise.defaultReps}</span>
+        {exercise.defaultWeight > 0 && <span> @ {exercise.defaultWeight}kg</span>}
+      </div>
+      <button className="set-del-btn" onClick={onDelete}>
+        <Trash2 size={12} />
+      </button>
+    </div>
+  )
+}
+
+// ── TrainingDayCard ───────────────────────────────────────────
+function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
+  const [editingLabel, setEditingLabel] = useState(false)
+  const [editLabel, setEditLabel] = useState('')
+
+  return (
+    <div className="training-day-card">
+      <div className="training-day-header">
+        {editingLabel ? (
+          <div className="routine-edit-row">
+            <input
+              className="training-input"
+              value={editLabel}
+              onChange={e => setEditLabel(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { onUpdate({ label: editLabel.trim() }); setEditingLabel(false) }
+              }}
+              autoFocus
+            />
+            <button className="training-add-set-btn" onClick={() => { onUpdate({ label: editLabel.trim() }); setEditingLabel(false) }}>OK</button>
+            <button className="set-del-btn" onClick={() => setEditingLabel(false)}><X size={14} /></button>
+          </div>
+        ) : (
+          <div className="training-day-title-row">
+            <span className="training-day-label">{day.label}</span>
+            <div className="training-day-week-badges">
+              {(day.weekDays || []).map(d => (
+                <span key={d} className="day-badge">{DAYS[d]}</span>
+              ))}
+            </div>
+            <div className="training-day-actions">
+              <button className="routine-edit-btn" onClick={() => { setEditingLabel(true); setEditLabel(day.label) }}>
+                <Edit2 size={12} />
+              </button>
+              <button className="set-del-btn" onClick={onDelete}>
+                <Trash2 size={12} />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="training-day-week-row">
+        <DaySelector
+          selected={day.weekDays || []}
+          onChange={weekDays => onUpdate({ weekDays })}
+          days={DAYS}
+        />
+      </div>
+      <div className="training-day-exercises">
+        {(day.exercises || []).sort((a, b) => a.order - b.order).map(ex => (
+          <ExerciseRowInRoutine
+            key={ex.id}
+            exercise={ex}
+            onDelete={() => onDeleteExercise(ex.id)}
+          />
+        ))}
+        <AddExerciseForm
+          onAdd={(name, muscle, equip) => onAddExercise(name, muscle, equip)}
+          muscleGroups={MUSCLE_GROUPS}
+          equipment={EQUIPMENT}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── RoutineCard ───────────────────────────────────────────────
+function RoutineCard({
+  routine, expanded, onToggle, onSetActive, isActive,
+  onUpdate, onDelete,
+  onAddDay, onUpdateDay, onDeleteDay,
+  onAddExercise, onDeleteExercise,
+  MUSCLE_GROUPS, EQUIPMENT, DAYS,
+}) {
+  const [editingName, setEditingName] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [showAddDay, setShowAddDay] = useState(false)
+  const trainingDays = routine.trainingDays || []
+
+  return (
+    <div className={`routine-card${isActive ? ' routine-card-active' : ''}`}>
+      <div
+        className="routine-card-header"
+        onClick={() => { onToggle(); onSetActive() }}
+      >
+        {editingName ? (
+          <div className="routine-edit-row" onClick={e => e.stopPropagation()}>
+            <input
+              className="training-input"
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { onUpdate({ name: editName.trim() }); setEditingName(false) }
+              }}
+              autoFocus
+            />
+            <button className="training-add-set-btn" onClick={() => { onUpdate({ name: editName.trim() }); setEditingName(false) }}>OK</button>
+            <button className="set-del-btn" onClick={() => setEditingName(false)}><X size={14} /></button>
+          </div>
+        ) : (
+          <>
+            <div className="routine-card-title">
+              <span className="routine-card-name">{routine.name}</span>
+              {isActive && <span className="routine-active-badge">ativa</span>}
+            </div>
+            <div className="routine-card-actions" onClick={e => e.stopPropagation()}>
+              <button className="routine-edit-btn" onClick={() => { setEditingName(true); setEditName(routine.name) }}>
+                <Edit2 size={14} />
+              </button>
+              <button className="set-del-btn" onClick={() => {
+                if (confirm(`Excluir rotina "${routine.name}"?`)) onDelete()
+              }}>
+                <Trash2 size={14} />
+              </button>
+              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </div>
+          </>
+        )}
+      </div>
+
+      {expanded && (
+        <div className="routine-card-body">
+          {trainingDays.length === 0 && (
+            <p className="routine-empty-hint">Nenhum dia de treino. Adicione abaixo.</p>
+          )}
+          {trainingDays.map(day => (
+            <TrainingDayCard
+              key={day.id}
+              day={day}
+              onUpdate={patch => onUpdateDay(day.id, patch)}
+              onDelete={() => { if (confirm(`Excluir dia "${day.label}"?`)) onDeleteDay(day.id) }}
+              onAddExercise={(name, muscle, equip) => onAddExercise(day.id, name, muscle, equip)}
+              onDeleteExercise={(exId) => onDeleteExercise(day.id, exId)}
+              MUSCLE_GROUPS={MUSCLE_GROUPS}
+              EQUIPMENT={EQUIPMENT}
+              DAYS={DAYS}
+            />
+          ))}
+          {showAddDay ? (
+            <AddTrainingDayForm
+              onAdd={(label, weekDays) => { onAddDay(label, weekDays); setShowAddDay(false) }}
+              onCancel={() => setShowAddDay(false)}
+              DAYS={DAYS}
+            />
+          ) : (
+            <button className="training-add-set-btn add-day-btn" onClick={() => setShowAddDay(true)}>
+              <Plus size={14} /> Adicionar dia de treino
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── RotinasScreen ─────────────────────────────────────────────
+function RotinasScreen({ training }) {
+  const {
+    routines, activeRoutine, setActiveRoutineId,
+    addRoutine, updateRoutine, deleteRoutine,
+    addTrainingDay, updateTrainingDay, deleteTrainingDay,
+    addExercise, deleteExercise,
+    MUSCLE_GROUPS, EQUIPMENT, DAYS,
+  } = training
+
+  const [expandedId, setExpandedId] = useState(() => activeRoutine?.id || routines[0]?.id || null)
+  const [showNewRoutine, setShowNewRoutine] = useState(false)
+  const [newName, setNewName] = useState('')
+
+  const handleAddRoutine = () => {
+    if (!newName.trim()) return
+    const id = addRoutine(newName.trim())
+    setNewName('')
+    setShowNewRoutine(false)
+    setExpandedId(id)
+  }
+
+  return (
+    <div className="training-rotinas">
+      {/* Add Routine Button */}
+      {showNewRoutine ? (
+        <div className="add-routine-form">
+          <input
+            className="training-input"
+            placeholder="Nome da rotina"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAddRoutine() }}
+            autoFocus
+          />
+          <div className="add-ex-actions">
+            <button className="training-add-set-btn" disabled={!newName.trim()} onClick={handleAddRoutine}>
+              Criar
+            </button>
+            <button className="set-del-btn" onClick={() => { setShowNewRoutine(false); setNewName('') }}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button className="new-routine-btn" onClick={() => setShowNewRoutine(true)}>
+          <Plus size={16} /> Nova Rotina
+        </button>
+      )}
+
+      {/* Routine Cards */}
+      {routines.length === 0 && !showNewRoutine && (
+        <div className="training-empty">
+          <Dumbbell size={40} strokeWidth={1.2} />
+          <p>Crie sua primeira rotina acima.</p>
+        </div>
+      )}
+      {routines.map(routine => (
+        <RoutineCard
+          key={routine.id}
+          routine={routine}
+          expanded={expandedId === routine.id}
+          isActive={activeRoutine?.id === routine.id}
+          onToggle={() => setExpandedId(id => id === routine.id ? null : routine.id)}
+          onSetActive={() => setActiveRoutineId(routine.id)}
+          onUpdate={patch => updateRoutine(routine.id, patch)}
+          onDelete={() => deleteRoutine(routine.id)}
+          onAddDay={(label, weekDays) => addTrainingDay(routine.id, label, weekDays)}
+          onUpdateDay={(dayId, patch) => updateTrainingDay(routine.id, dayId, patch)}
+          onDeleteDay={(dayId) => deleteTrainingDay(routine.id, dayId)}
+          onAddExercise={(dayId, name, muscle, equip) => addExercise(routine.id, dayId, name, muscle, equip)}
+          onDeleteExercise={(dayId, exId) => deleteExercise(routine.id, dayId, exId)}
+          MUSCLE_GROUPS={MUSCLE_GROUPS}
+          EQUIPMENT={EQUIPMENT}
+          DAYS={DAYS}
+        />
+      ))}
+    </div>
+  )
+}
+
 // ── RegistrarScreen ───────────────────────────────────────────
 function RegistrarScreen({ training }) {
   const {
-    activeRoutine, todaySession,
+    activeRoutine, todayTrainingDay, todaySession,
     startSession, completeSession, deleteSession,
     addSet, updateSet, deleteSet,
     addCardio, updateCardio, deleteCardio,
@@ -127,6 +480,7 @@ function RegistrarScreen({ training }) {
     updateSession,
   } = training
 
+  const [manualDay, setManualDay] = useState(null)
   const session = todaySession
   const elapsed = useTimer(!!session && !session?.completed)
   const [showCardioForm, setShowCardioForm] = useState(false)
@@ -143,21 +497,60 @@ function RegistrarScreen({ training }) {
     )
   }
 
+  const trainingDays = activeRoutine.trainingDays || []
+
+  // Determine which training day is relevant
+  const activeDay = session
+    ? trainingDays.find(d => d.id === session.trainingDayId) || null
+    : (manualDay || todayTrainingDay)
+
   if (!session) {
+    // No training day today and no manual selection
+    if (!activeDay) {
+      return (
+        <div className="training-start-screen">
+          <div className="training-start-info">
+            <span className="rest-day-emoji">💪</span>
+            <h3>Hoje é folga</h3>
+            {trainingDays.length > 0 ? (
+              <p>Quer treinar mesmo assim? Escolha um dia:</p>
+            ) : (
+              <p>Adicione dias de treino na aba <strong>Rotina</strong>.</p>
+            )}
+          </div>
+          {trainingDays.length > 0 && (
+            <div className="training-day-picker">
+              {trainingDays.map(d => (
+                <button
+                  key={d.id}
+                  className={`training-day-pick-btn${manualDay?.id === d.id ? ' day-pick-active' : ''}`}
+                  onClick={() => setManualDay(d)}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
+
     return (
       <div className="training-start-screen">
         <div className="training-start-info">
           <Dumbbell size={32} strokeWidth={1.2} />
           <h3>{activeRoutine.name}</h3>
-          <p>{activeRoutine.exercises.length} exercício{activeRoutine.exercises.length !== 1 ? 's' : ''}</p>
+          <p className="training-day-subtitle">{activeDay.label}</p>
+          <p>{activeDay.exercises.length} exercício{activeDay.exercises.length !== 1 ? 's' : ''}</p>
         </div>
-        <button className="session-start-btn" onClick={() => startSession(activeRoutine.id)}>
-          <Play size={18} /> Iniciar treino
+        <button className="session-start-btn" onClick={() => startSession(activeRoutine.id, activeDay.id)}>
+          <Play size={18} /> Iniciar {activeDay.label}
         </button>
       </div>
     )
   }
 
+  const sessionExercises = activeDay?.exercises || []
   const completedSets = Object.values(session.sets).flat().filter(s => s.completed).length
   const totalSets     = Object.values(session.sets).flat().length
 
@@ -167,6 +560,7 @@ function RegistrarScreen({ training }) {
       <div className="session-timer-bar">
         <Clock size={14} />
         <span className="timer-display">{formatDuration(elapsed)}</span>
+        {activeDay && <span className="timer-day-label">{activeDay.label}</span>}
         <span className="timer-sets">{completedSets}/{totalSets} séries</span>
         <button className="session-abort-btn" onClick={() => { if (confirm('Cancelar treino?')) deleteSession(session.id) }}>
           <X size={14} />
@@ -174,11 +568,10 @@ function RegistrarScreen({ training }) {
       </div>
 
       {/* Exercises */}
-      {activeRoutine.exercises.map(ex => (
+      {sessionExercises.map(ex => (
         <ExerciseCard
           key={ex.id}
           exercise={ex}
-          sessionId={session.id}
           sets={session.sets[ex.id] || []}
           onAddSet={(exId, reps, weight) => addSet(session.id, exId, reps, weight)}
           onUpdateSet={(exId, setId, patch) => updateSet(session.id, exId, setId, patch)}
@@ -186,6 +579,12 @@ function RegistrarScreen({ training }) {
           history={exerciseHistory(ex.id)}
         />
       ))}
+
+      {sessionExercises.length === 0 && (
+        <div className="training-empty" style={{ padding: '20px 0' }}>
+          <p>Este dia não tem exercícios cadastrados.</p>
+        </div>
+      )}
 
       {/* Cardio */}
       <div className="training-cardio-section">
@@ -246,214 +645,6 @@ function RegistrarScreen({ training }) {
   )
 }
 
-// ── RotinasScreen ─────────────────────────────────────────────
-function AddExerciseForm({ routineId, onAdd, muscleGroups, equipment }) {
-  const [name, setName] = useState('')
-  const [muscle, setMuscle] = useState('')
-  const [equip, setEquip] = useState('')
-  const [open, setOpen] = useState(false)
-
-  if (!open) {
-    return (
-      <button className="training-add-set-btn routine-add-ex-btn" onClick={() => setOpen(true)}>
-        <Plus size={14} /> Adicionar exercício
-      </button>
-    )
-  }
-
-  return (
-    <div className="add-exercise-form">
-      <input
-        className="training-input"
-        placeholder="Nome do exercício"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        autoFocus
-      />
-      <select className="training-select" value={muscle} onChange={e => setMuscle(e.target.value)}>
-        <option value="">Grupo muscular</option>
-        {muscleGroups.map(m => <option key={m}>{m}</option>)}
-      </select>
-      <select className="training-select" value={equip} onChange={e => setEquip(e.target.value)}>
-        <option value="">Equipamento</option>
-        {equipment.map(eq => <option key={eq}>{eq}</option>)}
-      </select>
-      <div className="add-ex-actions">
-        <button className="training-add-set-btn" onClick={() => {
-          if (!name.trim()) return
-          onAdd(routineId, name.trim(), muscle, equip)
-          setName(''); setMuscle(''); setEquip(''); setOpen(false)
-        }}>
-          Salvar
-        </button>
-        <button className="set-del-btn" onClick={() => setOpen(false)}><X size={14} /></button>
-      </div>
-    </div>
-  )
-}
-
-function DaySelector({ selected, onChange, days }) {
-  return (
-    <div className="day-selector">
-      {days.map((day, idx) => (
-        <button
-          key={day}
-          className={`day-btn${selected.includes(idx) ? ' day-active' : ''}`}
-          onClick={() => {
-            onChange(selected.includes(idx)
-              ? selected.filter(d => d !== idx)
-              : [...selected, idx].sort()
-            )
-          }}
-        >
-          {day}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function RotinasScreen({ training }) {
-  const {
-    routines, activeRoutine, setActiveRoutineId,
-    addRoutine, updateRoutine, deleteRoutine,
-    addExercise, deleteExercise,
-    MUSCLE_GROUPS, EQUIPMENT, DAYS,
-  } = training
-
-  const [newName, setNewName] = useState('')
-  const [editingId, setEditingId] = useState(null)
-  const [editName, setEditName] = useState('')
-
-  const routine = activeRoutine
-
-  return (
-    <div className="training-rotinas">
-      {/* Routine selector */}
-      <div className="routine-selector">
-        {routines.map(r => (
-          <button
-            key={r.id}
-            className={`routine-tab-btn${r.id === routine?.id ? ' routine-active' : ''}`}
-            onClick={() => setActiveRoutineId(r.id)}
-          >
-            {r.name}
-          </button>
-        ))}
-        <div className="add-routine-inline">
-          <input
-            className="training-input routine-name-input"
-            placeholder="Nova rotina..."
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && newName.trim()) {
-                addRoutine(newName.trim())
-                setNewName('')
-              }
-            }}
-          />
-          <button
-            className="training-add-set-btn"
-            disabled={!newName.trim()}
-            onClick={() => {
-              if (newName.trim()) { addRoutine(newName.trim()); setNewName('') }
-            }}
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-      </div>
-
-      {!routine ? (
-        <div className="training-empty">
-          <Dumbbell size={40} strokeWidth={1.2} />
-          <p>Crie sua primeira rotina acima.</p>
-        </div>
-      ) : (
-        <div className="routine-detail">
-          {/* Routine header */}
-          <div className="routine-detail-header">
-            {editingId === routine.id ? (
-              <div className="routine-edit-row">
-                <input
-                  className="training-input"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      updateRoutine(routine.id, { name: editName.trim() })
-                      setEditingId(null)
-                    }
-                  }}
-                  autoFocus
-                />
-                <button className="training-add-set-btn" onClick={() => {
-                  updateRoutine(routine.id, { name: editName.trim() })
-                  setEditingId(null)
-                }}>OK</button>
-                <button className="set-del-btn" onClick={() => setEditingId(null)}><X size={14} /></button>
-              </div>
-            ) : (
-              <div className="routine-edit-row">
-                <h3 className="routine-detail-name">{routine.name}</h3>
-                <button className="routine-edit-btn" onClick={() => { setEditingId(routine.id); setEditName(routine.name) }}>
-                  <Edit2 size={14} />
-                </button>
-                <button className="set-del-btn" onClick={() => {
-                  if (confirm(`Excluir rotina "${routine.name}"?`)) deleteRoutine(routine.id)
-                }}>
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Days */}
-          <div className="routine-section">
-            <span className="routine-section-label">Dias da semana</span>
-            <DaySelector
-              selected={routine.days || []}
-              onChange={days => updateRoutine(routine.id, { days })}
-              days={DAYS}
-            />
-          </div>
-
-          {/* Exercise list */}
-          <div className="routine-section">
-            <span className="routine-section-label">Exercícios ({routine.exercises.length})</span>
-            {routine.exercises.length === 0 && (
-              <p className="routine-empty-hint">Nenhum exercício ainda.</p>
-            )}
-            {[...routine.exercises].sort((a, b) => a.order - b.order).map(ex => (
-              <div key={ex.id} className="routine-exercise-row">
-                <div className="routine-ex-info">
-                  <span className="routine-ex-name">{ex.name}</span>
-                  {ex.muscleGroup && <span className="muscle-badge">{ex.muscleGroup}</span>}
-                  {ex.equipment && <span className="equip-badge">{ex.equipment}</span>}
-                </div>
-                <div className="routine-ex-defaults">
-                  <span>{ex.defaultSets}×{ex.defaultReps}</span>
-                  {ex.defaultWeight > 0 && <span> @ {ex.defaultWeight}kg</span>}
-                </div>
-                <button className="set-del-btn" onClick={() => deleteExercise(routine.id, ex.id)}>
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-            <AddExerciseForm
-              routineId={routine.id}
-              onAdd={addExercise}
-              muscleGroups={MUSCLE_GROUPS}
-              equipment={EQUIPMENT}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── HistoricoScreen ───────────────────────────────────────────
 function WeekSummaryBar({ sessions }) {
   const days = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -482,6 +673,7 @@ function WeekSummaryBar({ sessions }) {
 
 function SessionCard({ session, routines, onDelete }) {
   const routine = routines.find(r => r.id === session.routineId)
+  const trainingDay = routine?.trainingDays?.find(d => d.id === session.trainingDayId)
   const start = new Date(session.startedAt)
   const end   = session.finishedAt ? new Date(session.finishedAt) : null
   const durationSec = end ? Math.round((end - start) / 1000) : 0
@@ -494,6 +686,7 @@ function SessionCard({ session, routines, onDelete }) {
         <div className="session-card-info">
           <span className="session-card-date">{formatDate(session.startedAt)}</span>
           <span className="session-card-routine">{routine?.name || 'Rotina removida'}</span>
+          {trainingDay && <span className="session-card-day">{trainingDay.label}</span>}
         </div>
         <button className="set-del-btn" onClick={() => {
           if (confirm('Excluir este treino?')) onDelete(session.id)
