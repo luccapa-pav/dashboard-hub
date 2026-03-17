@@ -96,25 +96,37 @@ function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
 }
 
 // ── SetRow ────────────────────────────────────────────────────
-function SetRow({ set, onUpdate, onDelete, isPlanned }) {
+// ── SetRow ────────────────────────────────────────────────────
+function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet }) {
   return (
     <div className={`training-set-row${set.completed ? ' set-done' : ''}`}>
       <span className="set-num">S{set.setNumber}</span>
-      <div className="set-field">
-        <span className="set-label">Reps</span>
-        <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
+      <div className="set-row-fields">
+        <div className="set-field-compact">
+          <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
+          <span className="set-unit-label">reps</span>
+        </div>
+        <span className="set-sep">×</span>
+        <div className="set-field-compact">
+          <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
+          <span className="set-unit-label">kg</span>
+        </div>
       </div>
-      <div className="set-field">
-        <span className="set-label">kg</span>
-        <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
+      <div className="set-meta-col">
+        {plannedReps && (
+          <span className="set-meta-goal" title="Meta planejada">↗{plannedReps}</span>
+        )}
+        {prevSet && (
+          <span className="set-meta-prev" title="Treino anterior">{prevSet.reps}×{Number(prevSet.weightKg).toFixed(1)}kg</span>
+        )}
       </div>
       <button
         className={`set-check-btn${set.completed ? ' checked' : ''}`}
         onClick={() => onUpdate({ completed: !set.completed })}
       >
-        {set.completed ? <Check size={16} /> : <span>✓</span>}
+        {set.completed ? <Check size={15} /> : <span>✓</span>}
       </button>
-      <button className="set-del-btn" onClick={onDelete}><X size={12} /></button>
+      <button className="set-del-btn" onClick={onDelete}><X size={11} /></button>
     </div>
   )
 }
@@ -156,7 +168,8 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
             <SetRow
               key={set.id}
               set={set}
-              isPlanned={isPlanned}
+              plannedReps={exercise.sets?.[idx]?.reps}
+              prevSet={history[0]?.sets?.[idx]}
               onUpdate={patch => onUpdateSet(exercise.id, set.id, patch)}
               onDelete={() => onDeleteSet(exercise.id, set.id)}
             />
@@ -197,7 +210,9 @@ function SingleDayPicker({ value, onChange, days, usedDays = [] }) {
 // ── CustomSelect ──────────────────────────────────────────────
 function CustomSelect({ value, onChange, options, placeholder = 'Selecionar' }) {
   const [open, setOpen] = useState(false)
+  const [openUp, setOpenUp] = useState(false)
   const ref = useRef(null)
+  const dropdownRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
@@ -206,14 +221,23 @@ function CustomSelect({ value, onChange, options, placeholder = 'Selecionar' }) 
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
+  const handleToggle = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUp(spaceBelow < 260)
+    }
+    setOpen(v => !v)
+  }
+
   return (
     <div className="cs-wrap" ref={ref}>
-      <button type="button" className="add-select-btn" onClick={() => setOpen(v => !v)}>
+      <button type="button" className="add-select-btn" onClick={handleToggle}>
         <span className={value ? '' : 'cs-placeholder'}>{value || placeholder}</span>
         <ChevronDown size={13} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
       </button>
       {open && (
-        <div className="sf-dropdown">
+        <div className={`sf-dropdown${openUp ? ' sf-dropdown-up' : ''}`} ref={dropdownRef}>
           {options.map(opt => (
             <button key={opt} type="button"
               className={`sf-item${value === opt ? ' sf-item-active' : ''}`}
@@ -282,7 +306,7 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment, draftKey }) {
   const addVariation = () => setVariations(vs => [...vs, { count: 1, reps: '12' }])
 
   return (
-    <div className="add-exercise-form">
+    <div className="add-exercise-form add-exercise-form-centered">
       {draftRestored && (
         <div className="draft-banner">
           <span>📋 Rascunho recuperado</span>
@@ -299,7 +323,7 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment, draftKey }) {
       <CustomSelect value={muscle} onChange={setMuscle} options={muscleGroups} placeholder="Grupo muscular" />
       <CustomSelect value={equip} onChange={setEquip} options={equipment} placeholder="Equipamento" />
       <div className="ex-sets-editor">
-        <span className="add-ex-field-label">Séries e repetições</span>
+        <span className="add-ex-field-label" style={{ display: 'block', textAlign: 'center', marginBottom: '6px' }}>Séries e repetições</span>
         {variations.map((v, idx) => (
           <div key={idx} className="ex-variation-row">
             <input
@@ -446,7 +470,7 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
             <Plus size={12} /> Adicionar variação
           </button>
         </div>
-        <div className="add-ex-actions centered-actions">
+        <div className="add-ex-actions" style={{ justifyContent: 'center' }}>
           <button className="training-add-set-btn" onClick={saveEdit}>Salvar</button>
           <button className="set-del-btn" onClick={() => setEditing(false)}><X size={14} /></button>
         </div>
