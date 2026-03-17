@@ -122,24 +122,23 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
   )
 }
 
-// ── DaySelector ───────────────────────────────────────────────
-function DaySelector({ selected, onChange, days }) {
+// ── SingleDayPicker ───────────────────────────────────────────
+function SingleDayPicker({ value, onChange, days, usedDays = [] }) {
   return (
     <div className="day-selector">
-      {days.map((day, idx) => (
-        <button
-          key={day}
-          className={`day-btn${selected.includes(idx) ? ' day-active' : ''}`}
-          onClick={() => {
-            onChange(selected.includes(idx)
-              ? selected.filter(d => d !== idx)
-              : [...selected, idx].sort()
-            )
-          }}
-        >
-          {day}
-        </button>
-      ))}
+      {days.map((day, idx) => {
+        const taken = usedDays.includes(idx) && value !== idx
+        return (
+          <button
+            key={day}
+            className={`day-btn${value === idx ? ' day-active' : ''}${taken ? ' day-taken' : ''}`}
+            onClick={() => onChange(idx)}
+            title={taken ? 'Dia já em uso' : day}
+          >
+            {day}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -236,9 +235,13 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
 }
 
 // ── AddTrainingDayForm ────────────────────────────────────────
-function AddTrainingDayForm({ onAdd, onCancel, DAYS }) {
+function AddTrainingDayForm({ onAdd, onCancel, DAYS, usedDays = [] }) {
+  const getNextDay = () => {
+    for (let i = 1; i <= 6; i++) { if (!usedDays.includes(i)) return i }
+    return 0
+  }
   const [label, setLabel] = useState('')
-  const [weekDays, setWeekDays] = useState([])
+  const [weekDay, setWeekDay] = useState(getNextDay)
 
   return (
     <div className="add-training-day-form">
@@ -249,12 +252,12 @@ function AddTrainingDayForm({ onAdd, onCancel, DAYS }) {
         onChange={e => setLabel(e.target.value)}
         autoFocus
       />
-      <DaySelector selected={weekDays} onChange={setWeekDays} days={DAYS} />
+      <SingleDayPicker value={weekDay} onChange={setWeekDay} days={DAYS} usedDays={usedDays} />
       <div className="add-ex-actions">
         <button
           className="training-add-set-btn"
           disabled={!label.trim()}
-          onClick={() => { if (label.trim()) onAdd(label.trim(), weekDays) }}
+          onClick={() => { if (label.trim()) onAdd(label.trim(), weekDay) }}
         >
           Salvar
         </button>
@@ -344,34 +347,47 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
 function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
   const [editingLabel, setEditingLabel] = useState(false)
   const [editLabel, setEditLabel] = useState('')
+  const [editWeekDay, setEditWeekDay] = useState(day.weekDay ?? 1)
+
+  const startEdit = () => {
+    setEditLabel(day.label)
+    setEditWeekDay(day.weekDay ?? 1)
+    setEditingLabel(true)
+  }
+
+  const saveEdit = () => {
+    onUpdate({ label: editLabel.trim(), weekDay: editWeekDay })
+    setEditingLabel(false)
+  }
 
   return (
     <div className="training-day-card">
       <div className="training-day-header">
         {editingLabel ? (
-          <div className="routine-edit-row">
+          <div className="training-day-edit-form">
             <input
               className="training-input"
               value={editLabel}
               onChange={e => setEditLabel(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') { onUpdate({ label: editLabel.trim() }); setEditingLabel(false) }
-              }}
+              onKeyDown={e => { if (e.key === 'Enter') saveEdit() }}
               autoFocus
             />
-            <button className="training-add-set-btn" onClick={() => { onUpdate({ label: editLabel.trim() }); setEditingLabel(false) }}>OK</button>
-            <button className="set-del-btn" onClick={() => setEditingLabel(false)}><X size={14} /></button>
+            <SingleDayPicker value={editWeekDay} onChange={setEditWeekDay} days={DAYS} />
+            <div className="add-ex-actions">
+              <button className="training-add-set-btn" onClick={saveEdit}>OK</button>
+              <button className="set-del-btn" onClick={() => setEditingLabel(false)}><X size={14} /></button>
+            </div>
           </div>
         ) : (
           <div className="training-day-title-row">
-            <span className="training-day-label">{day.label}</span>
-            <div className="training-day-week-badges">
-              {(day.weekDays || []).map(d => (
-                <span key={d} className="day-badge">{DAYS[d]}</span>
-              ))}
+            <div className="training-day-label-group">
+              <span className="training-day-label">{day.label}</span>
+              {day.weekDay !== undefined && (
+                <span className="day-badge-week">{DAYS[day.weekDay]}</span>
+              )}
             </div>
             <div className="training-day-actions">
-              <button className="routine-edit-btn" onClick={() => { setEditingLabel(true); setEditLabel(day.label) }}>
+              <button className="routine-edit-btn" onClick={startEdit}>
                 <Edit2 size={12} />
               </button>
               <button className="set-del-btn" onClick={onDelete}>
@@ -380,13 +396,6 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
             </div>
           </div>
         )}
-      </div>
-      <div className="training-day-week-row">
-        <DaySelector
-          selected={day.weekDays || []}
-          onChange={weekDays => onUpdate({ weekDays })}
-          days={DAYS}
-        />
       </div>
       <div className="training-day-exercises">
         {(day.exercises || []).sort((a, b) => a.order - b.order).map(ex => (
@@ -468,25 +477,28 @@ function RoutineCard({
           {trainingDays.length === 0 && (
             <p className="routine-empty-hint">Nenhum dia de treino. Adicione abaixo.</p>
           )}
-          {trainingDays.map(day => (
-            <TrainingDayCard
-              key={day.id}
-              day={day}
-              onUpdate={patch => onUpdateDay(day.id, patch)}
-              onDelete={() => { if (confirm(`Excluir dia "${day.label}"?`)) onDeleteDay(day.id) }}
-              onAddExercise={(name, muscle, equip, sets, reps, weight) => onAddExercise(day.id, name, muscle, equip, sets, reps, weight)}
-              onDeleteExercise={(exId) => onDeleteExercise(day.id, exId)}
-              onUpdateExercise={(exId, patch) => onUpdateExercise(day.id, exId, patch)}
-              MUSCLE_GROUPS={MUSCLE_GROUPS}
-              EQUIPMENT={EQUIPMENT}
-              DAYS={DAYS}
-            />
-          ))}
+          <div className="training-days-grid">
+            {trainingDays.map(day => (
+              <TrainingDayCard
+                key={day.id}
+                day={day}
+                onUpdate={patch => onUpdateDay(day.id, patch)}
+                onDelete={() => { if (confirm(`Excluir dia "${day.label}"?`)) onDeleteDay(day.id) }}
+                onAddExercise={(name, muscle, equip, sets, reps, weight) => onAddExercise(day.id, name, muscle, equip, sets, reps, weight)}
+                onDeleteExercise={(exId) => onDeleteExercise(day.id, exId)}
+                onUpdateExercise={(exId, patch) => onUpdateExercise(day.id, exId, patch)}
+                MUSCLE_GROUPS={MUSCLE_GROUPS}
+                EQUIPMENT={EQUIPMENT}
+                DAYS={DAYS}
+              />
+            ))}
+          </div>
           {showAddDay ? (
             <AddTrainingDayForm
-              onAdd={(label, weekDays) => { onAddDay(label, weekDays); setShowAddDay(false) }}
+              onAdd={(label, weekDay) => { onAddDay(label, weekDay); setShowAddDay(false) }}
               onCancel={() => setShowAddDay(false)}
               DAYS={DAYS}
+              usedDays={trainingDays.map(d => d.weekDay).filter(d => d !== undefined)}
             />
           ) : (
             <button className="training-add-set-btn add-day-btn" onClick={() => setShowAddDay(true)}>
@@ -566,7 +578,7 @@ function RotinasScreen({ training }) {
           onSetActive={() => setActiveRoutineId(routine.id)}
           onUpdate={patch => updateRoutine(routine.id, patch)}
           onDelete={() => deleteRoutine(routine.id)}
-          onAddDay={(label, weekDays) => addTrainingDay(routine.id, label, weekDays)}
+          onAddDay={(label, weekDay) => addTrainingDay(routine.id, label, weekDay)}
           onUpdateDay={(dayId, patch) => updateTrainingDay(routine.id, dayId, patch)}
           onDeleteDay={(dayId) => deleteTrainingDay(routine.id, dayId)}
           onAddExercise={(dayId, name, muscle, equip, sets, reps, weight) => addExercise(routine.id, dayId, name, muscle, equip, sets, reps, weight)}

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
 /* ── Animations ──────────────────────────────────────────────── */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(14px); }
@@ -1699,7 +1701,7 @@
 .sf-item {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
   width: 100%;
   padding: 9px 12px;
@@ -1707,8 +1709,10 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  text-align: center;
+  text-align: left;
   font-family: inherit;
+  font-size: 13px;
+  color: var(--white);
   transition: background 0.1s;
 }
 
@@ -3356,7 +3360,15 @@ kbd {
 .session-notes:focus { border-color: var(--accent); }
 
 /* ── Rotinas Screen ──────────────────────────────────────────── */
-.training-rotinas { display: flex; flex-direction: column; gap: 12px; }
+.training-rotinas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  font-family: 'Gotham', 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+}
 
 /* New Routine Button */
 .new-routine-btn {
@@ -3408,7 +3420,7 @@ kbd {
 .routine-card-header:hover { background: color-mix(in srgb, var(--accent) 4%, transparent); }
 
 .routine-card-title { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
-.routine-card-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.routine-card-name { font-size: 15px; font-weight: 700; color: var(--white); font-family: 'Gotham', 'Montserrat', sans-serif; }
 .routine-active-badge {
   font-size: 10px;
   font-weight: 700;
@@ -3450,7 +3462,7 @@ kbd {
   gap: 8px;
 }
 
-.training-day-label { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+.training-day-label { font-size: 13px; font-weight: 700; color: var(--white); font-family: 'Gotham', 'Montserrat', sans-serif; }
 
 .training-day-week-badges { display: flex; gap: 4px; flex-wrap: wrap; }
 .day-badge {
@@ -3580,8 +3592,8 @@ kbd {
 }
 
 .routine-ex-info { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-.routine-ex-name { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.routine-ex-defaults { font-size: 12px; color: var(--text-mid); white-space: nowrap; }
+.routine-ex-name { font-size: 13px; font-weight: 600; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.routine-ex-defaults { font-size: 12px; color: var(--text-mid); white-space: nowrap; font-weight: 500; }
 
 .routine-add-ex-btn { align-self: flex-start; }
 
@@ -3836,4 +3848,61 @@ kbd {
   background: var(--bg-card);
   border-color: var(--border);
   box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 6px 20px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .sf-item { color: var(--white); }
+
+/* ── Training: 2-column days grid ───────────────────────────── */
+.training-days-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+@media (max-width: 640px) {
+  .training-days-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Training day: label + day badge group ───────────────────── */
+.training-day-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Week day badge (inside card header) ────────────────────── */
+.day-badge-week {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(196, 25, 48, 0.20);
+  color: #e8192c;
+  border: 1px solid rgba(196, 25, 48, 0.35);
+  flex-shrink: 0;
+}
+
+/* ── Day button: taken (already used) ───────────────────────── */
+.day-btn.day-taken {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Training day: edit form (label + day picker inline) ─────── */
+.training-day-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+/* ── add-select-btn light theme fix ─────────────────────────── */
+[data-theme="light"] .add-select-btn {
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--white);
 }

@@ -10,13 +10,15 @@ export const FEATURES = {
 }
 
 const MUSCLE_GROUPS = [
-  'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps',
-  'Antebraço', 'Abdômen', 'Quadríceps', 'Posteriores', 'Glúteos',
-  'Panturrilha', 'Trapézio', 'Lombar', 'Cardio',
+  'Peito', 'Costas', 'Latíssimo', 'Ombros', 'Trapézio', 'Rombóide',
+  'Bíceps', 'Tríceps', 'Antebraço',
+  'Abdômen', 'Oblíquos', 'Lombar',
+  'Quadríceps', 'Isquiotibiais', 'Glúteos', 'Panturrilha', 'Adutores',
+  'Cardio',
 ]
 
 const EQUIPMENT = [
-  'Barra', 'Haltere', 'Máquina', 'Cabo', 'Elástico', 'Peso Corporal', 'Kettlebell',
+  'Barra', 'Halter', 'Máquina', 'Polia', 'Nenhum', 'Elástico', 'Kettlebell',
 ]
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -55,10 +57,14 @@ function loadData() {
       return r
     })
     // Migração: defaultReps number → string
+    // Migração: weekDays[] → weekDay (único dia por bloco de treino)
     raw.routines = raw.routines.map(r => ({
       ...r,
-      trainingDays: (r.trainingDays || []).map(d => ({
+      trainingDays: (r.trainingDays || []).map((d, i) => ({
         ...d,
+        weekDay: d.weekDay !== undefined
+          ? d.weekDay
+          : (Array.isArray(d.weekDays) && d.weekDays.length > 0 ? d.weekDays[0] : ((i % 6) + 1)),
         exercises: (d.exercises || []).map(e => ({
           ...e,
           defaultReps: e.defaultReps !== undefined ? String(e.defaultReps) : '12',
@@ -124,8 +130,8 @@ export function useTraining() {
   }, [save])
 
   // ── Training Days ──────────────────────────────────────────────
-  const addTrainingDay = useCallback((routineId, label, weekDays = []) => {
-    const day = { id: makeId(), label, weekDays, exercises: [] }
+  const addTrainingDay = useCallback((routineId, label, weekDay = 1) => {
+    const day = { id: makeId(), label, weekDay, exercises: [] }
     save(cur => ({
       ...cur,
       routines: cur.routines.map(r => {
@@ -399,7 +405,7 @@ export function useTraining() {
 
   const todayTrainingDay = useMemo(() => {
     const dayIdx = new Date().getDay() // 0=Dom ... 6=Sáb
-    return activeRoutine?.trainingDays?.find(d => d.weekDays.includes(dayIdx)) || null
+    return activeRoutine?.trainingDays?.find(d => d.weekDay === dayIdx) || null
   }, [activeRoutine])
 
   const currentWeekSessions = useMemo(() => {
