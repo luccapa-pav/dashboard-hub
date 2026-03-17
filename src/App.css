@@ -3188,10 +3188,13 @@ kbd {
 
 /* Muscle / Equipment badges */
 .muscle-badge, .equip-badge {
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
   font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 20px;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 6px;
   white-space: nowrap;
 }
 
@@ -5148,6 +5151,9 @@ kbd {
 .routine-ex-tags { margin-top: 2px !important; }
 .routine-ex-sets-display { margin-top: 3px !important; }
 .routine-ex-set-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
   font-size: 11px !important;
   padding: 3px 8px !important;
   border-radius: 6px !important;
