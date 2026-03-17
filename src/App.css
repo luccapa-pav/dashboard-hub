@@ -3100,24 +3100,27 @@ kbd {
 }
 
 .set-check-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  background: none;
-  color: var(--text-mid);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(128,128,128,0.18);
+  color: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  transition: background 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
 }
+.set-check-btn:active { transform: scale(0.92); }
 
 .set-check-btn.checked {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: #22c55e;
   color: #fff;
+}
+[data-theme="light"] .set-check-btn {
+  background: rgba(0,0,0,0.10);
 }
 
 .set-del-btn {
@@ -3133,6 +3136,14 @@ kbd {
 }
 
 .set-del-btn:hover { opacity: 1; color: #e55; }
+
+.set-prev-inline {
+  font-size: 10px;
+  color: var(--text-mid);
+  opacity: 0.65;
+  margin-top: 3px;
+  letter-spacing: 0.01em;
+}
 
 /* ── Exercise Card ────────────────────────────────────────────── */
 .training-exercise-card {

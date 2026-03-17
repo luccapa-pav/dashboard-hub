@@ -227,6 +227,9 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
             <span className="set-unit-label">kg</span>
           </div>
         </div>
+        {prevSet && (
+          <span className="set-prev-inline">Anterior: {prevSet.reps} reps @ {Number(prevSet.weightKg).toFixed(1)}kg</span>
+        )}
         {weightSuggestions.length > 0 && !set.completed && (
           <div className="weight-chips">
             {weightSuggestions.map((w, i) => (
@@ -243,9 +246,6 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
         )}
         {!isPR && plannedReps && (
           <span className="set-meta-goal" title="Meta planejada">↗{plannedReps}</span>
-        )}
-        {prevSet && (
-          <span className="set-meta-prev" title="Treino anterior">{prevSet.reps}×{Number(prevSet.weightKg).toFixed(1)}kg</span>
         )}
         {set.completed && set.weightKg > 0 && set.reps > 1 && (
           <span className="set-1rm" title="1RM estimado (Epley)">
@@ -265,9 +265,8 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
           }
         }}
       >
-        {set.completed ? <Check size={15} /> : <span>✓</span>}
+        {set.completed ? <Check size={14} /> : null}
       </button>
-      <button className="set-del-btn" onClick={onDelete}><X size={11} /></button>
     </div>
   )
 }
@@ -336,20 +335,6 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
       <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
-          <div className="ex-goal-pills">
-            {getExerciseMeta(exercise.sets) && (
-              <span className="ex-pill ex-pill-goal">
-                <span className="ex-pill-icon">↗</span>
-                {getExerciseMeta(exercise.sets)}
-              </span>
-            )}
-            {history.length > 0 && formatPrevSummary(history[0].sets) && (
-              <span className="ex-pill ex-pill-prev">
-                <span className="ex-pill-icon">◷</span>
-                {formatPrevSummary(history[0].sets)}
-              </span>
-            )}
-          </div>
           {sets.map((set, idx) => (
             <SetRow
               key={set.id}
