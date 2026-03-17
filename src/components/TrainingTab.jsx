@@ -214,15 +214,17 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
   return (
     <div className={`training-set-row${set.completed ? ' set-done' : ''}`}>
       <span className="set-num">S{set.setNumber}</span>
-      <div className="set-row-fields">
-        <div className="set-field-compact">
-          <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
-          <span className="set-unit-label">reps</span>
-        </div>
-        <span className="set-sep">×</span>
-        <div className="set-field-compact">
-          <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
-          <span className="set-unit-label">kg</span>
+      <div className="set-row-main-col">
+        <div className="set-row-fields">
+          <div className="set-field-compact">
+            <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
+            <span className="set-unit-label">reps</span>
+          </div>
+          <span className="set-sep">×</span>
+          <div className="set-field-compact">
+            <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
+            <span className="set-unit-label">kg</span>
+          </div>
         </div>
         {weightSuggestions.length > 0 && !set.completed && (
           <div className="weight-chips">
@@ -320,12 +322,18 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
       {expanded && (
         <div className="ex-card-body">
-          <div className="ex-goal-banner">
+          <div className="ex-goal-pills">
             {getExerciseMeta(exercise.sets) && (
-              <span className="ex-goal-meta">Meta: {getExerciseMeta(exercise.sets)}</span>
+              <span className="ex-pill ex-pill-goal">
+                <span className="ex-pill-icon">↗</span>
+                {getExerciseMeta(exercise.sets)}
+              </span>
             )}
             {history.length > 0 && formatPrevSummary(history[0].sets) && (
-              <span className="ex-goal-prev">Semana passada: {formatPrevSummary(history[0].sets)}</span>
+              <span className="ex-pill ex-pill-prev">
+                <span className="ex-pill-icon">◷</span>
+                {formatPrevSummary(history[0].sets)}
+              </span>
             )}
           </div>
           {sets.map((set, idx) => (
@@ -1098,6 +1106,13 @@ function RegistrarScreen({ training }) {
       <div className="registrar-inner">
       {/* Timer Hero */}
       <div className="session-timer-hero">
+        <button
+          className="session-abort-icon"
+          title="Cancelar treino"
+          onClick={() => { if (confirm('Cancelar treino?')) deleteSession(session.id) }}
+        >
+          <X size={14} />
+        </button>
         <div className="timer-hero-clock">
           <span className="timer-hero-time">{formatDuration(elapsed)}</span>
         </div>
@@ -1108,9 +1123,6 @@ function RegistrarScreen({ training }) {
             <span className="timer-hero-volume">{liveVolume.toFixed(0)} kg vol.</span>
           )}
         </div>
-        <button className="session-abort-btn-hero" onClick={() => { if (confirm('Cancelar treino?')) deleteSession(session.id) }}>
-          <X size={13} /> Cancelar
-        </button>
       </div>
 
       <RestTimerBar
