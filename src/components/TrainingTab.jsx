@@ -186,7 +186,6 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
   const [equip, setEquip] = useState('')
   const [defaultSets, setDefaultSets] = useState(3)
   const [defaultReps, setDefaultReps] = useState('12')
-  const [defaultWeight, setDefaultWeight] = useState(0)
   const [open, setOpen] = useState(false)
 
   if (!open) {
@@ -219,18 +218,13 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
           <input type="text" className="training-input" placeholder="ex: 12 ou 8-10"
             value={defaultReps} onChange={e => setDefaultReps(e.target.value)} />
         </div>
-        <div className="add-ex-field">
-          <label className="add-ex-field-label">kg</label>
-          <input type="number" className="training-input add-ex-num-input" min={0} step={0.5}
-            value={defaultWeight} onChange={e => setDefaultWeight(+e.target.value)} />
-        </div>
       </div>
       <div className="add-ex-actions">
         <button className="training-add-set-btn" onClick={() => {
           if (!name.trim()) return
-          onAdd(name.trim(), muscle, equip, defaultSets, defaultReps.trim() || '12', defaultWeight)
+          onAdd(name.trim(), muscle, equip, defaultSets, defaultReps.trim() || '12', 0)
           setName(''); setMuscle(''); setEquip('')
-          setDefaultSets(3); setDefaultReps('12'); setDefaultWeight(0)
+          setDefaultSets(3); setDefaultReps('12')
           setOpen(false)
         }}>
           Salvar
@@ -278,7 +272,6 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
   const [editEquip, setEditEquip] = useState('')
   const [editSets, setEditSets] = useState(3)
   const [editReps, setEditReps] = useState('12')
-  const [editWeight, setEditWeight] = useState(0)
 
   const startEdit = () => {
     setEditName(exercise.name)
@@ -286,7 +279,6 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
     setEditEquip(exercise.equipment || '')
     setEditSets(exercise.defaultSets || 3)
     setEditReps(String(exercise.defaultReps ?? '12'))
-    setEditWeight(exercise.defaultWeight || 0)
     setEditing(true)
   }
 
@@ -298,7 +290,6 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
       equipment: editEquip,
       defaultSets: editSets,
       defaultReps: editReps.trim() || '12',
-      defaultWeight: editWeight,
     })
     setEditing(false)
   }
@@ -322,11 +313,6 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
             <input type="text" className="training-input" placeholder="ex: 12 ou 8-10"
               value={editReps} onChange={e => setEditReps(e.target.value)} />
           </div>
-          <div className="add-ex-field">
-            <label className="add-ex-field-label">kg</label>
-            <input type="number" className="training-input add-ex-num-input" min={0} step={0.5}
-              value={editWeight} onChange={e => setEditWeight(+e.target.value)} />
-          </div>
         </div>
         <div className="add-ex-actions">
           <button className="training-add-set-btn" onClick={saveEdit}>Salvar</button>
@@ -345,7 +331,6 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
       </div>
       <div className="routine-ex-defaults">
         <span>{exercise.defaultSets}×{exercise.defaultReps}</span>
-        {exercise.defaultWeight > 0 && <span> @ {exercise.defaultWeight}kg</span>}
       </div>
       <button className="routine-edit-btn" onClick={startEdit}><Edit2 size={12} /></button>
       <button className="set-del-btn" onClick={onDelete}>
@@ -997,12 +982,10 @@ export function TrainingTab() {
       </div>
 
       <div className="training-content">
-        <div className="training-content-inner">
-          {activeNav === 'rotina'    && <RotinasScreen    training={training} />}
-          {activeNav === 'registrar' && <RegistrarScreen  training={training} />}
-          {activeNav === 'historico' && <HistoricoScreen  training={training} />}
-          {activeNav === 'avaliacao' && <AIFeedbackPanel  training={training} />}
-        </div>
+        {activeNav === 'rotina'    && <RotinasScreen    training={training} />}
+        {activeNav === 'registrar' && <RegistrarScreen  training={training} />}
+        {activeNav === 'historico' && <HistoricoScreen  training={training} />}
+        {activeNav === 'avaliacao' && <AIFeedbackPanel  training={training} />}
       </div>
     </div>
   )

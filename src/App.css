@@ -3168,19 +3168,28 @@ kbd {
 /* Muscle / Equipment badges */
 .muscle-badge, .equip-badge {
   font-size: 10px;
+  font-weight: 600;
   padding: 2px 7px;
   border-radius: 20px;
   white-space: nowrap;
 }
 
 .muscle-badge {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
+  background: rgba(196, 25, 48, 0.22);
+  color: #e8192c;
+  border: 1px solid rgba(196, 25, 48, 0.35);
 }
 
 .equip-badge {
-  background: color-mix(in srgb, var(--text-mid) 10%, transparent);
-  color: var(--text-mid);
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.30);
+}
+
+[data-theme="light"] .equip-badge {
+  background: rgba(29, 78, 216, 0.10);
+  color: #1d4ed8;
+  border-color: rgba(29, 78, 216, 0.22);
 }
 
 /* ── Session Timer Bar ────────────────────────────────────────── */
