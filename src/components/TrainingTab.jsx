@@ -9,6 +9,28 @@ function parseDefaultReps(val) {
   return isNaN(n) ? 12 : n
 }
 
+// Converte [{count, reps}] → [{reps}, {reps}, ...]
+function variationsToSets(variations) {
+  return variations.flatMap(v =>
+    Array.from({ length: Math.max(1, v.count || 1) }, () => ({ reps: String(v.reps || '12') }))
+  )
+}
+
+// Converte [{reps}, {reps}, ...] → [{count, reps}] (agrupa consecutivos iguais)
+function setsToVariations(sets) {
+  if (!sets || sets.length === 0) return [{ count: 3, reps: '12' }]
+  const result = []
+  let cur = { count: 1, reps: sets[0].reps }
+  for (let i = 1; i < sets.length; i++) {
+    if (sets[i].reps === cur.reps) { cur.count++ }
+    else { result.push(cur); cur = { count: 1, reps: sets[i].reps } }
+  }
+  result.push(cur)
+  return result
+}
+
+const DRAFT_KEY = (id) => `training-draft-ex-${id}`
+
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
@@ -179,26 +201,65 @@ function CustomSelect({ value, onChange, options, placeholder = 'Selecionar' }) 
 }
 
 // ── AddExerciseForm ───────────────────────────────────────────
-function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
+function AddExerciseForm({ onAdd, muscleGroups, equipment, draftKey }) {
   const [name, setName] = useState('')
   const [muscle, setMuscle] = useState('')
   const [equip, setEquip] = useState('')
-  const [sets, setSets] = useState([{ reps: '12' }, { reps: '12' }, { reps: '12' }])
+  const [variations, setVariations] = useState([{ count: 3, reps: '12' }])
   const [open, setOpen] = useState(false)
+  const [draftRestored, setDraftRestored] = useState(false)
+
+  // Auto-save draft while form is open
+  useEffect(() => {
+    if (!open || !draftKey) return
+    localStorage.setItem(DRAFT_KEY(draftKey), JSON.stringify({ name, muscle, equip, variations }))
+  }, [open, name, muscle, equip, variations, draftKey])
+
+  const clearDraft = () => { if (draftKey) localStorage.removeItem(DRAFT_KEY(draftKey)) }
+
+  const handleOpen = () => {
+    if (draftKey) {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY(draftKey))
+        if (raw) {
+          const d = JSON.parse(raw)
+          if (d.name || d.muscle || d.equip || d.variations?.length) {
+            setName(d.name || '')
+            setMuscle(d.muscle || '')
+            setEquip(d.equip || '')
+            setVariations(d.variations?.length ? d.variations : [{ count: 3, reps: '12' }])
+            setDraftRestored(true)
+          }
+        }
+      } catch {
+        // ignore malformed draft
+      }
+    }
+    setOpen(true)
+  }
 
   if (!open) {
+    const hasDraft = draftKey && !!localStorage.getItem(DRAFT_KEY(draftKey))
     return (
-      <button className="training-add-set-btn routine-add-ex-btn" onClick={() => setOpen(true)}>
-        <Plus size={14} /> Adicionar exercício
+      <button className={`training-add-set-btn routine-add-ex-btn${hasDraft ? ' has-draft' : ''}`} onClick={handleOpen}>
+        <Plus size={14} /> Adicionar exercício{hasDraft ? ' 📋' : ''}
       </button>
     )
   }
 
-  const updateReps = (idx, reps) => setSets(s => s.map((set, i) => i === idx ? { reps } : set))
-  const removeSet = (idx) => setSets(s => s.filter((_, i) => i !== idx))
+  const updateVariation = (idx, field, val) =>
+    setVariations(vs => vs.map((v, i) => i === idx ? { ...v, [field]: val } : v))
+  const removeVariation = (idx) => setVariations(vs => vs.filter((_, i) => i !== idx))
+  const addVariation = () => setVariations(vs => [...vs, { count: 1, reps: '12' }])
 
   return (
     <div className="add-exercise-form">
+      {draftRestored && (
+        <div className="draft-banner">
+          <span>📋 Rascunho recuperado</span>
+          <button className="set-del-btn" onClick={() => { clearDraft(); setName(''); setMuscle(''); setEquip(''); setVariations([{ count: 3, reps: '12' }]); setDraftRestored(false) }}><X size={10} /></button>
+        </div>
+      )}
       <input
         className="training-input"
         placeholder="Nome do exercício"
@@ -210,37 +271,46 @@ function AddExerciseForm({ onAdd, muscleGroups, equipment }) {
       <CustomSelect value={equip} onChange={setEquip} options={equipment} placeholder="Equipamento" />
       <div className="ex-sets-editor">
         <span className="add-ex-field-label">Séries e repetições</span>
-        {sets.map((set, idx) => (
-          <div key={idx} className="ex-set-row">
-            <span className="ex-set-num">S{idx + 1}</span>
+        {variations.map((v, idx) => (
+          <div key={idx} className="ex-variation-row">
+            <input
+              type="number"
+              className="training-input ex-count-input"
+              min={1} max={20}
+              value={v.count}
+              onChange={e => updateVariation(idx, 'count', +e.target.value || 1)}
+            />
+            <span className="ex-set-sep">×</span>
             <input
               type="text"
               className="training-input ex-set-reps-input"
               placeholder="12"
-              value={set.reps}
-              onChange={e => updateReps(idx, e.target.value)}
+              value={v.reps}
+              onChange={e => updateVariation(idx, 'reps', e.target.value)}
             />
             <span className="ex-set-unit">reps</span>
-            {sets.length > 1 && (
-              <button className="set-del-btn" onClick={() => removeSet(idx)}><X size={10} /></button>
+            {variations.length > 1 && (
+              <button className="set-del-btn" onClick={() => removeVariation(idx)}><X size={10} /></button>
             )}
           </div>
         ))}
-        <button className="ex-add-set-row-btn" onClick={() => setSets(s => [...s, { reps: '12' }])}>
-          <Plus size={12} /> Série
+        <button className="ex-add-set-row-btn" onClick={addVariation}>
+          <Plus size={12} /> Adicionar variação
         </button>
       </div>
-      <div className="add-ex-actions">
+      <div className="add-ex-actions centered-actions">
         <button className="training-add-set-btn" onClick={() => {
           if (!name.trim()) return
-          onAdd(name.trim(), muscle, equip, sets)
+          clearDraft()
+          onAdd(name.trim(), muscle, equip, variationsToSets(variations))
           setName(''); setMuscle(''); setEquip('')
-          setSets([{ reps: '12' }, { reps: '12' }, { reps: '12' }])
+          setVariations([{ count: 3, reps: '12' }])
+          setDraftRestored(false)
           setOpen(false)
         }}>
           Salvar
         </button>
-        <button className="set-del-btn" onClick={() => setOpen(false)}><X size={14} /></button>
+        <button className="set-del-btn" onClick={() => { clearDraft(); setDraftRestored(false); setOpen(false) }}><X size={14} /></button>
       </div>
     </div>
   )
@@ -285,17 +355,13 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
   const [editName, setEditName] = useState('')
   const [editMuscle, setEditMuscle] = useState('')
   const [editEquip, setEditEquip] = useState('')
-  const [editSets, setEditSets] = useState([{ reps: '12' }])
+  const [editVariations, setEditVariations] = useState([{ count: 3, reps: '12' }])
 
   const startEdit = () => {
     setEditName(exercise.name)
     setEditMuscle(exercise.muscleGroup || '')
     setEditEquip(exercise.equipment || '')
-    setEditSets(
-      Array.isArray(exercise.sets) && exercise.sets.length > 0
-        ? exercise.sets.map(s => ({ reps: String(s.reps) }))
-        : [{ reps: '12' }, { reps: '12' }, { reps: '12' }]
-    )
+    setEditVariations(setsToVariations(exercise.sets))
     setEditing(true)
   }
 
@@ -305,13 +371,14 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
       name: editName.trim(),
       muscleGroup: editMuscle,
       equipment: editEquip,
-      sets: editSets,
+      sets: variationsToSets(editVariations),
     })
     setEditing(false)
   }
 
-  const updateReps = (idx, reps) => setEditSets(s => s.map((set, i) => i === idx ? { reps } : set))
-  const removeSet = (idx) => setEditSets(s => s.filter((_, i) => i !== idx))
+  const updateVariation = (idx, field, val) =>
+    setEditVariations(vs => vs.map((v, i) => i === idx ? { ...v, [field]: val } : v))
+  const removeVariation = (idx) => setEditVariations(vs => vs.filter((_, i) => i !== idx))
 
   if (editing) {
     return (
@@ -323,27 +390,34 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
         </div>
         <div className="ex-sets-editor">
           <span className="add-ex-field-label">Séries e repetições</span>
-          {editSets.map((set, idx) => (
-            <div key={idx} className="ex-set-row">
-              <span className="ex-set-num">S{idx + 1}</span>
+          {editVariations.map((v, idx) => (
+            <div key={idx} className="ex-variation-row">
+              <input
+                type="number"
+                className="training-input ex-count-input"
+                min={1} max={20}
+                value={v.count}
+                onChange={e => updateVariation(idx, 'count', +e.target.value || 1)}
+              />
+              <span className="ex-set-sep">×</span>
               <input
                 type="text"
                 className="training-input ex-set-reps-input"
                 placeholder="12"
-                value={set.reps}
-                onChange={e => updateReps(idx, e.target.value)}
+                value={v.reps}
+                onChange={e => updateVariation(idx, 'reps', e.target.value)}
               />
               <span className="ex-set-unit">reps</span>
-              {editSets.length > 1 && (
-                <button className="set-del-btn" onClick={() => removeSet(idx)}><X size={10} /></button>
+              {editVariations.length > 1 && (
+                <button className="set-del-btn" onClick={() => removeVariation(idx)}><X size={10} /></button>
               )}
             </div>
           ))}
-          <button className="ex-add-set-row-btn" onClick={() => setEditSets(s => [...s, { reps: '12' }])}>
-            <Plus size={12} /> Série
+          <button className="ex-add-set-row-btn" onClick={() => setEditVariations(vs => [...vs, { count: 1, reps: '12' }])}>
+            <Plus size={12} /> Adicionar variação
           </button>
         </div>
-        <div className="add-ex-actions">
+        <div className="add-ex-actions centered-actions">
           <button className="training-add-set-btn" onClick={saveEdit}>Salvar</button>
           <button className="set-del-btn" onClick={() => setEditing(false)}><X size={14} /></button>
         </div>
@@ -351,7 +425,7 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
     )
   }
 
-  const setsData = Array.isArray(exercise.sets) ? exercise.sets : []
+  const displayVariations = setsToVariations(Array.isArray(exercise.sets) ? exercise.sets : [])
 
   return (
     <div className="routine-exercise-row">
@@ -363,8 +437,8 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
         </div>
       </div>
       <div className="routine-ex-sets-display">
-        {setsData.map((s, i) => (
-          <span key={i} className="routine-ex-set-chip">S{i + 1}:{s.reps}</span>
+        {displayVariations.map((v, i) => (
+          <span key={i} className="routine-ex-set-chip">{v.count}×{v.reps}</span>
         ))}
       </div>
       <button className="routine-edit-btn" onClick={startEdit}><Edit2 size={12} /></button>
@@ -442,6 +516,7 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           onAdd={(name, muscle, equip, sets) => onAddExercise(name, muscle, equip, sets)}
           muscleGroups={MUSCLE_GROUPS}
           equipment={EQUIPMENT}
+          draftKey={day.id}
         />
       </div>
     </div>
