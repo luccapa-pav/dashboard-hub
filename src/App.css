@@ -3188,8 +3188,10 @@ kbd {
 
 /* Muscle / Equipment badges */
 .muscle-badge, .equip-badge {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
+  text-align: center;
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
@@ -4026,6 +4028,7 @@ kbd {
   display: grid;
   grid-template-columns: 90px 90px;
   gap: 4px;
+  justify-content: center;
 }
 
 .routine-ex-sets-display {
