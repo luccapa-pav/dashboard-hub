@@ -5563,3 +5563,17 @@ kbd {
 .registrar-inner {
   max-width: 1100px !important;
 }
+
+/* ── Batch 10: "Série N" label destacado ────────────────────── */
+.set-num {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 12%, transparent) !important;
+  border-radius: 6px !important;
+  padding: 2px 7px !important;
+  min-width: unset !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.02em !important;
+  flex-shrink: 0 !important;
+}

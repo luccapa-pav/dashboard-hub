@@ -214,7 +214,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
   const [justChecked, setJustChecked] = useState(false)
   return (
     <div className={`training-set-row${set.completed ? ' set-done' : ''}${justChecked ? ' set-just-checked' : ''}`}>
-      <span className="set-num">S{set.setNumber}</span>
+      <span className="set-num">Série {set.setNumber}</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
           <div className="set-field-wrap">
