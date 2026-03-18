@@ -688,17 +688,17 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
 
   return (
     <div className="routine-exercise-row">
+      <div className="routine-ex-sets-display">
+        {displayVariations.map((v, i) => (
+          <span key={i} className="routine-ex-set-chip">{v.count}×{v.reps}</span>
+        ))}
+      </div>
       <div className="routine-ex-info">
         <span className="routine-ex-name">{exercise.name}</span>
         <div className="routine-ex-tags">
           {exercise.muscleGroup && <span className="muscle-badge">{exercise.muscleGroup}</span>}
           {exercise.equipment && <span className="equip-badge">{exercise.equipment}</span>}
         </div>
-      </div>
-      <div className="routine-ex-sets-display">
-        {displayVariations.map((v, i) => (
-          <span key={i} className="routine-ex-set-chip">{v.count}×{v.reps}</span>
-        ))}
       </div>
       <div className="routine-ex-actions">
         <button className="routine-edit-btn" onClick={startEdit}><Edit2 size={12} /></button>

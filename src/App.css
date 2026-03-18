@@ -5770,16 +5770,35 @@ kbd {
   letter-spacing: 0.12em !important;
 }
 
-/* === Rotina: sets à esquerda, nome centralizado === */
+/* === Rotina: grid simétrico — sets à esq, nome centrado com título do dia === */
 
-/* Puxa os chips de sets para antes do nome */
-.routine-ex-sets-display {
-  order: -1 !important;
-  margin-left: 0 !important;
-  align-items: flex-start !important;
+/* Grid 54px | 1fr | 54px → colunas laterais iguais → nome centrado no card */
+.routine-exercise-row {
+  display: grid !important;
+  grid-template-columns: 54px 1fr 54px !important;
+  gap: 8px !important;
+  align-items: center !important;
 }
 
-/* Nome + tags centralizados */
+/* Coluna esquerda: chips empilhados */
+.routine-ex-sets-display {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  align-items: flex-start !important;
+  margin-left: 0 !important;
+  order: unset !important;
+}
+
+/* Todos os chips com mesma largura (preenchem a coluna de 54px) */
+.routine-ex-set-chip {
+  display: flex !important;
+  width: 100% !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* Coluna central: nome e tags centralizados */
 .routine-ex-info {
   align-items: center !important;
   text-align: center !important;
@@ -5789,5 +5808,14 @@ kbd {
   white-space: normal !important;
 }
 .routine-ex-tags {
+  justify-content: center !important;
+}
+
+/* Coluna direita: botões centralizados nos 54px */
+.routine-ex-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  align-items: center !important;
   justify-content: center !important;
 }
