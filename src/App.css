@@ -5592,24 +5592,22 @@ kbd {
 
 /* ── Batch 10 → 11: ordinal badge + prev panel ──────────────── */
 
-/* 1. Ordinal badge — número em círculo discreto */
+/* 1. Ordinal badge "1ª SÉRIE" */
 .set-num {
-  width: 26px !important;
-  height: 26px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 14%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent) !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
   min-width: unset !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  background: rgba(255,255,255,0.05) !important;
-  border: 1px solid var(--border) !important;
-  color: var(--text-mid) !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0 !important;
-  text-transform: none !important;
-  white-space: normal !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  width: unset !important;
+  height: unset !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  display: inline !important;
   flex-shrink: 0 !important;
 }
 

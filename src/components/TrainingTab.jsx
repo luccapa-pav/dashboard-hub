@@ -178,7 +178,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
         if (dx < -60 && set.completed) { onUpdate({ completed: false }); navigator.vibrate?.(20) }
       }}
     >
-      <span className="set-num">{set.setNumber}</span>
+      <span className="set-num">{set.setNumber}ª SÉRIE</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
           {prevSet && !set.completed && (
