@@ -1220,14 +1220,14 @@ function RegistrarScreen({ training }) {
         >
           <X size={14} />
         </button>
+        {activeDay && <span className="timer-hero-day">{activeDay.label}</span>}
         <div className="timer-hero-clock">
           <span className="timer-hero-time">{formatDuration(elapsed)}</span>
         </div>
         <div className="timer-hero-info">
-          {activeDay && <span className="timer-hero-day">{activeDay.label}</span>}
-          <span className="timer-hero-sets">{completedSets}/{totalSets} séries concluídas</span>
+          <span className="timer-hero-sets">{completedSets}/{totalSets} séries</span>
           {liveVolume > 0 && (
-            <span className="timer-hero-volume">{liveVolume.toFixed(0)} kg vol.</span>
+            <><span className="timer-hero-dot">·</span><span className="timer-hero-volume">{liveVolume.toFixed(0)} kg</span></>
           )}
         </div>
         {totalSets > 0 && (

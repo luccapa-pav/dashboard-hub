@@ -5712,3 +5712,60 @@ kbd {
 .training-set-row {
   gap: 12px !important;
 }
+
+/* === Timer Hero & Rest Timer refinement === */
+
+/* Nome do treino: headline acima do relógio */
+.timer-hero-day {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: var(--white) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
+  text-align: center !important;
+  opacity: 1 !important;
+  line-height: 1.1 !important;
+  padding: 0 8px !important;
+  border-bottom: 2px solid var(--accent) !important;
+  padding-bottom: 10px !important;
+  margin-bottom: 2px !important;
+  width: 100% !important;
+}
+
+/* Stats em linha horizontal */
+.timer-hero-info {
+  flex-direction: row !important;
+  gap: 6px !important;
+  align-items: center !important;
+}
+.timer-hero-sets {
+  font-size: 13px !important;
+  color: var(--text-mid) !important;
+}
+.timer-hero-dot {
+  font-size: 14px;
+  color: var(--text-mid);
+  opacity: 0.5;
+  line-height: 1;
+}
+.timer-hero-volume {
+  font-size: 13px !important;
+  color: #22c55e !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Rest timer: contador maior e mais destaque */
+.rest-timer-bar {
+  border-radius: 14px !important;
+  border-width: 1.5px !important;
+}
+.rest-timer-count {
+  font-size: 30px !important;
+  min-width: 56px !important;
+  letter-spacing: 0.02em !important;
+}
+.rest-timer-label {
+  font-size: 12px !important;
+  letter-spacing: 0.12em !important;
+}
