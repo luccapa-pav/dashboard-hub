@@ -6050,3 +6050,62 @@ kbd {
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   cursor: pointer;
 }
+
+/* === F2: Separador exercícios concluídos/pendentes === */
+.ex-group-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  color: var(--text-mid);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ex-group-divider::before,
+.ex-group-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* === F3: Botão inline adicionar série === */
+.add-set-inline-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px auto 0;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.add-set-inline-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* === F5: Resumo inline após colapso === */
+.ex-card-summary {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mid);
+  text-align: center;
+  padding: 4px 0 6px;
+  letter-spacing: 0.02em;
+  animation: fadeIn 0.2s ease both;
+}
+
+/* === F6: Badge sequência semanal do dia === */
+.day-streak-pill {
+  background: color-mix(in srgb, #3b82f6 15%, transparent) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(96,165,250,0.25) !important;
+}

@@ -250,7 +250,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
 }
 
 // ── ExerciseCard (during session) ─────────────────────────────
-function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, note = '', onNoteChange, isFirst = false }) {
+function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, note = '', onNoteChange, isFirst = false, onAllDone }) {
   const [expanded, setExpanded] = useState(isFirst)
   const [showNote, setShowNote] = useState(false)
   const [flashing, setFlashing] = useState(false)
@@ -261,13 +261,14 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
   const totalSets  = sets.length
   const doneSets   = sets.filter(s => s.completed).length
   const allDone = doneSets === totalSets && totalSets > 0
+  const volume = sets.reduce((a, s) => a + (s.reps || 0) * (s.weightKg || 0), 0)
   // Auto-collapse when all sets are done + flash
   const prevDoneRef = useRef(false)
   useEffect(() => {
     if (allDone && !prevDoneRef.current) {
       setFlashing(true)
       setTimeout(() => setFlashing(false), 350)
-      const t = setTimeout(() => setExpanded(false), 600)
+      const t = setTimeout(() => { setExpanded(false); onAllDone?.() }, 600)
       prevDoneRef.current = true
       return () => clearTimeout(t)
     }
@@ -332,6 +333,9 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
           <div className="ex-progress-fill" style={{ width: `${Math.round((doneSets / totalSets) * 100)}%` }} />
         </div>
       )}
+      {!expanded && allDone && volume > 0 && (
+        <div className="ex-card-summary">{doneSets} séries · {volume.toFixed(0)} kg vol.</div>
+      )}
 
       <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
@@ -347,6 +351,14 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
               weightSuggestions={weightSuggestions}
             />
           ))}
+          {!allDone && (
+            <button
+              className="add-set-inline-btn"
+              onClick={() => onAddSet(exercise.id, lastReps, lastWeight)}
+            >
+              <Plus size={12} /> série extra
+            </button>
+          )}
           <div className="ex-note-row">
             <button className="ex-note-toggle" onClick={() => setShowNote(v => !v)}>
               {showNote ? '— Ocultar nota' : `+ Nota${note ? ' ✏️' : ''}`}
@@ -1081,6 +1093,33 @@ function RotinasScreen({ training }) {
   )
 }
 
+// ── Helpers RegistrarScreen ───────────────────────────────────
+function getISOWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7)
+}
+
+function calcDayStreakWeeks(sessions, dayId) {
+  const completed = sessions.filter(s => s.completed && s.trainingDayId === dayId)
+  if (completed.length === 0) return 0
+  const weeks = new Set(completed.map(s => {
+    const d = new Date(s.startedAt)
+    return `${d.getFullYear()}-${getISOWeek(d)}`
+  }))
+  const now = new Date()
+  let streak = 0
+  for (let i = 0; i < 52; i++) {
+    const d = new Date(now)
+    d.setDate(now.getDate() - i * 7)
+    const key = `${d.getFullYear()}-${getISOWeek(d)}`
+    if (weeks.has(key)) { streak++ } else if (i > 0) { break }
+  }
+  return streak
+}
+
 // ── RegistrarScreen ───────────────────────────────────────────
 function RegistrarScreen({ training }) {
   const {
@@ -1100,6 +1139,7 @@ function RegistrarScreen({ training }) {
   const elapsed = useTimer(!!session && !session?.completed)
   const [showSummary, setShowSummary] = useState(false)
   const [summarySession, setSummarySession] = useState(null)
+  const cardRefs = useRef({})
   if (!activeRoutine) {
     return (
       <div className="training-empty">
@@ -1164,10 +1204,15 @@ function RegistrarScreen({ training }) {
       : {}
     const hasLastWeights = lastDaySession && Object.values(lastWeights).some(ws => ws.some(w => w > 0))
 
+    const dayStreakWeeks = calcDayStreakWeeks(sessions, activeDay.id)
+
     return (
       <div className="training-start-screen">
         {startScreenStreak > 1 && (
           <div className="start-streak-pill">🔥 {startScreenStreak} dias seguidos</div>
+        )}
+        {dayStreakWeeks >= 2 && (
+          <div className="start-streak-pill day-streak-pill">🗓️ {dayStreakWeeks}ª semana seguida neste dia!</div>
         )}
         <div className="training-start-info">
           <Dumbbell size={32} strokeWidth={1.2} />
@@ -1247,21 +1292,51 @@ function RegistrarScreen({ training }) {
         )}
       </div>
 
-      {/* Exercises */}
-      {sessionExercises.map((ex, idx) => (
-        <ExerciseCard
-          key={ex.id}
-          exercise={ex}
-          sets={session.sets[ex.id] || []}
-          onAddSet={(exId, reps, weight) => addSet(session.id, exId, reps, weight)}
-          onUpdateSet={(exId, setId, patch) => updateSet(session.id, exId, setId, patch)}
-          onDeleteSet={(exId, setId) => deleteSet(session.id, exId, setId)}
-          history={exerciseHistory(ex.id)}
-          note={session.exerciseNotes?.[ex.id] || ''}
-          onNoteChange={text => updateSession(session.id, { exerciseNotes: { ...(session.exerciseNotes || {}), [ex.id]: text } })}
-          isFirst={idx === 0}
-        />
-      ))}
+      {/* Exercises — F2: split pending / done, F4: scroll to next */}
+      {(() => {
+        const isExDone = ex => {
+          const s = session.sets[ex.id] || []
+          return s.length > 0 && s.every(set => set.completed)
+        }
+        const pending = sessionExercises.filter(ex => !isExDone(ex))
+        const done    = sessionExercises.filter(ex => isExDone(ex))
+
+        const handleAllDone = (exId) => {
+          const nextPending = sessionExercises.find(ex => !isExDone(ex) && ex.id !== exId)
+          if (nextPending) {
+            setTimeout(() => {
+              cardRefs.current[nextPending.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 700)
+          }
+        }
+
+        const renderCard = (ex, idx) => (
+          <div key={ex.id} ref={el => { cardRefs.current[ex.id] = el }}>
+            <ExerciseCard
+              exercise={ex}
+              sets={session.sets[ex.id] || []}
+              onAddSet={(exId, reps, weight) => addSet(session.id, exId, reps, weight)}
+              onUpdateSet={(exId, setId, patch) => updateSet(session.id, exId, setId, patch)}
+              onDeleteSet={(exId, setId) => deleteSet(session.id, exId, setId)}
+              history={exerciseHistory(ex.id)}
+              note={session.exerciseNotes?.[ex.id] || ''}
+              onNoteChange={text => updateSession(session.id, { exerciseNotes: { ...(session.exerciseNotes || {}), [ex.id]: text } })}
+              isFirst={idx === 0}
+              onAllDone={() => handleAllDone(ex.id)}
+            />
+          </div>
+        )
+
+        return (
+          <>
+            {pending.map((ex, idx) => renderCard(ex, idx))}
+            {done.length > 0 && pending.length > 0 && (
+              <div className="ex-group-divider"><span>concluídos</span></div>
+            )}
+            {done.map((ex, idx) => renderCard(ex, idx))}
+          </>
+        )
+      })()}
 
       {sessionExercises.length === 0 && (
         <div className="training-empty" style={{ padding: '20px 0' }}>
