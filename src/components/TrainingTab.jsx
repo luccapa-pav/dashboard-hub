@@ -153,13 +153,10 @@ function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
   )
 }
 
-function PrevStepper({ value, decimals = 0, label }) {
+function PrevStepper({ value, decimals = 0 }) {
   return (
-    <div className="prev-stepper-wrap">
-      <div className="prev-stepper">
-        <span className="prev-stepper-val">{Number(value).toFixed(decimals)}</span>
-      </div>
-      <span className="set-unit-label prev-stepper-label">{label}</span>
+    <div className="prev-stepper">
+      <span className="prev-stepper-val">{Number(value).toFixed(decimals)}</span>
     </div>
   )
 }
@@ -186,9 +183,9 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
               <div className="set-prev-outer">
                 <span className="set-prev-label">sem. passada</span>
                 <div className="set-prev-block">
-                  <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
+                  <PrevStepper value={prevSet.reps} decimals={0} />
                   <span className="set-sep prev-sep">×</span>
-                  <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
+                  <PrevStepper value={prevSet.weightKg} decimals={1} />
                 </div>
               </div>
               <span className="set-fields-div" aria-hidden>|</span>
@@ -198,18 +195,14 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
             {plannedReps && !set.completed && (
               <span className="set-ghost-hint">Meta: {plannedReps}</span>
             )}
-            <div className="set-field-compact">
-              <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
-              <span className="set-unit-label">reps</span>
-            </div>
+            <Stepper value={set.reps} onChange={v => onUpdate({ reps: v })} step={1} min={1} />
           </div>
+          <span className="set-unit-label">reps</span>
           <span className="set-sep">×</span>
           <div className="set-field-wrap">
-            <div className="set-field-compact">
-              <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
-              <span className="set-unit-label">kg</span>
-            </div>
+            <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
           </div>
+          <span className="set-unit-label">kg</span>
           {!set.completed && (
             <div className="set-rir-inline">
               <span className="set-rir-lbl">RIR</span>
