@@ -3693,7 +3693,7 @@ kbd {
 .routine-edit-btn:hover { opacity: 1; }
 
 .day-minimize-btn {
-  background: var(--primary);
+  background: var(--accent);
   border: none;
   border-radius: 6px;
   color: #fff;
@@ -5469,12 +5469,14 @@ kbd {
 /* ────────────────────────────────────────────────────────────── */
 
 /* 1. Colapso de dia de treino */
-.training-day-exercises.day-exercises-hidden {
+.training-day-exercises.day-exercises-hidden,
+.training-day-footer.day-exercises-hidden {
   overflow: hidden !important;
   max-height: 0 !important;
   flex: 0 !important;
   margin: 0 !important;
   gap: 0 !important;
+  padding: 0 !important;
 }
 
 /* 2. Cardio details com bullet — remover espaçamento de múltiplos spans */
