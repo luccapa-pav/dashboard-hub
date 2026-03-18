@@ -5631,17 +5631,23 @@ kbd {
 
 /* === PrevStepper — clone verde somente-leitura, alinhado ao Stepper === */
 
-/* Linha prev: mesma estrutura horizontal que set-row-fields */
+/* Grupo prev: lado a lado com os steppers atuais dentro de set-row-fields */
 .set-prev-block {
   display: flex;
   align-items: center;
-  justify-content: center;         /* mesmo centro que set-row-fields */
-  gap: 12px;                       /* mesma gap que set-row-fields */
-  width: 100%;
+  gap: 12px;
   opacity: 0.8;
-  padding-bottom: 5px;
-  margin-bottom: 1px;
-  border-bottom: 1px solid rgba(76, 175, 80, 0.18);
+}
+
+/* Divisor vertical entre grupo prev e grupo atual */
+.set-fields-div {
+  color: rgba(76, 175, 80, 0.35);
+  font-size: 22px;
+  font-weight: 300;
+  align-self: center;
+  line-height: 1;
+  margin: 0 2px;
+  user-select: none;
 }
 
 /* Cada célula prev: mesma orientação que set-field-compact (row: stepper + label) */
@@ -5700,11 +5706,6 @@ kbd {
   align-self: center;
   line-height: 34px;
   margin-bottom: 0;
-}
-
-/* set-row-main-col centraliza as duas linhas (prev + atual) */
-.set-row-main-col {
-  align-items: center !important;
 }
 
 /* Espaço entre badge "1ª SÉRIE" e o bloco central */

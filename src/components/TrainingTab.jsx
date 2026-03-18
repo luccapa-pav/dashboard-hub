@@ -229,14 +229,17 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
     <div className={`training-set-row${set.completed ? ' set-done' : ''}${justChecked ? ' set-just-checked' : ''}`}>
       <span className="set-num">{set.setNumber}ª SÉRIE</span>
       <div className="set-row-main-col">
-        {prevSet && !set.completed && (
-          <div className="set-prev-block">
-            <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
-            <span className="set-sep prev-sep">×</span>
-            <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
-          </div>
-        )}
         <div className="set-row-fields">
+          {prevSet && !set.completed && (
+            <>
+              <div className="set-prev-block">
+                <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
+                <span className="set-sep prev-sep">×</span>
+                <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
+              </div>
+              <span className="set-fields-div" aria-hidden>|</span>
+            </>
+          )}
           <div className="set-field-wrap">
             {plannedReps && !set.completed && (
               <span className="set-ghost-hint">Meta: {plannedReps}</span>
