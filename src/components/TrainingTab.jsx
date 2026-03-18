@@ -121,61 +121,6 @@ function useTimer(running) {
   return elapsed
 }
 
-// ── Rest Timer Hook ───────────────────────────────────────────
-function useRestTimer() {
-  const [restSecs, setRestSecs] = useState(0)
-  const [restRunning, setRestRunning] = useState(false)
-  const ref = useRef(null)
-
-  const start = useCallback((duration = 90) => {
-    setRestSecs(duration)
-    setRestRunning(true)
-  }, [])
-
-  const stop = useCallback(() => {
-    setRestRunning(false)
-    setRestSecs(0)
-    clearInterval(ref.current)
-  }, [])
-
-  useEffect(() => {
-    if (restRunning && restSecs > 0) {
-      ref.current = setInterval(() => {
-        setRestSecs(s => {
-          if (s <= 1) { clearInterval(ref.current); setRestRunning(false); return 0 }
-          return s - 1
-        })
-      }, 1000)
-    }
-    return () => clearInterval(ref.current)
-  }, [restRunning])
-
-  return { restSecs, restRunning, start, stop }
-}
-
-// ── Rest Timer Bar ────────────────────────────────────────────
-const REST_PRESETS = [60, 90, 120]
-
-function RestTimerBar({ restSecs, restRunning, onStop, onPreset }) {
-  if (!restRunning && restSecs === 0) return null
-  const pct = Math.round((restSecs / 120) * 100)
-  return (
-    <div className="rest-timer-bar">
-      <div className="rest-timer-progress" style={{ width: `${Math.min(pct, 100)}%` }} />
-      <div className="rest-timer-content">
-        <span className="rest-timer-label">Descanso</span>
-        <span className="rest-timer-count">{restSecs}s</span>
-        <div className="rest-timer-presets">
-          {REST_PRESETS.map(p => (
-            <button key={p} className="rest-preset-btn" onClick={() => onPreset(p)}>{p}s</button>
-          ))}
-        </div>
-        <button className="rest-skip-btn" onClick={onStop}>Pular</button>
-      </div>
-    </div>
-  )
-}
-
 // ── Stepper ───────────────────────────────────────────────────
 function Stepper({ value, onChange, step = 1, min = 0, decimals = 0 }) {
   const [editing, setEditing] = useState(false)
@@ -222,7 +167,6 @@ function PrevStepper({ value, decimals = 0, label }) {
 }
 
 // ── SetRow ────────────────────────────────────────────────────
-// ── SetRow ────────────────────────────────────────────────────
 function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, isPR, weightSuggestions = [] }) {
   const [justChecked, setJustChecked] = useState(false)
   const touchStartX = useRef(0)
@@ -233,6 +177,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
       onTouchEnd={e => {
         const dx = e.changedTouches[0].clientX - touchStartX.current
         if (dx > 60 && !set.completed) { onUpdate({ completed: true }); if (onCompleted) onCompleted(); navigator.vibrate?.(30) }
+        if (dx < -60 && set.completed) { onUpdate({ completed: false }); navigator.vibrate?.(20) }
       }}
     >
       <span className="set-num">{set.setNumber}ª SÉRIE</span>
@@ -305,7 +250,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
 }
 
 // ── ExerciseCard (during session) ─────────────────────────────
-function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, restTimer, note = '', onNoteChange, isFirst = false }) {
+function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, note = '', onNoteChange, isFirst = false }) {
   const [expanded, setExpanded] = useState(isFirst)
   const [showNote, setShowNote] = useState(false)
   const [flashing, setFlashing] = useState(false)
@@ -359,7 +304,7 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
         </div>
         <div className="ex-card-meta">
           <span className={`ex-sets-count${allDone ? ' ex-sets-done' : ''}`}>
-            {allDone ? <Check size={12} /> : `${doneSets}/${totalSets}`}
+            {allDone ? <Check size={12} /> : `${totalSets - doneSets} rest.`}
           </span>
           {!allDone && (
             <>
@@ -398,8 +343,7 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
               prevSet={history[0]?.sets?.[idx]}
               onUpdate={patch => onUpdateSet(exercise.id, set.id, patch)}
               onDelete={() => onDeleteSet(exercise.id, set.id)}
-              onCompleted={() => restTimer?.start(90)}
-              isPR={set.completed && set.weightKg > 0 && set.weightKg > bestHistWeight}
+              isPR={set.weightKg > 0 && set.weightKg > bestHistWeight}
               weightSuggestions={weightSuggestions}
             />
           ))}
@@ -1154,7 +1098,6 @@ function RegistrarScreen({ training }) {
   const [manualDay, setManualDay] = useState(null)
   const session = todaySession
   const elapsed = useTimer(!!session && !session?.completed)
-  const restTimer = useRestTimer()
   const [showSummary, setShowSummary] = useState(false)
   const [summarySession, setSummarySession] = useState(null)
   if (!activeRoutine) {
@@ -1304,13 +1247,6 @@ function RegistrarScreen({ training }) {
         )}
       </div>
 
-      <RestTimerBar
-        restSecs={restTimer.restSecs}
-        restRunning={restTimer.restRunning}
-        onStop={restTimer.stop}
-        onPreset={restTimer.start}
-      />
-
       {/* Exercises */}
       {sessionExercises.map((ex, idx) => (
         <ExerciseCard
@@ -1321,7 +1257,6 @@ function RegistrarScreen({ training }) {
           onUpdateSet={(exId, setId, patch) => updateSet(session.id, exId, setId, patch)}
           onDeleteSet={(exId, setId) => deleteSet(session.id, exId, setId)}
           history={exerciseHistory(ex.id)}
-          restTimer={restTimer}
           note={session.exerciseNotes?.[ex.id] || ''}
           onNoteChange={text => updateSession(session.id, { exerciseNotes: { ...(session.exerciseNotes || {}), [ex.id]: text } })}
           isFirst={idx === 0}
@@ -1675,6 +1610,19 @@ const NAV_TABS = [
 export function TrainingTab() {
   const training = useTraining()
   const [activeNav, setActiveNav] = useState(() => training.todaySession ? 'registrar' : 'rotina')
+  const [pendingNav, setPendingNav] = useState(null)
+
+  const handleNavClick = (tabId) => {
+    if (tabId === activeNav) return
+    if (activeNav === 'registrar' && training.todaySession) {
+      const incompleteSets = Object.values(training.todaySession.sets || {}).flat().filter(s => !s.completed)
+      if (incompleteSets.length > 0) {
+        setPendingNav(tabId)
+        return
+      }
+    }
+    setActiveNav(tabId)
+  }
 
   return (
     <div className="training-tab">
@@ -1684,7 +1632,7 @@ export function TrainingTab() {
             <button
               key={t.id}
               className={`training-nav-btn${activeNav === t.id ? ' training-nav-active' : ''}`}
-              onClick={() => setActiveNav(t.id)}
+              onClick={() => handleNavClick(t.id)}
             >
               {t.label}
               {t.id === 'registrar' && training.todaySession && (
@@ -1701,6 +1649,23 @@ export function TrainingTab() {
         {activeNav === 'historico' && <HistoricoScreen  training={training} />}
         {activeNav === 'avaliacao' && <AIFeedbackPanel  training={training} />}
       </div>
+
+      {pendingNav && (
+        <div className="nav-warning-overlay" onClick={() => setPendingNav(null)}>
+          <div className="nav-warning-sheet" onClick={e => e.stopPropagation()}>
+            <p className="nav-warning-title">Treino em andamento</p>
+            <p className="nav-warning-sub">Você tem séries pendentes. Deseja sair mesmo assim?</p>
+            <div className="nav-warning-actions">
+              <button className="nav-warn-stay-btn" onClick={() => setPendingNav(null)}>
+                Continuar Treino
+              </button>
+              <button className="nav-warn-leave-btn" onClick={() => { setActiveNav(pendingNav); setPendingNav(null) }}>
+                Sair mesmo assim
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

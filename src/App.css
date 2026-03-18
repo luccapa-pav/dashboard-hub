@@ -5972,8 +5972,81 @@ kbd {
   color: var(--text-mid);
 }
 
-/* === F6: Modo foco — botão ativo === */
+/* === Foco btn ativo === */
 .ex-header-add-btn.focus-active {
   color: var(--accent) !important;
   opacity: 1 !important;
+}
+
+/* === F1: Número da série maior === */
+.set-num {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  min-width: 44px !important;
+}
+
+/* === F4: PR badge sempre visível (antes de concluir) === */
+.set-pr-badge {
+  animation: pulse 1.2s ease infinite !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+}
+
+/* === F6: Bottom sheet — confirmar saída durante treino === */
+.nav-warning-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+}
+.nav-warning-sheet {
+  width: 100%;
+  background: var(--bg-card, #111);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideInUp 0.22s ease both;
+}
+.nav-warning-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white, #f0f0f0);
+  margin: 0;
+  text-align: center;
+}
+.nav-warning-sub {
+  font-size: 13px;
+  color: var(--text-mid, #888);
+  margin: 0 0 8px;
+  text-align: center;
+}
+.nav-warning-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nav-warn-stay-btn {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--accent, #c41930);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+.nav-warn-leave-btn {
+  padding: 12px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-mid, #888);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  cursor: pointer;
 }
