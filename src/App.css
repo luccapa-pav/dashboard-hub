@@ -5553,9 +5553,11 @@ kbd {
 /* 2. Stepper numbers larger + set row centered */
 .stepper-val {
   font-size: 18px !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   min-width: 40px !important;
   height: 34px !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.02em !important;
 }
 .stepper-btn {
   height: 34px !important;
@@ -5636,70 +5638,75 @@ kbd {
   gap: 1px !important;
 }
 
-/* 4. Alinhamento vertical perfeito: centralizado */
+/* 4. Centralização: todos os filhos de set-row-fields têm mesma altura */
 .set-row-main-col .set-row-fields {
   align-items: center !important;
 }
-/* Ghost hint flutua acima sem empurrar o campo — relative + absolute trick */
+
+/* Altura uniforme em todos os wraps: 16px cima (hint) + stepper + 16px baixo */
 .set-field-wrap {
   position: relative !important;
-  padding-top: 0 !important; /* padding aplicado inline apenas quando hint presente */
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
 }
 
-/* === Sub-linha informativa: prev ref + RIR === */
-.set-info-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 3px;
-}
-
-/* Referência anterior: "← 5 × 72.5 kg" em verde discreto */
-.set-prev-ref {
-  font-size: 11px;
-  font-weight: 500;
-  color: #4caf50;
-  opacity: 0.75;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-
-/* RIR chip alinhado à direita da sub-linha */
-.set-rir-chip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-left: auto;
-}
-.set-rir-label {
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--text-muted);
-  opacity: 0.5;
-}
-/* Stepper mini para RIR */
-.set-rir-chip .training-stepper {
-  gap: 0;
-}
-.set-rir-chip .stepper-btn {
-  width: 26px !important;
-  height: 26px !important;
-  font-size: 14px !important;
-  border-radius: 6px !important;
-}
-.set-rir-chip .stepper-val {
-  min-width: 26px !important;
-  font-size: 13px !important;
-  color: var(--text-muted) !important;
-}
+/* Hints absolutos — não empurram o layout */
 .set-ghost-hint {
   position: absolute !important;
-  top: 0 !important;
+  top: 2px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   width: max-content !important;
+}
+.set-kg-hint {
+  position: absolute !important;
+  bottom: 2px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  white-space: nowrap !important;
+}
+
+/* Bloco prev: mesma altura que field-wrap, label flutuante */
+.set-prev-outer {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+  gap: 0 !important;
+}
+.set-prev-label {
+  position: absolute !important;
+  top: 2px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: max-content !important;
+}
+
+/* RIR inline: label flutuante + mesma altura via herança do .set-field-wrap */
+.set-rir-sep {
+  opacity: 0.25 !important;
+  font-size: 18px !important;
+}
+.rir-label-hint {
+  color: var(--text-muted) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  font-size: 9px !important;
+  letter-spacing: 0.1em !important;
+  opacity: 0.6 !important;
+}
+/* Stepper RIR menor que reps/kg */
+.set-rir-wrap .stepper-btn {
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 15px !important;
+}
+.set-rir-wrap .stepper-val {
+  min-width: 30px !important;
+  font-size: 15px !important;
+  color: var(--text-muted) !important;
 }
 
 /* === PrevStepper — clone verde somente-leitura, alinhado ao Stepper === */
@@ -5759,8 +5766,10 @@ kbd {
   min-width: 40px;
   text-align: center;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   color: #4caf50;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   line-height: 34px;
   border-left: 1px solid rgba(76, 175, 80, 0.28);
   border-right: 1px solid rgba(76, 175, 80, 0.28);

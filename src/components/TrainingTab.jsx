@@ -183,10 +183,20 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
       <span className="set-num">{set.setNumber}ª SÉRIE</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
-          <div
-            className="set-field-wrap"
-            style={plannedReps && !set.completed ? { paddingTop: '16px' } : {}}
-          >
+          {prevSet && !set.completed && (
+            <>
+              <div className="set-prev-outer">
+                <span className="set-prev-label">sem. passada</span>
+                <div className="set-prev-block">
+                  <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
+                  <span className="set-sep prev-sep">×</span>
+                  <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
+                </div>
+              </div>
+              <span className="set-fields-div" aria-hidden>|</span>
+            </>
+          )}
+          <div className="set-field-wrap">
             {plannedReps && !set.completed && (
               <span className="set-ghost-hint">Meta: {plannedReps}</span>
             )}
@@ -205,20 +215,18 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
               <span className="set-kg-hint">↑ {Number(weightSuggestions[0]).toFixed(1)}kg</span>
             )}
           </div>
+          {!set.completed && (
+            <>
+              <span className="set-sep set-rir-sep">·</span>
+              <div className="set-field-wrap set-rir-wrap">
+                <span className="set-ghost-hint rir-label-hint">RIR</span>
+                <div className="set-field-compact">
+                  <Stepper value={set.rir ?? 0} onChange={v => onUpdate({ rir: v })} step={1} min={0} />
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        {!set.completed && (
-          <div className="set-info-row">
-            {prevSet && (
-              <span className="set-prev-ref">
-                ← {prevSet.reps} × {Number(prevSet.weightKg).toFixed(1)} kg
-              </span>
-            )}
-            <span className="set-rir-chip">
-              <span className="set-rir-label">RIR</span>
-              <Stepper value={set.rir ?? 0} onChange={v => onUpdate({ rir: v })} step={1} min={0} />
-            </span>
-          </div>
-        )}
         {weightSuggestions.length > 0 && !set.completed && (
           <div className="weight-chips">
             {weightSuggestions.map((w, i) => (
