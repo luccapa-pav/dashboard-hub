@@ -1388,7 +1388,7 @@ function RegistrarScreen({ training }) {
             const m = c.durationMin ?? 30
             const s = c.speedKmh ?? 0
             return (
-              <div key={c.id} className="cardio-row cardio-row-centered">
+              <div key={c.id} className={`cardio-row cardio-row-centered${c.completed ? ' cardio-done' : ''}`}>
                 <span className="cardio-type">{c.type}</span>
                 <div className="cardio-row-fields">
                   <Stepper value={h} onChange={v => updateCardio(session.id, c.id, { durationHrs: v, distanceKm: +((v + m / 60) * s).toFixed(2) })} step={1} min={0} />
@@ -1399,6 +1399,15 @@ function RegistrarScreen({ training }) {
                   <span className="cardio-unit">km/h</span>
                   {c.distanceKm > 0 && <span className="cardio-dist-auto">{Number(c.distanceKm).toFixed(1)} km</span>}
                 </div>
+                <button
+                  className={`set-check-btn cardio-check-btn${c.completed ? ' checked' : ''}`}
+                  onClick={() => {
+                    updateCardio(session.id, c.id, { completed: !(c.completed ?? false) })
+                    navigator.vibrate?.(30)
+                  }}
+                >
+                  {c.completed ? <Check size={14} /> : null}
+                </button>
               </div>
             )
           })}

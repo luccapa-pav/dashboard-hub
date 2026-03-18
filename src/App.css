@@ -5116,6 +5116,15 @@ kbd {
   padding: 6px 8px !important;
   gap: 8px !important;
 }
+.cardio-row-centered.cardio-done {
+  opacity: 0.55;
+  border-color: rgba(34,197,94,0.3) !important;
+  background: rgba(34,197,94,0.05) !important;
+}
+.cardio-check-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
 .cardio-type { font-size: 11px !important; font-weight: 700 !important; white-space: nowrap; }
 .cardio-section-header-centered { padding: 4px 0 4px !important; }
 

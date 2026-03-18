@@ -336,6 +336,7 @@ export function useTraining() {
         durationMin: c.durationMin ?? 30,
         speedKmh: c.speedKmh ?? 0,
         distanceKm: c.distanceKm ?? 0,
+        completed: false,
       })),
       notes: '',
     }
