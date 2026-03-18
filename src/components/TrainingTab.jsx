@@ -225,8 +225,16 @@ function PrevStepper({ value, decimals = 0, label }) {
 // ── SetRow ────────────────────────────────────────────────────
 function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, isPR, weightSuggestions = [] }) {
   const [justChecked, setJustChecked] = useState(false)
+  const touchStartX = useRef(0)
   return (
-    <div className={`training-set-row${set.completed ? ' set-done' : ''}${justChecked ? ' set-just-checked' : ''}`}>
+    <div
+      className={`training-set-row${set.completed ? ' set-done' : ''}${justChecked ? ' set-just-checked' : ''}`}
+      onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+      onTouchEnd={e => {
+        const dx = e.changedTouches[0].clientX - touchStartX.current
+        if (dx > 60 && !set.completed) { onUpdate({ completed: true }); if (onCompleted) onCompleted() }
+      }}
+    >
       <span className="set-num">{set.setNumber}ª SÉRIE</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
@@ -356,6 +364,11 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </div>
       </div>
+      {totalSets > 0 && !allDone && (
+        <div className="ex-progress-bar">
+          <div className="ex-progress-fill" style={{ width: `${Math.round((doneSets / totalSets) * 100)}%` }} />
+        </div>
+      )}
 
       <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
@@ -972,7 +985,11 @@ function RoutineCard({
       <div className={`routine-card-body-wrap${expanded ? ' routine-body-open' : ''}`}>
         <div className="routine-card-body">
           {trainingDays.length === 0 && (
-            <p className="routine-empty-hint">Nenhum dia de treino. Adicione abaixo.</p>
+            <div className="routine-empty-state">
+              <Dumbbell size={28} className="routine-empty-icon" />
+              <p className="routine-empty-title">Nenhum dia ainda</p>
+              <span className="routine-empty-sub">Adicione o primeiro dia de treino abaixo</span>
+            </div>
           )}
           <div className="training-days-grid" data-count={trainingDays.length}>
             {trainingDays.map(day => (
@@ -1176,6 +1193,12 @@ function RegistrarScreen({ training }) {
     const lastWeights = lastDaySession
       ? Object.fromEntries(Object.entries(lastDaySession.sets).map(([exId, sets]) => [exId, sets.map(s => s.weightKg)]))
       : {}
+    const progressiveWeights = lastDaySession
+      ? Object.fromEntries(Object.entries(lastDaySession.sets).map(([exId, sets]) => {
+          const allDone = sets.every(s => s.completed)
+          return [exId, sets.map(s => allDone ? +(s.weightKg + 2.5).toFixed(1) : s.weightKg)]
+        }))
+      : {}
     const hasLastWeights = lastDaySession && Object.values(lastWeights).some(ws => ws.some(w => w > 0))
 
     return (
@@ -1189,7 +1212,7 @@ function RegistrarScreen({ training }) {
           <p className="training-day-subtitle">{activeDay.label}</p>
           <p>{activeDay.exercises.length} exercício{activeDay.exercises.length !== 1 ? 's' : ''} · {activeDay.exercises.reduce((a, e) => a + (e.sets?.length || 0), 0)} séries planejadas</p>
         </div>
-        <button className="session-start-btn" onClick={() => startSession(activeRoutine.id, activeDay.id, activeDay.exercises || [], activeDay.plannedCardio || [])}>
+        <button className="session-start-btn" onClick={() => startSession(activeRoutine.id, activeDay.id, activeDay.exercises || [], activeDay.plannedCardio || [], progressiveWeights)}>
           <Play size={18} /> Iniciar {activeDay.label}
         </button>
         {hasLastWeights && (
@@ -1225,9 +1248,15 @@ function RegistrarScreen({ training }) {
           <span className="timer-hero-time">{formatDuration(elapsed)}</span>
         </div>
         <div className="timer-hero-info">
-          <span className="timer-hero-sets">{completedSets}/{totalSets} séries</span>
+          <div className="timer-hero-metric">
+            <span className="timer-hero-metric-val">{completedSets}/{totalSets}</span>
+            <span className="timer-hero-metric-label">séries</span>
+          </div>
           {liveVolume > 0 && (
-            <><span className="timer-hero-dot">·</span><span className="timer-hero-volume">{liveVolume.toFixed(0)} kg</span></>
+            <div className="timer-hero-metric">
+              <span className="timer-hero-metric-val">{liveVolume.toFixed(0)}</span>
+              <span className="timer-hero-metric-label">kg vol.</span>
+            </div>
           )}
         </div>
         {totalSets > 0 && (

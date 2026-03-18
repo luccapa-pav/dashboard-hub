@@ -5852,3 +5852,83 @@ kbd {
 .training-set-row.set-just-checked {
   animation: none !important;
 }
+
+/* === F1: Série concluída — verde + strikethrough (sem opacity total) === */
+.training-set-row.set-done {
+  opacity: 1 !important;
+}
+.training-set-row.set-done .set-num {
+  text-decoration: line-through !important;
+  color: #22c55e !important;
+  opacity: 0.65 !important;
+}
+
+/* === F2: Timer — métricas em bloco separado === */
+.timer-hero-info {
+  flex-direction: row !important;
+  gap: 20px !important;
+  align-items: center !important;
+}
+.timer-hero-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.timer-hero-metric-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.timer-hero-metric-label {
+  font-size: 10px;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* === F3: Barra de progresso por exercício === */
+.ex-progress-bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 0;
+  overflow: hidden;
+  margin: 0;
+}
+.ex-progress-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 0;
+  transition: width 0.4s ease;
+}
+
+/* === F4: Estado vazio visual na Rotina === */
+.routine-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 12px;
+  text-align: center;
+}
+.routine-empty-icon {
+  color: var(--text-mid);
+  opacity: 0.35;
+}
+.routine-empty-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0;
+}
+.routine-empty-sub {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+/* === F5: Swipe — não bloquear scroll vertical === */
+.training-set-row {
+  touch-action: pan-y !important;
+}
