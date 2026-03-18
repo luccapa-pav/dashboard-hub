@@ -5769,3 +5769,25 @@ kbd {
   font-size: 12px !important;
   letter-spacing: 0.12em !important;
 }
+
+/* === Rotina: sets à esquerda, nome centralizado === */
+
+/* Puxa os chips de sets para antes do nome */
+.routine-ex-sets-display {
+  order: -1 !important;
+  margin-left: 0 !important;
+  align-items: flex-start !important;
+}
+
+/* Nome + tags centralizados */
+.routine-ex-info {
+  align-items: center !important;
+  text-align: center !important;
+}
+.routine-ex-name {
+  text-align: center !important;
+  white-space: normal !important;
+}
+.routine-ex-tags {
+  justify-content: center !important;
+}
