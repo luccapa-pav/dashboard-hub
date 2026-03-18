@@ -1503,7 +1503,7 @@ function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [],
     })
       .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.error)))
       .then(({ feedback }) => setAiFeedback(feedback))
-      .catch(() => setAiLoading(false))
+      .catch(e => setAiError(typeof e === 'string' ? e : 'Erro ao gerar análise.'))
       .finally(() => setAiLoading(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1540,7 +1540,7 @@ function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [],
           </div>
         )}
 
-        {(aiLoading || aiFeedback) && (
+        {(aiLoading || aiFeedback || aiError) && (
           <div className="summary-ai-feedback">
             {aiLoading && (
               <div className="summary-ai-loading">
@@ -1548,6 +1548,7 @@ function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [],
                 Analisando seu treino com IA...
               </div>
             )}
+            {aiError && <div className="summary-ai-error">{aiError}</div>}
             {aiFeedback && (
               <div className="summary-ai-text">
                 {aiFeedback.split('\n').map((line, i) => (
