@@ -5646,12 +5646,30 @@ kbd {
   padding-top: 0 !important; /* padding aplicado inline apenas quando hint presente */
 }
 
-/* === RIR (Reps In Reserve) — sub-linha compacta === */
-.set-rir-row {
+/* === Sub-linha informativa: prev ref + RIR === */
+.set-info-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 10px;
+  margin-top: 3px;
+}
+
+/* Referência anterior: "← 5 × 72.5 kg" em verde discreto */
+.set-prev-ref {
+  font-size: 11px;
+  font-weight: 500;
+  color: #4caf50;
+  opacity: 0.75;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* RIR chip alinhado à direita da sub-linha */
+.set-rir-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
 }
 .set-rir-label {
   font-size: 9px;
@@ -5660,20 +5678,19 @@ kbd {
   font-weight: 600;
   color: var(--text-muted);
   opacity: 0.5;
-  min-width: 22px;
 }
-/* Stepper compacto dentro do RIR */
-.set-rir-row .training-stepper {
+/* Stepper mini para RIR */
+.set-rir-chip .training-stepper {
   gap: 0;
 }
-.set-rir-row .stepper-btn {
-  width: 28px !important;
-  height: 28px !important;
-  font-size: 15px !important;
+.set-rir-chip .stepper-btn {
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 14px !important;
   border-radius: 6px !important;
 }
-.set-rir-row .stepper-val {
-  min-width: 28px !important;
+.set-rir-chip .stepper-val {
+  min-width: 26px !important;
   font-size: 13px !important;
   color: var(--text-muted) !important;
 }

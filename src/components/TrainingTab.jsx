@@ -183,19 +183,6 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
       <span className="set-num">{set.setNumber}ª SÉRIE</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
-          {prevSet && !set.completed && (
-            <>
-              <div className="set-prev-outer">
-                <span className="set-prev-label">sem. passada</span>
-                <div className="set-prev-block">
-                  <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
-                  <span className="set-sep prev-sep">×</span>
-                  <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
-                </div>
-              </div>
-              <span className="set-fields-div" aria-hidden>|</span>
-            </>
-          )}
           <div
             className="set-field-wrap"
             style={plannedReps && !set.completed ? { paddingTop: '16px' } : {}}
@@ -220,9 +207,16 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
           </div>
         </div>
         {!set.completed && (
-          <div className="set-rir-row">
-            <span className="set-rir-label">RIR</span>
-            <Stepper value={set.rir ?? 0} onChange={v => onUpdate({ rir: v })} step={1} min={0} />
+          <div className="set-info-row">
+            {prevSet && (
+              <span className="set-prev-ref">
+                ← {prevSet.reps} × {Number(prevSet.weightKg).toFixed(1)} kg
+              </span>
+            )}
+            <span className="set-rir-chip">
+              <span className="set-rir-label">RIR</span>
+              <Stepper value={set.rir ?? 0} onChange={v => onUpdate({ rir: v })} step={1} min={0} />
+            </span>
           </div>
         )}
         {weightSuggestions.length > 0 && !set.completed && (
