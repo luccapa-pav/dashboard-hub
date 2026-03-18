@@ -6286,3 +6286,98 @@ kbd {
   border-radius: 12px !important;
   font-size: 13px !important;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   CANCEL CONFIRM + TODAY HIGHLIGHTS
+   ════════════════════════════════════════════════════════════════ */
+
+/* Cancel confirm inline */
+.cancel-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, #ef4444 10%, transparent);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 600;
+  animation: fadeIn 0.15s ease both;
+  margin: 0 0 8px 0;
+}
+.cancel-confirm span { flex: 1; }
+.cancel-confirm-yes {
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cancel-confirm-yes:hover { background: rgba(239,68,68,0.28); }
+.cancel-confirm-no {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.cancel-confirm-no:hover { background: rgba(255,255,255,0.12); }
+
+/* "Treino de hoje" badge — start screen */
+.hoje-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  align-self: center;
+}
+
+/* "HOJE" badge — TrainingDayCard */
+.hoje-badge-small {
+  font-size: 9px;
+  font-weight: 800;
+  background: var(--accent);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* Today highlight — TrainingDayCard border */
+.day-card-today {
+  border: 1.5px solid var(--accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent) !important;
+}
+
+/* Other days row — below start buttons */
+.other-days-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  justify-content: center;
+}
+.other-days-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}

@@ -690,7 +690,7 @@ function ExerciseRowInRoutine({ exercise, onDelete, onUpdate, muscleGroups, equi
 // ── TrainingDayCard ───────────────────────────────────────────
 const CARDIO_TYPES = ['Bike', 'Caminhada', 'Corrida', 'Esteira', 'Natação', 'Surf']
 
-function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, onAddPlannedCardio, onUpdatePlannedCardio, onDeletePlannedCardio, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
+function TrainingDayCard({ day, isToday, onUpdate, onDelete, onAddExercise, onDeleteExercise, onUpdateExercise, onAddPlannedCardio, onUpdatePlannedCardio, onDeletePlannedCardio, MUSCLE_GROUPS, EQUIPMENT, DAYS }) {
   const [collapsed, setCollapsed] = useState(false)
   const [editingLabel, setEditingLabel] = useState(false)
   const [editLabel, setEditLabel] = useState('')
@@ -765,7 +765,7 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
   }
 
   return (
-    <div className="training-day-card">
+    <div className={`training-day-card${isToday ? ' day-card-today' : ''}`}>
       <div className="training-day-header">
         {editingLabel ? (
           <div className="training-day-edit-form">
@@ -788,7 +788,10 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
               ? <span className="day-badge-week">{DAYS[day.weekDay]}</span>
               : <span />
             }
-            <span className="training-day-label">{day.label}</span>
+            <span className="training-day-label">
+              {day.label}
+              {isToday && <span className="hoje-badge-small">HOJE</span>}
+            </span>
             <div className="training-day-actions">
               <button className="routine-edit-btn" onClick={startEdit}>
                 <Edit2 size={12} />
@@ -901,6 +904,7 @@ function RoutineCard({
   onAddDay, onUpdateDay, onDeleteDay,
   onAddExercise, onDeleteExercise, onUpdateExercise,
   onAddPlannedCardio, onUpdatePlannedCardio, onDeletePlannedCardio,
+  todayDayId,
   MUSCLE_GROUPS, EQUIPMENT, DAYS,
 }) {
   const [editingName, setEditingName] = useState(false)
@@ -963,6 +967,7 @@ function RoutineCard({
               <TrainingDayCard
                 key={day.id}
                 day={day}
+                isToday={day.id === todayDayId}
                 onUpdate={patch => onUpdateDay(day.id, patch)}
                 onDelete={() => { if (confirm(`Excluir dia "${day.label}"?`)) onDeleteDay(day.id) }}
                 onAddExercise={(name, muscle, equip, sets) => onAddExercise(day.id, name, muscle, equip, sets)}
@@ -1001,7 +1006,7 @@ function RoutineCard({
 // ── RotinasScreen ─────────────────────────────────────────────
 function RotinasScreen({ training }) {
   const {
-    routines, activeRoutine, setActiveRoutineId,
+    routines, activeRoutine, setActiveRoutineId, todayTrainingDay,
     addRoutine, updateRoutine, deleteRoutine,
     addTrainingDay, updateTrainingDay, deleteTrainingDay,
     addExercise, updateExercise, deleteExercise,
@@ -1077,6 +1082,7 @@ function RotinasScreen({ training }) {
           onAddPlannedCardio={(dayId, item) => addPlannedCardio(routine.id, dayId, item)}
           onUpdatePlannedCardio={(dayId, cardioId, patch) => updatePlannedCardio(routine.id, dayId, cardioId, patch)}
           onDeletePlannedCardio={(dayId, cardioId) => deletePlannedCardio(routine.id, dayId, cardioId)}
+          todayDayId={todayTrainingDay?.id}
           MUSCLE_GROUPS={MUSCLE_GROUPS}
           EQUIPMENT={EQUIPMENT}
           DAYS={DAYS}
@@ -1133,6 +1139,7 @@ function RegistrarScreen({ training }) {
   const [showSummary, setShowSummary] = useState(false)
   const [summarySession, setSummarySession] = useState(null)
   const [showFinishWarning, setShowFinishWarning] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const cardRefs = useRef({})
   if (!activeRoutine) {
     return (
@@ -1210,6 +1217,9 @@ function RegistrarScreen({ training }) {
         )}
         <div className="training-start-info">
           <Dumbbell size={32} strokeWidth={1.2} />
+          {activeDay.id === todayTrainingDay?.id && (
+            <span className="hoje-badge">Treino de hoje</span>
+          )}
           <h3>{activeRoutine.name}</h3>
           <p className="training-day-subtitle">{activeDay.label}</p>
           <p>{activeDay.exercises.length} exercício{activeDay.exercises.length !== 1 ? 's' : ''} · {activeDay.exercises.reduce((a, e) => a + (e.sets?.length || 0), 0)} séries planejadas</p>
@@ -1237,6 +1247,20 @@ function RegistrarScreen({ training }) {
             🔄 Repetir pesos anteriores
           </button>
         )}
+        {trainingDays.filter(d => d.id !== activeDay.id).length > 0 && (
+          <div className="other-days-row">
+            <span className="other-days-label">Ou iniciar:</span>
+            {trainingDays.filter(d => d.id !== activeDay.id).map(d => (
+              <button
+                key={d.id}
+                className="training-day-pick-btn"
+                onClick={() => setManualDay(d)}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -1261,7 +1285,7 @@ function RegistrarScreen({ training }) {
         <button
           className="session-abort-icon"
           title="Cancelar treino"
-          onClick={() => { if (confirm('Cancelar treino?')) deleteSession(session.id) }}
+          onClick={() => setShowCancelConfirm(v => !v)}
         >
           <X size={14} />
         </button>
@@ -1296,6 +1320,14 @@ function RegistrarScreen({ training }) {
           </div>
         )}
       </div>
+
+      {showCancelConfirm && (
+        <div className="cancel-confirm">
+          <span>Cancelar este treino?</span>
+          <button className="cancel-confirm-yes" onClick={() => deleteSession(session.id)}>Sim, cancelar</button>
+          <button className="cancel-confirm-no" onClick={() => setShowCancelConfirm(false)}>Voltar</button>
+        </div>
+      )}
 
       {/* Exercises — F2: split pending / done, F4: scroll to next */}
       {(() => {
