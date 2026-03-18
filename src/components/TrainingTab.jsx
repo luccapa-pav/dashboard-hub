@@ -232,7 +232,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
       onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
       onTouchEnd={e => {
         const dx = e.changedTouches[0].clientX - touchStartX.current
-        if (dx > 60 && !set.completed) { onUpdate({ completed: true }); if (onCompleted) onCompleted() }
+        if (dx > 60 && !set.completed) { onUpdate({ completed: true }); if (onCompleted) onCompleted(); navigator.vibrate?.(30) }
       }}
     >
       <span className="set-num">{set.setNumber}ª SÉRIE</span>
@@ -294,6 +294,7 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
             setJustChecked(true)
             setTimeout(() => setJustChecked(false), 400)
             if (onCompleted) onCompleted()
+            navigator.vibrate?.(30)
           }
         }}
       >
@@ -307,16 +308,20 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
 function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, restTimer, note = '', onNoteChange, isFirst = false }) {
   const [expanded, setExpanded] = useState(isFirst)
   const [showNote, setShowNote] = useState(false)
+  const [flashing, setFlashing] = useState(false)
+  const [focusMode, setFocusMode] = useState(false)
   const lastSet   = history[0]?.sets?.slice(-1)[0]
   const lastWeight = lastSet?.weightKg ?? 0
   const lastReps   = lastSet?.reps ?? parseDefaultReps(exercise.sets?.[0]?.reps ?? '12')
   const totalSets  = sets.length
   const doneSets   = sets.filter(s => s.completed).length
   const allDone = doneSets === totalSets && totalSets > 0
-  // Auto-collapse when all sets are done
+  // Auto-collapse when all sets are done + flash
   const prevDoneRef = useRef(false)
   useEffect(() => {
     if (allDone && !prevDoneRef.current) {
+      setFlashing(true)
+      setTimeout(() => setFlashing(false), 350)
       const t = setTimeout(() => setExpanded(false), 600)
       prevDoneRef.current = true
       return () => clearTimeout(t)
@@ -337,9 +342,13 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
   const muscleColor = exercise.muscleGroup ? (MUSCLE_COLORS[exercise.muscleGroup] || 'var(--accent)') : null
 
+  const visibleSets = focusMode
+    ? sets.filter((_, i) => i === sets.findIndex(s => !s.completed) || (sets.every(s => s.completed) && i === sets.length - 1))
+    : sets
+
   return (
     <div
-      className={`training-exercise-card${allDone ? ' ex-card-done' : ''}`}
+      className={`training-exercise-card${allDone ? ' ex-card-done' : ''}${flashing ? ' ex-card-flash' : ''}`}
       style={muscleColor ? { borderLeft: `3px solid ${muscleColor}` } : undefined}
     >
       <div className="ex-card-header" onClick={() => setExpanded(e => !e)}>
@@ -353,13 +362,22 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
             {allDone ? <Check size={12} /> : `${doneSets}/${totalSets}`}
           </span>
           {!allDone && (
-            <button
-              className="ex-header-add-btn"
-              title="Série extra"
-              onClick={e => { e.stopPropagation(); onAddSet(exercise.id, lastReps, lastWeight) }}
-            >
-              <Plus size={11} />
-            </button>
+            <>
+              <button
+                className={`ex-header-add-btn${focusMode ? ' focus-active' : ''}`}
+                title="Modo foco"
+                onClick={e => { e.stopPropagation(); setFocusMode(v => !v) }}
+              >
+                <Clock size={11} />
+              </button>
+              <button
+                className="ex-header-add-btn"
+                title="Série extra"
+                onClick={e => { e.stopPropagation(); onAddSet(exercise.id, lastReps, lastWeight) }}
+              >
+                <Plus size={11} />
+              </button>
+            </>
           )}
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </div>
@@ -372,7 +390,7 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
       <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
-          {sets.map((set, idx) => (
+          {visibleSets.map((set, idx) => (
             <SetRow
               key={set.id}
               set={set}
@@ -1187,9 +1205,11 @@ function RegistrarScreen({ training }) {
     }
 
     // Pesos do último treino deste dia
-    const lastDaySession = sessions
+    const lastDaySessions = sessions
       .filter(s => s.completed && s.trainingDayId === activeDay.id)
-      .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))[0]
+      .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))
+      .slice(0, 2)
+    const lastDaySession = lastDaySessions[0]
     const lastWeights = lastDaySession
       ? Object.fromEntries(Object.entries(lastDaySession.sets).map(([exId, sets]) => [exId, sets.map(s => s.weightKg)]))
       : {}
@@ -1212,6 +1232,21 @@ function RegistrarScreen({ training }) {
           <p className="training-day-subtitle">{activeDay.label}</p>
           <p>{activeDay.exercises.length} exercício{activeDay.exercises.length !== 1 ? 's' : ''} · {activeDay.exercises.reduce((a, e) => a + (e.sets?.length || 0), 0)} séries planejadas</p>
         </div>
+        {lastDaySessions.length > 0 && (
+          <div className="session-history-preview">
+            {lastDaySessions.map((s, i) => {
+              const vol = calcVolume(s.sets)
+              const date = new Date(s.startedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+              const setsCount = Object.values(s.sets).flat().filter(x => x.completed).length
+              return (
+                <div key={s.id} className="session-history-row">
+                  <span className="shp-date">{date}</span>
+                  <span className="shp-detail">{setsCount} séries{vol > 0 ? ` · ${vol.toFixed(0)} kg` : ''}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
         <button className="session-start-btn" onClick={() => startSession(activeRoutine.id, activeDay.id, activeDay.exercises || [], activeDay.plannedCardio || [], progressiveWeights)}>
           <Play size={18} /> Iniciar {activeDay.label}
         </button>

@@ -5932,3 +5932,48 @@ kbd {
 .training-set-row {
   touch-action: pan-y !important;
 }
+
+/* === F2: Flash verde na conclusão do exercício === */
+@keyframes exFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  30%  { box-shadow: 0 0 0 6px rgba(34,197,94,0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+.training-exercise-card.ex-card-flash {
+  animation: exFlash 0.35s ease-out both;
+}
+
+/* === F3: Histórico compacto na tela de início === */
+.session-history-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+}
+.session-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg-card-h);
+}
+.shp-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.shp-detail {
+  font-size: 11px;
+  color: var(--text-mid);
+}
+
+/* === F6: Modo foco — botão ativo === */
+.ex-header-add-btn.focus-active {
+  color: var(--accent) !important;
+  opacity: 1 !important;
+}
