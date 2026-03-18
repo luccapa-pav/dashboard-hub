@@ -260,7 +260,6 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
   const [expanded, setExpanded] = useState(isFirst)
   const [showNote, setShowNote] = useState(false)
   const [flashing, setFlashing] = useState(false)
-  const [focusMode, setFocusMode] = useState(false)
   const lastSet   = history[0]?.sets?.slice(-1)[0]
   const lastWeight = lastSet?.weightKg ?? 0
   const lastReps   = lastSet?.reps ?? parseDefaultReps(exercise.sets?.[0]?.reps ?? '12')
@@ -294,9 +293,6 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
   const muscleColor = exercise.muscleGroup ? (MUSCLE_COLORS[exercise.muscleGroup] || 'var(--accent)') : null
 
-  const visibleSets = focusMode
-    ? sets.filter((_, i) => i === sets.findIndex(s => !s.completed) || (sets.every(s => s.completed) && i === sets.length - 1))
-    : sets
 
   return (
     <div
@@ -313,24 +309,6 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
           <span className={`ex-sets-count${allDone ? ' ex-sets-done' : ''}`}>
             {allDone ? <Check size={12} /> : `${totalSets - doneSets} rest.`}
           </span>
-          {!allDone && (
-            <>
-              <button
-                className={`ex-header-add-btn${focusMode ? ' focus-active' : ''}`}
-                title="Modo foco"
-                onClick={e => { e.stopPropagation(); setFocusMode(v => !v) }}
-              >
-                <Clock size={11} />
-              </button>
-              <button
-                className="ex-header-add-btn"
-                title="Série extra"
-                onClick={e => { e.stopPropagation(); onAddSet(exercise.id, lastReps, lastWeight) }}
-              >
-                <Plus size={11} />
-              </button>
-            </>
-          )}
           {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </div>
       </div>
@@ -361,7 +339,7 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
       <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
-          {visibleSets.map((set, idx) => (
+          {sets.map((set, idx) => (
             <SetRow
               key={set.id}
               set={set}
@@ -373,14 +351,6 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
               weightSuggestions={weightSuggestions}
             />
           ))}
-          {!allDone && (
-            <button
-              className="add-set-inline-btn"
-              onClick={() => onAddSet(exercise.id, lastReps, lastWeight)}
-            >
-              <Plus size={12} /> série extra
-            </button>
-          )}
           <div className="ex-note-row">
             <button className="ex-note-toggle" onClick={() => setShowNote(v => !v)}>
               {showNote ? '— Ocultar nota' : `+ Nota${note ? ' ✏️' : ''}`}
