@@ -814,6 +814,11 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           </div>
         ) : (
           <div className="training-day-title-row">
+            {day.weekDay !== undefined
+              ? <span className="day-badge-week">{DAYS[day.weekDay]}</span>
+              : <span />
+            }
+            <span className="training-day-label">{day.label}</span>
             <div className="training-day-actions">
               <button className="routine-edit-btn" onClick={startEdit}>
                 <Edit2 size={12} />
@@ -825,14 +830,10 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
                 {collapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
               </button>
             </div>
-            <span className="training-day-label">{day.label}</span>
           </div>
         )}
       </div>
       <div className={`training-day-exercises${collapsed ? ' day-exercises-hidden' : ''}`}>
-        {day.weekDay !== undefined && (
-          <span className="day-badge-week">{DAYS[day.weekDay]}</span>
-        )}
         {(day.exercises || []).sort((a, b) => a.order - b.order).map(ex => (
           <ExerciseRowInRoutine
             key={ex.id}

@@ -5518,12 +5518,22 @@ kbd {
 /* REFINAMENTO UI – Batch 9                                       */
 /* ────────────────────────────────────────────────────────────── */
 
-/* 1. Day header: actions RIGHT */
-.training-day-actions {
-  left: auto !important;
-  right: 0 !important;
+/* 1. Title row usa o mesmo grid dos exercise rows: badge | nome | actions */
+.training-day-title-row {
+  display: grid !important;
+  grid-template-columns: 54px 1fr auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 14px !important;
+  position: static !important;
 }
-/* Badge alinhado com a coluna de chips das séries (grid 54px | 1fr | 54px, padding 14px) */
+.training-day-actions {
+  position: static !important;
+  transform: none !important;
+  left: auto !important;
+  right: auto !important;
+}
+/* Badge na primeira coluna, alinhado com os chips de séries */
 .day-badge-week {
   color: var(--accent) !important;
   background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
@@ -5531,16 +5541,13 @@ kbd {
   opacity: 1 !important;
   font-size: 11px !important;
   font-weight: 800 !important;
-  padding: 3px 9px !important;
+  padding: 3px 6px !important;
   border-radius: 20px !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
-  align-self: flex-start;
-  margin-left: 14px !important;
-  width: 54px !important;
-  box-sizing: border-box !important;
   text-align: center !important;
-  margin-bottom: 4px;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* 2. Stepper numbers larger + set row centered */
