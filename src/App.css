@@ -5870,12 +5870,12 @@ kbd {
   min-width: 32px !important;
 }
 
-/* "SEM. PASSADA" label: realmente secundária */
+/* "SEM. PASSADA" label */
 .set-prev-label {
-  font-size: 7px !important;
-  opacity: 0.45 !important;
-  letter-spacing: 0.05em !important;
-  font-weight: 600 !important;
+  font-size: 9px !important;
+  opacity: 0.8 !important;
+  letter-spacing: 0.06em !important;
+  font-weight: 700 !important;
 }
 
 /* Bloco prev: opacidade total (a cor verde já cria hierarquia) */
