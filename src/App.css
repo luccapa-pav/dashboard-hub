@@ -5629,53 +5629,85 @@ kbd {
   width: max-content !important;
 }
 
-/* === PrevStepper — clone verde somente-leitura do Stepper === */
+/* === PrevStepper — clone verde somente-leitura, alinhado ao Stepper === */
+
+/* Linha prev: mesma estrutura horizontal que set-row-fields */
 .set-prev-block {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  opacity: 0.85;
+  align-items: center;
+  justify-content: center;         /* mesmo centro que set-row-fields */
+  gap: 12px;                       /* mesma gap que set-row-fields */
+  width: 100%;
+  opacity: 0.8;
+  padding-bottom: 5px;
+  margin-bottom: 1px;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.18);
 }
 
+/* Cada célula prev: mesma orientação que set-field-compact (row: stepper + label) */
+.prev-stepper-wrap {
+  display: flex;
+  align-items: center;
+  gap: 3px;                        /* igual set-field-compact gap */
+}
+
+/* Widget visual */
 .prev-stepper {
   display: flex;
   align-items: center;
-  border: 1.5px solid var(--accent-green, #4caf50);
-  border-radius: 8px;
+  border: 1.5px solid #4caf50;
+  border-radius: 6px;
   overflow: hidden;
-  background: color-mix(in srgb, #4caf50 10%, transparent);
+  background: color-mix(in srgb, #4caf50 8%, transparent);
   height: 34px;
 }
 
+/* Botões: mesma largura do stepper-btn override (44px) */
 .prev-stepper-btn {
-  width: 28px;
+  width: 44px;
   height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  color: color-mix(in srgb, #4caf50 50%, transparent);
+  font-size: 17px;
+  color: color-mix(in srgb, #4caf50 55%, transparent);
   cursor: default;
   user-select: none;
 }
 
+/* Valor: mesma largura do stepper-val override (40px) */
 .prev-stepper-val {
-  min-width: 36px;
+  min-width: 40px;
   text-align: center;
   font-size: 18px;
   font-weight: 700;
   color: #4caf50;
   line-height: 34px;
+  border-left: 1px solid rgba(76, 175, 80, 0.28);
+  border-right: 1px solid rgba(76, 175, 80, 0.28);
   padding: 0 2px;
 }
 
+/* Label "reps" / "kg" em verde */
 .prev-stepper-label {
   color: #4caf50 !important;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
+/* Separador × entre reps e kg — mesmo alinhamento vertical */
 .prev-sep {
   color: var(--text-mid);
+  align-self: center;
   line-height: 34px;
   margin-bottom: 0;
+}
+
+/* set-row-main-col centraliza as duas linhas (prev + atual) */
+.set-row-main-col {
+  align-items: center !important;
+}
+
+/* Espaço entre badge "1ª SÉRIE" e o bloco central */
+.training-set-row {
+  gap: 12px !important;
 }
