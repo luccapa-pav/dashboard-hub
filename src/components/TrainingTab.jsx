@@ -157,9 +157,7 @@ function PrevStepper({ value, decimals = 0, label }) {
   return (
     <div className="prev-stepper-wrap">
       <div className="prev-stepper">
-        <span className="prev-stepper-btn">−</span>
         <span className="prev-stepper-val">{Number(value).toFixed(decimals)}</span>
-        <span className="prev-stepper-btn">+</span>
       </div>
       <span className="set-unit-label prev-stepper-label">{label}</span>
     </div>
@@ -184,9 +182,17 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
       <div className="set-row-main-col">
         <div className="set-row-fields">
           {prevSet && !set.completed && (
-            <span className="set-prev-text">
-              {prevSet.reps} × {Number(prevSet.weightKg).toFixed(1)} kg
-            </span>
+            <>
+              <div className="set-prev-outer">
+                <span className="set-prev-label">sem. passada</span>
+                <div className="set-prev-block">
+                  <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
+                  <span className="set-sep prev-sep">×</span>
+                  <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
+                </div>
+              </div>
+              <span className="set-fields-div" aria-hidden>|</span>
+            </>
           )}
           <div className="set-field-wrap">
             {plannedReps && !set.completed && (
@@ -205,15 +211,10 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
             </div>
           </div>
           {!set.completed && (
-            <>
-              <span className="set-sep set-rir-sep">·</span>
-              <div className="set-field-wrap set-rir-wrap">
-                <span className="set-ghost-hint rir-label-hint">RIR</span>
-                <div className="set-field-compact">
-                  <Stepper value={set.rir ?? 0} onChange={v => onUpdate({ rir: v })} step={1} min={0} />
-                </div>
-              </div>
-            </>
+            <div className="set-rir-inline">
+              <span className="set-rir-lbl">RIR</span>
+              <Stepper value={set.rir ?? 0} onChange={v => onUpdate({ rir: v })} step={1} min={0} />
+            </div>
           )}
         </div>
       </div>

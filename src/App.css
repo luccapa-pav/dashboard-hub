@@ -5679,28 +5679,62 @@ kbd {
   flex-shrink: 0 !important;
 }
 
-/* RIR: label flutua acima via herança de .set-ghost-hint */
-.set-rir-sep {
-  opacity: 0.2 !important;
-  font-size: 16px !important;
+/* Bloco prev: mesmo alinhamento da row, label flutua acima */
+.set-prev-outer {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-direction: column !important;
+  gap: 0 !important;
 }
-.rir-label-hint {
-  color: var(--text-muted) !important;
-  border-color: transparent !important;
-  background: transparent !important;
-  font-size: 9px !important;
+.set-prev-label {
+  position: absolute !important;
+  bottom: calc(100% + 3px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: max-content !important;
+}
+
+/* PrevStepper: caixa read-only sem botões */
+.prev-stepper {
+  border: 1.5px solid rgba(76,175,80,0.35) !important;
+  border-radius: 8px !important;
+  padding: 0 10px !important;
+  height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(76,175,80,0.04) !important;
+}
+.prev-stepper-btn { display: none !important; }
+
+/* RIR — chip pequeno e discreto, sem label flutuante */
+.set-rir-inline {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin-left: 4px !important;
+  opacity: 0.45 !important;
+}
+.set-rir-lbl {
+  font-size: 8px !important;
+  text-transform: uppercase !important;
   letter-spacing: 0.1em !important;
-  opacity: 0.55 !important;
-}
-.set-rir-wrap .stepper-btn {
-  width: 32px !important;
-  height: 32px !important;
-  font-size: 14px !important;
-}
-.set-rir-wrap .stepper-val {
-  min-width: 28px !important;
-  font-size: 14px !important;
+  font-weight: 700 !important;
   color: var(--text-muted) !important;
+  margin-right: 2px !important;
+}
+.set-rir-inline .stepper-btn {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 12px !important;
+  border-radius: 5px !important;
+}
+.set-rir-inline .stepper-val {
+  min-width: 20px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  height: 22px !important;
 }
 
 /* === PrevStepper — clone verde somente-leitura, alinhado ao Stepper === */
