@@ -5978,9 +5978,9 @@ kbd {
   opacity: 1 !important;
 }
 
-/* === F1: Número da série maior === */
+/* === F1: Número da série === */
 .set-num {
-  font-size: 28px !important;
+  font-size: 18px !important;
   font-weight: 800 !important;
   line-height: 1 !important;
   min-width: 44px !important;
@@ -6108,4 +6108,87 @@ kbd {
   background: color-mix(in srgb, #3b82f6 15%, transparent) !important;
   color: #60a5fa !important;
   border: 1px solid rgba(96,165,250,0.25) !important;
+}
+
+/* === Label "sem. passada" acima do bloco verde === */
+.set-prev-outer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.set-prev-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #4caf50;
+  opacity: 0.75;
+  line-height: 1;
+}
+
+/* === F2: Spark-bars de volume no card colapsado === */
+.ex-card-summary-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 0 6px;
+}
+.ex-spark-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
+}
+.ex-spark-bar {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  min-height: 3px;
+}
+.ex-spark-bar-current {
+  background: #4caf50;
+}
+
+/* === F4: Hint de peso sugerido inline === */
+.set-kg-hint {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-mid);
+  text-align: center;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  margin-top: 2px;
+  opacity: 0.75;
+}
+
+/* === F5: Alerta inline ao finalizar com séries pendentes === */
+.finish-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #f59e0b;
+  font-weight: 600;
+  animation: fadeIn 0.15s ease both;
+}
+.finish-warning-confirm {
+  margin-left: auto;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.35);
+  border-radius: 6px;
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.finish-warning-confirm:hover {
+  background: rgba(245,158,11,0.25);
 }

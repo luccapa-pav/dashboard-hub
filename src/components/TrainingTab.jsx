@@ -185,10 +185,13 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
         <div className="set-row-fields">
           {prevSet && !set.completed && (
             <>
-              <div className="set-prev-block">
-                <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
-                <span className="set-sep prev-sep">×</span>
-                <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
+              <div className="set-prev-outer">
+                <span className="set-prev-label">sem. passada</span>
+                <div className="set-prev-block">
+                  <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
+                  <span className="set-sep prev-sep">×</span>
+                  <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
+                </div>
               </div>
               <span className="set-fields-div" aria-hidden>|</span>
             </>
@@ -208,6 +211,9 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
               <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
               <span className="set-unit-label">kg</span>
             </div>
+            {weightSuggestions.length > 0 && !set.completed && (
+              <span className="set-kg-hint">↑ {Number(weightSuggestions[0]).toFixed(1)}kg</span>
+            )}
           </div>
         </div>
         {weightSuggestions.length > 0 && !set.completed && (
@@ -333,9 +339,25 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
           <div className="ex-progress-fill" style={{ width: `${Math.round((doneSets / totalSets) * 100)}%` }} />
         </div>
       )}
-      {!expanded && allDone && volume > 0 && (
-        <div className="ex-card-summary">{doneSets} séries · {volume.toFixed(0)} kg vol.</div>
-      )}
+      {!expanded && allDone && volume > 0 && (() => {
+        const recentVols = history.slice(0, 3).map(h =>
+          (h.sets || []).reduce((a, s) => a + (s.reps || 0) * (s.weightKg || 0), 0)
+        ).filter(v => v > 0)
+        const maxVol = Math.max(volume, ...recentVols, 1)
+        return (
+          <div className="ex-card-summary-row">
+            <span className="ex-card-summary">{doneSets} séries · {volume.toFixed(0)} kg vol.</span>
+            {recentVols.length > 0 && (
+              <div className="ex-spark-bars">
+                {recentVols.slice().reverse().map((v, i) => (
+                  <div key={i} className="ex-spark-bar" style={{ height: `${Math.max(3, Math.round((v / maxVol) * 18))}px` }} />
+                ))}
+                <div className="ex-spark-bar ex-spark-bar-current" style={{ height: `${Math.max(3, Math.round((volume / maxVol) * 18))}px` }} />
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
@@ -1139,6 +1161,7 @@ function RegistrarScreen({ training }) {
   const elapsed = useTimer(!!session && !session?.completed)
   const [showSummary, setShowSummary] = useState(false)
   const [summarySession, setSummarySession] = useState(null)
+  const [showFinishWarning, setShowFinishWarning] = useState(false)
   const cardRefs = useRef({})
   if (!activeRoutine) {
     return (
@@ -1250,6 +1273,11 @@ function RegistrarScreen({ training }) {
   const sessionExercises = activeDay?.exercises || []
   const completedSets = Object.values(session.sets).flat().filter(s => s.completed).length
   const totalSets     = Object.values(session.sets).flat().length
+  const totalExercises = sessionExercises.length
+  const completedExercises = sessionExercises.filter(ex => {
+    const s = session.sets[ex.id] || []
+    return s.length > 0 && s.every(set => set.completed)
+  }).length
   const liveVolume = Object.values(session.sets).flat()
     .filter(s => s.completed && s.weightKg > 0)
     .reduce((a, s) => a + (s.reps || 0) * (s.weightKg || 0), 0)
@@ -1275,6 +1303,12 @@ function RegistrarScreen({ training }) {
             <span className="timer-hero-metric-val">{completedSets}/{totalSets}</span>
             <span className="timer-hero-metric-label">séries</span>
           </div>
+          {totalExercises > 0 && (
+            <div className="timer-hero-metric">
+              <span className="timer-hero-metric-val">{completedExercises}/{totalExercises}</span>
+              <span className="timer-hero-metric-label">ex</span>
+            </div>
+          )}
           {liveVolume > 0 && (
             <div className="timer-hero-metric">
               <span className="timer-hero-metric-val">{liveVolume.toFixed(0)}</span>
@@ -1383,7 +1417,25 @@ function RegistrarScreen({ training }) {
       />
 
       {/* Finish */}
+      {showFinishWarning && (() => {
+        const pendingCount = Object.values(session.sets).flat().filter(s => !s.completed).length
+        return (
+          <div className="finish-warning">
+            ⚠️ {pendingCount} série{pendingCount !== 1 ? 's' : ''} não registrada{pendingCount !== 1 ? 's' : ''}
+            <button className="finish-warning-confirm" onClick={() => {
+              setShowFinishWarning(false)
+              completeSession(session.id)
+              setSummarySession({ ...session, finishedAt: new Date().toISOString() })
+              setShowSummary(true)
+            }}>
+              Finalizar mesmo assim
+            </button>
+          </div>
+        )
+      })()}
       <button className="session-finish-btn" onClick={() => {
+        const pending = Object.values(session.sets).flat().filter(s => !s.completed)
+        if (pending.length > 0) { setShowFinishWarning(v => !v); return }
         completeSession(session.id)
         setSummarySession({ ...session, finishedAt: new Date().toISOString() })
         setShowSummary(true)
