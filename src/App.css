@@ -5847,3 +5847,8 @@ kbd {
   right: auto !important;
   left: 0 !important;
 }
+
+/* === Remover animação do check de série === */
+.training-set-row.set-just-checked {
+  animation: none !important;
+}
