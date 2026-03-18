@@ -5837,3 +5837,13 @@ kbd {
 .training-days-grid {
   align-items: start !important;
 }
+
+/* === Inverter: badge do dia à esquerda, ações à direita === */
+.training-day-actions {
+  left: auto !important;
+  right: 0 !important;
+}
+.training-day-title-row .day-badge-week {
+  right: auto !important;
+  left: 0 !important;
+}
