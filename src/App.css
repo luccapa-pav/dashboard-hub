@@ -5636,14 +5636,30 @@ kbd {
   gap: 1px !important;
 }
 
-/* 4. Alinhamento vertical perfeito: bases dos inputs na mesma linha */
+/* 4. Alinhamento vertical perfeito: centralizado */
 .set-row-main-col .set-row-fields {
-  align-items: flex-end !important;
+  align-items: center !important;
 }
 /* Ghost hint flutua acima sem empurrar o campo — relative + absolute trick */
 .set-field-wrap {
   position: relative !important;
-  padding-top: 16px !important; /* reserva espaço para o hint */
+  padding-top: 0 !important; /* padding aplicado inline apenas quando hint presente */
+}
+
+/* === RIR (Reps In Reserve) === */
+.set-rir-wrap {
+  padding-top: 16px; /* espaço para label flutuante */
+}
+.set-rir-sep {
+  opacity: 0.3 !important;
+  font-size: 18px !important;
+}
+.rir-label-hint {
+  color: var(--text-muted) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  font-size: 9px !important;
+  letter-spacing: 0.1em !important;
 }
 .set-ghost-hint {
   position: absolute !important;

@@ -377,6 +377,7 @@ export function useTraining() {
           setNumber: prev.length + 1,
           reps,
           weightKg,
+          rir: 0,
           completed: false,
         }
         return { ...s, sets: { ...s.sets, [exerciseId]: [...prev, set] } }

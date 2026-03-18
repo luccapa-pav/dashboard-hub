@@ -196,7 +196,10 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
               <span className="set-fields-div" aria-hidden>|</span>
             </>
           )}
-          <div className="set-field-wrap">
+          <div
+            className="set-field-wrap"
+            style={plannedReps && !set.completed ? { paddingTop: '16px' } : {}}
+          >
             {plannedReps && !set.completed && (
               <span className="set-ghost-hint">Meta: {plannedReps}</span>
             )}
@@ -215,6 +218,22 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
               <span className="set-kg-hint">↑ {Number(weightSuggestions[0]).toFixed(1)}kg</span>
             )}
           </div>
+          {!set.completed && (
+            <>
+              <span className="set-sep set-rir-sep">·</span>
+              <div className="set-field-wrap set-rir-wrap">
+                <span className="set-ghost-hint rir-label-hint">RIR</span>
+                <div className="set-field-compact">
+                  <Stepper
+                    value={set.rir ?? 0}
+                    onChange={v => onUpdate({ rir: v })}
+                    step={1}
+                    min={0}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
         {weightSuggestions.length > 0 && !set.completed && (
           <div className="weight-chips">
@@ -339,18 +358,24 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
 
       <div className={`ex-card-body-wrap${expanded ? ' ex-card-body-open' : ''}`}>
         <div className="ex-card-body">
-          {sets.map((set, idx) => (
+          {(() => {
+            const lastSession = history[0]
+            const isRecentHistory = lastSession
+              ? (Date.now() - new Date(lastSession.date).getTime()) / 86400000 <= 8
+              : false
+            return sets.map((set, idx) => (
             <SetRow
               key={set.id}
               set={set}
               plannedReps={exercise.sets?.[idx]?.reps}
-              prevSet={history[0]?.sets?.[idx]}
+              prevSet={isRecentHistory ? lastSession?.sets?.[idx] : undefined}
               onUpdate={patch => onUpdateSet(exercise.id, set.id, patch)}
               onDelete={() => onDeleteSet(exercise.id, set.id)}
               isPR={set.weightKg > 0 && set.weightKg > bestHistWeight}
               weightSuggestions={weightSuggestions}
             />
-          ))}
+          ))
+          })()}
           <div className="ex-note-row">
             <button className="ex-note-toggle" onClick={() => setShowNote(v => !v)}>
               {showNote ? '— Ocultar nota' : `+ Nota${note ? ' ✏️' : ''}`}
