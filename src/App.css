@@ -5592,19 +5592,24 @@ kbd {
 
 /* ── Batch 10 → 11: ordinal badge + prev panel ──────────────── */
 
-/* 1. Ordinal badge "1ª SÉRIE" */
+/* 1. Ordinal badge — número em círculo discreto */
 .set-num {
-  font-size: 10px !important;
-  font-weight: 800 !important;
-  color: var(--accent) !important;
-  background: color-mix(in srgb, var(--accent) 14%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent) !important;
-  border-radius: 6px !important;
-  padding: 3px 8px !important;
+  width: 26px !important;
+  height: 26px !important;
   min-width: unset !important;
-  white-space: nowrap !important;
-  letter-spacing: 0.04em !important;
-  text-transform: uppercase !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-mid) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  white-space: normal !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   flex-shrink: 0 !important;
 }
 
@@ -5638,56 +5643,46 @@ kbd {
   gap: 1px !important;
 }
 
-/* 4. Centralização: todos os filhos de set-row-fields têm mesma altura */
+/* 4. Alinhamento: row com topo reservado para labels flutuantes */
 .set-row-main-col .set-row-fields {
   align-items: center !important;
+  padding-top: 20px !important;
+  overflow: visible !important;
 }
 
-/* Altura uniforme em todos os wraps: 16px cima (hint) + stepper + 16px baixo */
+/* field-wrap sem padding extra — altura = apenas o stepper */
 .set-field-wrap {
   position: relative !important;
-  padding-top: 16px !important;
-  padding-bottom: 16px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
-/* Hints absolutos — não empurram o layout */
+/* Labels flutuam ACIMA via bottom: 100% — não alteram altura do container */
 .set-ghost-hint {
   position: absolute !important;
-  top: 2px !important;
+  bottom: calc(100% + 3px) !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
   width: max-content !important;
 }
-.set-kg-hint {
-  position: absolute !important;
-  bottom: 2px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+
+/* Texto anterior read-only em verde suave */
+.set-prev-text {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #4caf50 !important;
+  opacity: 0.75 !important;
   white-space: nowrap !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -0.01em !important;
+  padding-right: 6px !important;
+  flex-shrink: 0 !important;
 }
 
-/* Bloco prev: mesma altura que field-wrap, label flutuante */
-.set-prev-outer {
-  position: relative !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  padding-top: 16px !important;
-  padding-bottom: 16px !important;
-  gap: 0 !important;
-}
-.set-prev-label {
-  position: absolute !important;
-  top: 2px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: max-content !important;
-}
-
-/* RIR inline: label flutuante + mesma altura via herança do .set-field-wrap */
+/* RIR: label flutua acima via herança de .set-ghost-hint */
 .set-rir-sep {
-  opacity: 0.25 !important;
-  font-size: 18px !important;
+  opacity: 0.2 !important;
+  font-size: 16px !important;
 }
 .rir-label-hint {
   color: var(--text-muted) !important;
@@ -5695,17 +5690,16 @@ kbd {
   background: transparent !important;
   font-size: 9px !important;
   letter-spacing: 0.1em !important;
-  opacity: 0.6 !important;
+  opacity: 0.55 !important;
 }
-/* Stepper RIR menor que reps/kg */
 .set-rir-wrap .stepper-btn {
-  width: 34px !important;
-  height: 34px !important;
-  font-size: 15px !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 14px !important;
 }
 .set-rir-wrap .stepper-val {
-  min-width: 30px !important;
-  font-size: 15px !important;
+  min-width: 28px !important;
+  font-size: 14px !important;
   color: var(--text-muted) !important;
 }
 

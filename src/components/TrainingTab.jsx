@@ -180,21 +180,13 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
         if (dx < -60 && set.completed) { onUpdate({ completed: false }); navigator.vibrate?.(20) }
       }}
     >
-      <span className="set-num">{set.setNumber}ª SÉRIE</span>
+      <span className="set-num">{set.setNumber}</span>
       <div className="set-row-main-col">
         <div className="set-row-fields">
           {prevSet && !set.completed && (
-            <>
-              <div className="set-prev-outer">
-                <span className="set-prev-label">sem. passada</span>
-                <div className="set-prev-block">
-                  <PrevStepper value={prevSet.reps} decimals={0} label="reps" />
-                  <span className="set-sep prev-sep">×</span>
-                  <PrevStepper value={prevSet.weightKg} decimals={1} label="kg" />
-                </div>
-              </div>
-              <span className="set-fields-div" aria-hidden>|</span>
-            </>
+            <span className="set-prev-text">
+              {prevSet.reps} × {Number(prevSet.weightKg).toFixed(1)} kg
+            </span>
           )}
           <div className="set-field-wrap">
             {plannedReps && !set.completed && (
@@ -211,9 +203,6 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
               <Stepper value={set.weightKg} onChange={v => onUpdate({ weightKg: v })} step={2.5} min={0} decimals={1} />
               <span className="set-unit-label">kg</span>
             </div>
-            {weightSuggestions.length > 0 && !set.completed && (
-              <span className="set-kg-hint">↑ {Number(weightSuggestions[0]).toFixed(1)}kg</span>
-            )}
           </div>
           {!set.completed && (
             <>
@@ -227,15 +216,6 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
             </>
           )}
         </div>
-        {weightSuggestions.length > 0 && !set.completed && (
-          <div className="weight-chips">
-            {weightSuggestions.map((w, i) => (
-              <button key={i} className="weight-chip" onClick={() => onUpdate({ weightKg: w })}>
-                {Number(w).toFixed(1)}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       <div className="set-meta-col">
         {isPR && set.weightKg > 0 && (
