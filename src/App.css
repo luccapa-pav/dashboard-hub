@@ -5819,3 +5819,21 @@ kbd {
   align-items: center !important;
   justify-content: center !important;
 }
+
+/* === Cardio header centralizado + grid cards sem esticamento === */
+
+/* "Cardio planejado" centralizado, botão absoluto à direita */
+.day-cardio-header {
+  position: relative !important;
+  justify-content: center !important;
+}
+.day-cardio-header .routine-edit-btn {
+  position: absolute !important;
+  right: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Cards não esticam para preencher altura da linha mais alta */
+.training-days-grid {
+  align-items: start !important;
+}
