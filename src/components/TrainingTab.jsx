@@ -818,21 +818,21 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
               <button className="routine-edit-btn" onClick={startEdit}>
                 <Edit2 size={12} />
               </button>
-              <button className="routine-edit-btn" onClick={() => setCollapsed(v => !v)}>
-                {collapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-              </button>
               <button className="set-del-btn" onClick={onDelete}>
                 <Trash2 size={12} />
               </button>
+              <button className="day-minimize-btn" onClick={() => setCollapsed(v => !v)}>
+                {collapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+              </button>
             </div>
             <span className="training-day-label">{day.label}</span>
-            {day.weekDay !== undefined && (
-              <span className="day-badge-week">{DAYS[day.weekDay]}</span>
-            )}
           </div>
         )}
       </div>
       <div className={`training-day-exercises${collapsed ? ' day-exercises-hidden' : ''}`}>
+        {day.weekDay !== undefined && (
+          <span className="day-badge-week">{DAYS[day.weekDay]}</span>
+        )}
         {(day.exercises || []).sort((a, b) => a.order - b.order).map(ex => (
           <ExerciseRowInRoutine
             key={ex.id}
@@ -844,7 +844,7 @@ function TrainingDayCard({ day, onUpdate, onDelete, onAddExercise, onDeleteExerc
           />
         ))}
       </div>
-      <div className="training-day-footer">
+      <div className={`training-day-footer${collapsed ? ' day-exercises-hidden' : ''}`}>
         <AddExerciseForm
           onAdd={(name, muscle, equip, sets) => onAddExercise(name, muscle, equip, sets)}
           muscleGroups={MUSCLE_GROUPS}

@@ -3692,6 +3692,20 @@ kbd {
 
 .routine-edit-btn:hover { opacity: 1; }
 
+.day-minimize-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  opacity: 0.85;
+  transition: opacity 0.12s;
+}
+.day-minimize-btn:hover { opacity: 1; }
+
 .routine-section { display: flex; flex-direction: column; gap: 8px; }
 
 .routine-section-label {
@@ -5502,18 +5516,13 @@ kbd {
 /* REFINAMENTO UI – Batch 9                                       */
 /* ────────────────────────────────────────────────────────────── */
 
-/* 1. Day header: actions LEFT, badge RIGHT */
+/* 1. Day header: actions RIGHT */
 .training-day-actions {
-  left: 0 !important;
-  right: auto !important;
-}
-.training-day-title-row .day-badge-week {
-  position: absolute !important;
-  right: 0 !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
   left: auto !important;
-  /* Premium accent style — same family as .routine-active-badge */
+  right: 0 !important;
+}
+/* Badge now lives inside .training-day-exercises, not the title row */
+.day-badge-week {
   color: var(--accent) !important;
   background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
   border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
@@ -5524,6 +5533,8 @@ kbd {
   border-radius: 20px !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
+  align-self: flex-start;
+  margin-bottom: 4px;
 }
 
 /* 2. Stepper numbers larger + set row centered */
@@ -5838,15 +5849,6 @@ kbd {
   align-items: start !important;
 }
 
-/* === Inverter: badge do dia à esquerda, ações à direita === */
-.training-day-actions {
-  left: auto !important;
-  right: 0 !important;
-}
-.training-day-title-row .day-badge-week {
-  right: auto !important;
-  left: 0 !important;
-}
 
 /* === Remover animação do check de série === */
 .training-set-row.set-just-checked {
