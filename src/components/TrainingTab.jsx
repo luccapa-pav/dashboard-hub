@@ -218,23 +218,13 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
               <span className="set-kg-hint">↑ {Number(weightSuggestions[0]).toFixed(1)}kg</span>
             )}
           </div>
-          {!set.completed && (
-            <>
-              <span className="set-sep set-rir-sep">·</span>
-              <div className="set-field-wrap set-rir-wrap">
-                <span className="set-ghost-hint rir-label-hint">RIR</span>
-                <div className="set-field-compact">
-                  <Stepper
-                    value={set.rir ?? 0}
-                    onChange={v => onUpdate({ rir: v })}
-                    step={1}
-                    min={0}
-                  />
-                </div>
-              </div>
-            </>
-          )}
         </div>
+        {!set.completed && (
+          <div className="set-rir-row">
+            <span className="set-rir-label">RIR</span>
+            <Stepper value={set.rir ?? 0} onChange={v => onUpdate({ rir: v })} step={1} min={0} />
+          </div>
+        )}
         {weightSuggestions.length > 0 && !set.completed && (
           <div className="weight-chips">
             {weightSuggestions.map((w, i) => (

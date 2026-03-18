@@ -5646,20 +5646,36 @@ kbd {
   padding-top: 0 !important; /* padding aplicado inline apenas quando hint presente */
 }
 
-/* === RIR (Reps In Reserve) === */
-.set-rir-wrap {
-  padding-top: 16px; /* espaço para label flutuante */
+/* === RIR (Reps In Reserve) — sub-linha compacta === */
+.set-rir-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
 }
-.set-rir-sep {
-  opacity: 0.3 !important;
-  font-size: 18px !important;
+.set-rir-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0.5;
+  min-width: 22px;
 }
-.rir-label-hint {
+/* Stepper compacto dentro do RIR */
+.set-rir-row .training-stepper {
+  gap: 0;
+}
+.set-rir-row .stepper-btn {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 15px !important;
+  border-radius: 6px !important;
+}
+.set-rir-row .stepper-val {
+  min-width: 28px !important;
+  font-size: 13px !important;
   color: var(--text-muted) !important;
-  border-color: transparent !important;
-  background: transparent !important;
-  font-size: 9px !important;
-  letter-spacing: 0.1em !important;
 }
 .set-ghost-hint {
   position: absolute !important;
