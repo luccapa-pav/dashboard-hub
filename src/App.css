@@ -6373,11 +6373,128 @@ kbd {
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 4px;
   justify-content: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  max-width: 380px;
 }
 .other-days-label {
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 500;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   START SCREEN REDESIGN
+   ════════════════════════════════════════════════════════════════ */
+
+.training-start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 16px 40px;
+}
+
+.training-start-info {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 28px 28px 24px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.07);
+}
+
+.start-icon-wrap {
+  width: 58px;
+  height: 58px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+
+.training-start-info h3 {
+  font-size: 21px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+  margin: 0 !important;
+  letter-spacing: -0.02em;
+}
+
+.training-day-subtitle {
+  font-size: 16px !important;
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  letter-spacing: 0.01em;
+}
+
+.start-stats-pill {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-top: 2px;
+}
+
+.session-start-btn {
+  width: 100% !important;
+  max-width: 380px !important;
+  justify-content: center !important;
+  border-radius: 14px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  padding: 15px 32px !important;
+  letter-spacing: 0.03em !important;
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--accent) 38%, transparent) !important;
+  transition: all 0.15s !important;
+}
+.session-start-btn:hover {
+  opacity: 1 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 50%, transparent) !important;
+}
+
+.session-repeat-btn {
+  width: 100% !important;
+  max-width: 380px !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+}
+
+.training-day-pick-btn {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-mid) !important;
+  padding: 5px 15px !important;
+  border-radius: 20px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
+  transition: all 0.15s !important;
+}
+.training-day-pick-btn:hover {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 7%, transparent) !important;
 }

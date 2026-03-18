@@ -1216,13 +1216,17 @@ function RegistrarScreen({ training }) {
           <div className="start-streak-pill day-streak-pill">🗓️ {dayStreakWeeks}ª semana seguida neste dia!</div>
         )}
         <div className="training-start-info">
-          <Dumbbell size={32} strokeWidth={1.2} />
           {activeDay.id === todayTrainingDay?.id && (
             <span className="hoje-badge">Treino de hoje</span>
           )}
+          <div className="start-icon-wrap">
+            <Dumbbell size={28} strokeWidth={1.4} />
+          </div>
           <h3>{activeRoutine.name}</h3>
           <p className="training-day-subtitle">{activeDay.label}</p>
-          <p>{activeDay.exercises.length} exercício{activeDay.exercises.length !== 1 ? 's' : ''} · {activeDay.exercises.reduce((a, e) => a + (e.sets?.length || 0), 0)} séries planejadas</p>
+          <span className="start-stats-pill">
+            {activeDay.exercises.length} exercício{activeDay.exercises.length !== 1 ? 's' : ''} · {activeDay.exercises.reduce((a, e) => a + (e.sets?.length || 0), 0)} séries planejadas
+          </span>
         </div>
         {lastDaySessions.length > 0 && (
           <div className="session-history-preview">
