@@ -5523,7 +5523,7 @@ kbd {
   left: auto !important;
   right: 0 !important;
 }
-/* Badge now lives inside .training-day-exercises, not the title row */
+/* Badge alinhado com a coluna de chips das séries (grid 54px | 1fr | 54px, padding 14px) */
 .day-badge-week {
   color: var(--accent) !important;
   background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
@@ -5536,6 +5536,10 @@ kbd {
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
   align-self: flex-start;
+  margin-left: 14px !important;
+  width: 54px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
   margin-bottom: 4px;
 }
 
