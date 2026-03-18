@@ -5641,10 +5641,11 @@ kbd {
   gap: 1px !important;
 }
 
-/* 4. Alinhamento: row com topo reservado para labels flutuantes */
+/* 4. Alinhamento: padding simétrico → stepper no centro exato da row */
 .set-row-main-col .set-row-fields {
   align-items: center !important;
   padding-top: 20px !important;
+  padding-bottom: 20px !important;
   overflow: visible !important;
 }
 
