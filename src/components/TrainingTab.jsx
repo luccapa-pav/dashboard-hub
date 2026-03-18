@@ -241,8 +241,8 @@ function SetRow({ set, onUpdate, onDelete, plannedReps, prevSet, onCompleted, is
 }
 
 // ── ExerciseCard (during session) ─────────────────────────────
-function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, note = '', onNoteChange, isFirst = false, onAllDone }) {
-  const [expanded, setExpanded] = useState(isFirst)
+function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet, history, note = '', onNoteChange, isFirst = false, isActive = false, onAllDone }) {
+  const [expanded, setExpanded] = useState(isFirst || isActive)
   const [showNote, setShowNote] = useState(false)
   const [flashing, setFlashing] = useState(false)
   const lastSet   = history[0]?.sets?.slice(-1)[0]
@@ -252,6 +252,11 @@ function ExerciseCard({ exercise, sets = [], onAddSet, onUpdateSet, onDeleteSet,
   const doneSets   = sets.filter(s => s.completed).length
   const allDone = doneSets === totalSets && totalSets > 0
   const volume = sets.reduce((a, s) => a + (s.reps || 0) * (s.weightKg || 0), 0)
+  // Expand when isActive changes to true
+  useEffect(() => {
+    if (isActive) setExpanded(true)
+  }, [isActive])
+
   // Auto-collapse when all sets are done + flash
   const prevDoneRef = useRef(false)
   useEffect(() => {
@@ -1131,6 +1136,7 @@ function RegistrarScreen({ training }) {
   const [summarySession, setSummarySession] = useState(null)
   const [showFinishWarning, setShowFinishWarning] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [activeExId, setActiveExId] = useState(null)
   const cardRefs = useRef({})
   if (!activeRoutine) {
     return (
@@ -1324,48 +1330,38 @@ function RegistrarScreen({ training }) {
         </div>
       )}
 
-      {/* Exercises — F2: split pending / done, F4: scroll to next */}
+      {/* Exercises — preserva ordem original, auto-expand próximo */}
       {(() => {
-        const isExDone = ex => {
-          const s = session.sets[ex.id] || []
-          return s.length > 0 && s.every(set => set.completed)
-        }
-        const pending = sessionExercises.filter(ex => !isExDone(ex))
-        const done    = sessionExercises.filter(ex => isExDone(ex))
-
         const handleAllDone = (exId) => {
-          const nextPending = sessionExercises.find(ex => !isExDone(ex) && ex.id !== exId)
-          if (nextPending) {
+          const idx = sessionExercises.findIndex(ex => ex.id === exId)
+          const next = sessionExercises[idx + 1]
+          if (next) {
+            setActiveExId(next.id)
             setTimeout(() => {
-              cardRefs.current[nextPending.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              cardRefs.current[next.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }, 700)
           }
         }
 
-        const renderCard = (ex, idx) => (
-          <div key={ex.id} ref={el => { cardRefs.current[ex.id] = el }}>
-            <ExerciseCard
-              exercise={ex}
-              sets={session.sets[ex.id] || []}
-              onAddSet={(exId, reps, weight) => addSet(session.id, exId, reps, weight)}
-              onUpdateSet={(exId, setId, patch) => updateSet(session.id, exId, setId, patch)}
-              onDeleteSet={(exId, setId) => deleteSet(session.id, exId, setId)}
-              history={exerciseHistory(ex.id)}
-              note={session.exerciseNotes?.[ex.id] || ''}
-              onNoteChange={text => updateSession(session.id, { exerciseNotes: { ...(session.exerciseNotes || {}), [ex.id]: text } })}
-              isFirst={idx === 0}
-              onAllDone={() => handleAllDone(ex.id)}
-            />
-          </div>
-        )
-
         return (
           <>
-            {pending.map((ex, idx) => renderCard(ex, idx))}
-            {done.length > 0 && pending.length > 0 && (
-              <div className="ex-group-divider"><span>concluídos</span></div>
-            )}
-            {done.map((ex, idx) => renderCard(ex, idx))}
+            {sessionExercises.map((ex, idx) => (
+              <div key={ex.id} ref={el => { cardRefs.current[ex.id] = el }}>
+                <ExerciseCard
+                  exercise={ex}
+                  sets={session.sets[ex.id] || []}
+                  onAddSet={(exId, reps, weight) => addSet(session.id, exId, reps, weight)}
+                  onUpdateSet={(exId, setId, patch) => updateSet(session.id, exId, setId, patch)}
+                  onDeleteSet={(exId, setId) => deleteSet(session.id, exId, setId)}
+                  history={exerciseHistory(ex.id)}
+                  note={session.exerciseNotes?.[ex.id] || ''}
+                  onNoteChange={text => updateSession(session.id, { exerciseNotes: { ...(session.exerciseNotes || {}), [ex.id]: text } })}
+                  isFirst={idx === 0}
+                  isActive={ex.id === activeExId}
+                  onAllDone={() => handleAllDone(ex.id)}
+                />
+              </div>
+            ))}
           </>
         )
       })()}
