@@ -5822,6 +5822,92 @@ kbd {
   gap: 12px !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   VISUAL POLISH — Set Row
+   Apenas estética, zero mudança estrutural ou funcional
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Card: sombra sutil + borda mais refinada */
+.training-set-row {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.22), 0 0 0 0.5px rgba(255,255,255,0.04) inset !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  padding: 10px 14px !important;
+}
+.training-set-row.set-done {
+  box-shadow: 0 1px 4px rgba(34,197,94,0.12) !important;
+}
+
+/* "|" divisor: linha fina real em vez de caractere */
+.set-fields-div {
+  color: transparent !important;
+  border-left: 1px solid rgba(255,255,255,0.1) !important;
+  width: 1px !important;
+  height: 22px !important;
+  align-self: center !important;
+  margin: 0 8px !important;
+  font-size: 0 !important;
+}
+
+/* Separadores × e · mais suaves — destaque fica nos números */
+.set-sep {
+  opacity: 0.3 !important;
+  font-size: 13px !important;
+}
+.prev-sep {
+  opacity: 0.4 !important;
+}
+
+/* PrevStepper: borda mais suave + sem bordas laterais internas (sem botões) */
+.prev-stepper {
+  border: 1px solid rgba(76,175,80,0.25) !important;
+  border-radius: 10px !important;
+  background: rgba(76,175,80,0.04) !important;
+}
+.prev-stepper-val {
+  border-left: none !important;
+  border-right: none !important;
+  padding: 0 10px !important;
+  min-width: 32px !important;
+}
+
+/* "SEM. PASSADA" label: realmente secundária */
+.set-prev-label {
+  font-size: 7px !important;
+  opacity: 0.45 !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 600 !important;
+}
+
+/* Bloco prev: opacidade total (a cor verde já cria hierarquia) */
+.set-prev-block {
+  opacity: 1 !important;
+}
+
+/* Steppers atuais: botões levemente mais arredondados */
+.set-row-main-col .stepper-btn {
+  border-radius: 9px !important;
+}
+
+/* Unit labels (REPS, KG): ligeiramente mais recuados */
+.set-unit-label {
+  opacity: 0.55 !important;
+  font-size: 9px !important;
+}
+.prev-stepper-label {
+  font-size: 9px !important;
+  opacity: 0.6 !important;
+}
+
+/* Meta hint: pill sutil */
+.set-ghost-hint:not(.rir-label-hint) {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 4px !important;
+  padding: 1px 6px !important;
+  font-size: 9px !important;
+  opacity: 0.75 !important;
+}
+
 /* === Timer Hero & Rest Timer refinement === */
 
 /* Nome do treino: headline acima do relógio */
