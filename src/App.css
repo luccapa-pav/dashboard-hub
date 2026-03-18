@@ -4826,6 +4826,56 @@ kbd {
 }
 .summary-close-btn:hover { background: var(--accent-hi); }
 
+/* ── WorkoutSummary — AI Feedback ────────────────────────────── */
+.summary-ai-feedback {
+  width: 100%;
+  margin: 12px 0 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.summary-ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+.summary-ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.summary-ai-error {
+  font-size: 11px;
+  color: #f87171;
+  padding: 4px 0;
+}
+.summary-ai-text {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.55;
+  text-align: left;
+}
+.summary-ai-heading {
+  font-weight: 600;
+  color: var(--accent);
+  margin: 8px 0 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.summary-ai-line {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+}
+.summary-ai-line:empty { display: none; }
+
 /* ── Streak Banner (HistoricoScreen) ─────────────────────────── */
 .streak-banner {
   display: flex;

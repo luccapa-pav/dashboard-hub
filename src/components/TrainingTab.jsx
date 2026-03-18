@@ -1452,6 +1452,7 @@ function RegistrarScreen({ training }) {
           routine={activeRoutine}
           trainingDay={activeDay}
           sessions={sessions}
+          aiEnabled={training.FEATURES?.aiEnabled}
           onClose={() => { setShowSummary(false); setSummarySession(null) }}
         />
       )}
@@ -1460,7 +1461,7 @@ function RegistrarScreen({ training }) {
 }
 
 // ── WorkoutSummary ────────────────────────────────────────────
-function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [] }) {
+function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [], aiEnabled = false }) {
   const start = new Date(session.startedAt)
   const end   = session.finishedAt ? new Date(session.finishedAt) : new Date()
   const durationSec = Math.round((end - start) / 1000)
@@ -1481,6 +1482,31 @@ function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [] 
     else if (volumeDiff >= -50) overloadHint = { icon: '⚡', msg: 'Volume similar ao último treino. Que tal +2.5kg próxima vez?', color: '#f59e0b' }
     else overloadHint = { icon: '💤', msg: 'Volume menor hoje — recupere bem para o próximo!', color: '#60a5fa' }
   }
+
+  // IA: análise automática da sessão
+  const [aiFeedback, setAiFeedback] = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState(null)
+
+  useEffect(() => {
+    if (!aiEnabled) return
+    setAiLoading(true)
+    const exercises = trainingDay?.exercises || []
+    fetch('/api/ai-session-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session,
+        prevSession: prevSession || null,
+        trainingDayLabel: trainingDay?.label || '',
+        exercises,
+      }),
+    })
+      .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.error)))
+      .then(({ feedback }) => setAiFeedback(feedback))
+      .catch(e => setAiError(typeof e === 'string' ? e : 'Erro ao gerar análise.'))
+      .finally(() => setAiLoading(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="workout-summary-overlay">
@@ -1514,6 +1540,28 @@ function WorkoutSummary({ session, routine, trainingDay, onClose, sessions = [] 
             <span>{overloadHint.msg}</span>
           </div>
         )}
+
+        {aiEnabled && (
+          <div className="summary-ai-feedback">
+            {aiLoading && (
+              <div className="summary-ai-loading">
+                <span className="summary-ai-spinner" />
+                Analisando seu treino com IA...
+              </div>
+            )}
+            {aiError && <div className="summary-ai-error">{aiError}</div>}
+            {aiFeedback && (
+              <div className="summary-ai-text">
+                {aiFeedback.split('\n').map((line, i) => (
+                  <p key={i} className={line.startsWith('**') ? 'summary-ai-heading' : 'summary-ai-line'}>
+                    {line.replace(/\*\*/g, '')}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <button className="summary-close-btn" onClick={onClose}>
           <Check size={18} /> Fechar
         </button>
